@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông tin đơn hàng | Tôi Đi Du Lịch</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        vietravel: {
+                            blue: '#0066b3',
+                            orange: '#f15a24',
+                            yellow: '#ffc72c',
+                            teal: '#00a99d',
+                            lightblue: '#e6f2fa',
+                            lightorange: '#fef0eb'
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f0fdfa 100%);
+        }
+        .status-badge {
+            animation: pulse-slow 2s infinite;
+        }
+        .progress-step .step-number {
+            background-color: #e5e7eb;
+            color: #9ca3af;
+        }
+        .progress-step.completed .step-number {
+            background-color: #00a99d;
+            color: white;
+        }
+        .progress-step.active .step-number {
+            background: linear-gradient(to right, #0066b3, #00a99d);
+            color: white;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+<header th:replace="client_html/fragment/headerANDfooter :: header"></header>
+<!-- Phần hiển thị khi có đơn hàng -->
+<div class="container mx-auto px-4 py-8 max-w-6xl" th:if="${booking != null}">
+
+
+    <!-- Booking Information -->
+    <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+        <div class="mb-4">
+            <a onclick="window.history.back()"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors cursor-pointer">
+                <i class="fas fa-arrow-left mr-2 text-gray-500 hover:text-blue-600 transition-colors"></i>
+                Quay lại trang trước
+            </a>
+        </div>
+        <!-- Status Badge -->
+        <div class="flex justify-end mb-6">
+            <div th:switch="${booking.status}" class="inline-flex items-center px-4 py-2 rounded-full shadow-md">
+                <!-- Đã thanh toán -->
+                <div th:case="'Paid'" class="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-green-400 to-green-600 shadow-md animate-pulse-slow">
+                    <i class="fas fa-check-circle text-white mr-2"></i>
+                    <span class="font-bold text-white text-sm uppercase tracking-wider">ĐÃ THANH TOÁN</span>
+                </div>
+
+                <!-- Thanh toán tiền mặt -->
+                <div th:case="'Cash'" class="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 shadow-md">
+                    <i class="fas fa-money-bill-wave text-white mr-2"></i>
+                    <span class="font-bold text-white text-sm uppercase tracking-wider">THANH TOÁN TIỀN MẶT</span>
+                </div>
+
+                <!-- Đã hủy -->
+                <div th:case="'Cancelled'" class="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-red-400 to-red-600 shadow-md">
+                    <i class="fas fa-times-circle text-white mr-2"></i>
+                    <span class="font-bold text-white text-sm uppercase tracking-wider">ĐÃ HỦY</span>
+                </div>
+
+                <!-- Chờ xử lý -->
+                <div th:case="'Pending payment'" class="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-gray-400 to-gray-600 shadow-md">
+                    <i class="fas fa-clock text-white mr-2"></i>
+                    <span class="font-bold text-white text-sm uppercase tracking-wider">CHỜ THANH TOÁN</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+            <!-- Booking Details -->
+            <div>
+                <h2 class="text-xl font-bold text-vietravel-blue mb-4 flex items-center">
+                    <i class="fas fa-receipt text-vietravel-blue mr-3"></i>
+                    CHI TIẾT ĐƠN HÀNG
+                </h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-sm text-gray-600">Mã đơn hàng:</p>
+                        <p class="font-semibold" th:text="'TOD-' + ${booking.booking_id}">TOD-123456</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Ngày đặt:</p>
+                        <p class="font-semibold" th:text="${#temporals.format(booking.booking_date, 'dd/MM/yyyy HH:mm')}">15/08/2023 14:30</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Tên tour:</p>
+                        <p class="font-semibold" th:text="${booking.tour_name}">Hà Nội - Hạ Long - Sapa</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Ngày khởi hành:</p>
+                        <p class="font-semibold" th:text="${#temporals.format(booking.start_date, 'dd/MM/yyyy')}">20/08/2023</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Số lượng khách:</p>
+                        <p class="font-semibold">
+                            <span th:text="${booking.number_of_adults} + ' người lớn'"></span>
+                            <span th:if="${booking.number_of_children > 0}" th:text="', ' + ${booking.number_of_children} + ' trẻ em'"></span>
+                            <span th:if="${booking.number_of_infants > 0}" th:text="', ' + ${booking.number_of_infants} + ' em bé'"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment & Customer Info -->
+            <div>
+                <h2 class="text-xl font-bold text-vietravel-blue mb-4 flex items-center">
+                    <i class="fas fa-user-circle text-vietravel-blue mr-3"></i>
+                    THÔNG TIN KHÁCH HÀNG
+                </h2>
+
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-sm text-gray-600">Họ tên:</p>
+                        <p class="font-semibold" th:text="${booking.user_full_name}">Nguyễn Văn A</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Số điện thoại:</p>
+                        <p class="font-semibold" th:text="${booking.user_phone_number}">0987654321</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Email:</p>
+                        <p class="font-semibold" th:text="${booking.user_email}">example@email.com</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Tổng thanh toán:</p>
+                        <p class="text-2xl font-bold text-vietravel-orange"
+                           th:text="${#numbers.formatInteger(booking.total_price, 3, 'POINT') + '₫'}">12,500,000₫</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Note Section -->
+        <div th:if="${booking.note}" class="mt-6 p-4 bg-gray-50 rounded-lg">
+            <h3 class="font-semibold text-gray-800 mb-2">GHI CHÚ:</h3>
+            <p class="italic" th:text="${booking.note}">Yêu cầu phòng đôi, không ăn đồ cay</p>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex flex-col sm:flex-row justify-center gap-4 mt-8">
+            <a href="/Client/Home"
+               class="bg-gradient-to-r from-vietravel-blue to-vietravel-teal text-white font-semibold py-3 px-6 rounded-lg hover:opacity-90 transition-all">
+                <i class="fas fa-home mr-2"></i> VỀ TRANG CHỦ
+            </a>
+            <a th:href="'/Client/TourDetail/' + ${booking.tour.tour_id}"
+               class="bg-gradient-to-r from-vietravel-orange to-vietravel-yellow text-white font-semibold py-3 px-6 rounded-lg hover:opacity-90 transition-all">
+                <i class="fas fa-info-circle mr-2"></i> XEM TOUR
+            </a>
+        </div>
+    </div>
+    <!-- Progress Steps -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
+        <!-- Search Again Form -->
+        <div class="bg-gray-50 rounded-lg p-6 mb-6 max-w-md mx-auto">
+            <h3 class="font-semibold text-gray-800 mb-4">TRA CỨU LẠI ĐƠN HÀNG</h3>
+            <form action="/Client/Tra_cuu" method="post" class="flex">
+                <input type="text" name="booking_id" placeholder="Nhập mã đơn hàng"
+                       class="flex-1 py-3 px-4 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-vietravel-orange">
+                <button type="submit"
+                        class="bg-vietravel-orange hover:bg-orange-600 text-white py-3 px-6 rounded-r-lg transition-colors">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+    <!-- Support Section -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+        <h2 class="text-xl font-bold text-vietravel-blue mb-4 flex items-center justify-center">
+            <i class="fas fa-headset text-vietravel-blue mr-3"></i>
+            CẦN HỖ TRỢ THÊM?
+        </h2>
+        <div class="grid md:grid-cols-2 gap-6">
+            <div class="text-center">
+                <div class="bg-blue-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-phone-alt text-2xl text-vietravel-blue"></i>
+                </div>
+                <h3 class="font-semibold text-gray-800 mb-1">Gọi ngay cho chúng tôi</h3>
+                <p class="text-gray-600">1900 1888</p>
+                <p class="text-sm text-gray-500">(24/7 hỗ trợ khách hàng)</p>
+            </div>
+            <div class="text-center">
+                <div class="bg-orange-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-envelope text-2xl text-vietravel-orange"></i>
+                </div>
+                <h3 class="font-semibold text-gray-800 mb-1">Gửi email hỗ trợ</h3>
+                <p class="text-gray-600">support@toididulich.com</p>
+                <p class="text-sm text-gray-500">(Phản hồi trong 24h)</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Phần hiển thị khi không tìm thấy đơn hàng -->
+<div class="container mx-auto px-4 py-12 max-w-3xl" th:unless="${booking != null}">
+    <div class="bg-white rounded-2xl shadow-lg p-8 text-center">
+        <!-- Icon warning -->
+        <div class="mx-auto w-24 h-24 rounded-full bg-orange-50 flex items-center justify-center mb-6">
+            <i class="fas fa-exclamation-triangle text-5xl text-orange-500"></i>
+        </div>
+
+        <!-- Title -->
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">KHÔNG TÌM THẤY ĐƠN HÀNG</h1>
+
+        <!-- Message -->
+        <div class="text-gray-600 mb-6 space-y-2">
+            <p>Chúng tôi không tìm thấy đơn hàng với mã bạn đã nhập</p>
+            <p>Vui lòng kiểm tra lại mã đơn hàng hoặc liên hệ bộ phận hỗ trợ nếu bạn cần giúp đỡ.</p>
+        </div>
+
+        <!-- Search Again Form -->
+        <div class="bg-gray-50 rounded-lg p-6 mb-6 max-w-md mx-auto">
+            <h3 class="font-semibold text-gray-800 mb-4">TRA CỨU LẠI ĐƠN HÀNG</h3>
+            <form action="/Client/Tra_cuu" method="post" class="flex">
+                <input type="text" name="booking_id" placeholder="Nhập mã đơn hàng"
+                       class="flex-1 py-3 px-4 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-vietravel-orange">
+                <button type="submit"
+                        class="bg-vietravel-orange hover:bg-orange-600 text-white py-3 px-6 rounded-r-lg transition-colors">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+            <a href="/Client/Home"
+               class="bg-gradient-to-r from-vietravel-blue to-vietravel-teal text-white font-semibold py-3 px-6 rounded-lg hover:opacity-90 transition-all">
+                <i class="fas fa-home mr-2"></i> VỀ TRANG CHỦ
+            </a>
+        </div>
+    </div>
+
+    <!-- Support Info -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 mt-8 border border-gray-100">
+        <h2 class="text-xl font-bold text-vietravel-blue mb-4 flex items-center justify-center">
+            <i class="fas fa-info-circle text-vietravel-blue mr-3"></i>
+            CẦN HỖ TRỢ NGAY?
+        </h2>
+        <div class="grid md:grid-cols-2 gap-6">
+            <div class="text-center">
+                <div class="bg-blue-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-phone-alt text-2xl text-vietravel-blue"></i>
+                </div>
+                <h3 class="font-semibold text-gray-800 mb-1">Gọi ngay cho chúng tôi</h3>
+                <p class="text-gray-600">1900 1888</p>
+                <p class="text-sm text-gray-500">(24/7 hỗ trợ khách hàng)</p>
+            </div>
+            <div class="text-center">
+                <div class="bg-orange-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-envelope text-2xl text-vietravel-orange"></i>
+                </div>
+                <h3 class="font-semibold text-gray-800 mb-1">Gửi email hỗ trợ</h3>
+                <p class="text-gray-600">support@toididulich.com</p>
+                <p class="text-sm text-gray-500">(Phản hồi trong 24h)</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="client_html/fragment/headerANDfooter :: footer"></footer>
+</body>
+</html>

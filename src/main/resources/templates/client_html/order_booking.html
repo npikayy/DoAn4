@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đặt Tour Du Lịch | Vietravel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        },
+                        secondary: {
+                            500: '#f59e0b',
+                        },
+                        success: {
+                            500: '#10b981',
+                        },
+                        vietravel: {
+                            blue: '#0066b3',
+                            orange: '#f15a24',
+                            yellow: '#ffc72c',
+                            teal: '#00a99d'
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'bounce-slow': 'bounce 3s infinite'
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f0fdfa 100%);
+        }
+        .progress-step.active .step-number {
+            box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.2);
+            animation: pulse-slow 2s infinite;
+        }
+        .tour-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-left: 4px solid #0066b3;
+        }
+        .price-tag {
+            background: linear-gradient(135deg, #ffc72c 0%, #f59e0b 100%);
+        }
+        .contact-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f0fdfa 100%);
+            border-top: 3px solid #00a99d;
+        }
+        .btn-book {
+            background: linear-gradient(135deg, #f15a24 0%, #ff6b3b 100%);
+            box-shadow: 0 4px 15px rgba(241, 90, 36, 0.3);
+        }
+        .btn-consult {
+            background: linear-gradient(135deg, #0066b3 0%, #0083d1 100%);
+            box-shadow: 0 4px 15px rgba(0, 102, 179, 0.3);
+        }
+        .counter-btn {
+            transition: all 0.2s ease;
+        }
+        .counter-btn:hover {
+            transform: scale(1.1);
+        }
+        .floating-icon {
+            animation: float 6s ease-in-out infinite;
+        }
+        .discount-modal {
+            transition: all 0.3s ease-out;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+        }
+        .discount-modal.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .coupon-card {
+            transition: all 0.2s ease;
+            border-left-width: 4px;
+        }
+        .coupon-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="font-sans">
+<header th:replace="client_html/fragment/headerANDfooter :: header"></header>
+
+<div class="w-full mx-auto max-w-7xl py-6 px-4 sm:px-6">
+    <!-- Progress Steps -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-6 tour-card">
+        <div class="flex justify-between items-center mb-6">
+            <!-- Nút quay lại - luôn trở về trang chi tiết tour khi chưa đăng nhập -->
+            <a th:href="'/Client/TourDetail/' + ${tour.tour_id}"
+               class="text-vietravel-blue hover:text-vietravel-orange font-medium flex items-center transition-all hover:-translate-x-1">
+                <i class="fas fa-arrow-left mr-2"></i> Quay lại
+            </a>
+            <h1 id="w-8" class="text-2xl font-bold text-gray-800 bg-gradient-to-r from-vietravel-blue to-vietravel-orange bg-clip-text text-transparent">ĐẶT TOUR</h1>
+            <a th:if="${booking_id}" th:href="'/Client/orderBooking/Payment/' + ${booking_id}"
+               class="text-vietravel-blue hover:text-vietravel-orange font-medium flex items-center transition-all hover:-translate-x-1">
+                Thanh toán <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+
+        <div class="flex justify-between relative px-10">
+            <!-- Progress line -->
+            <div class="absolute top-4 left-20 right-20 h-1 bg-gradient-to-r from-vietravel-blue via-vietravel-teal to-vietravel-orange z-0"></div>
+
+            <!-- Step 1 - Active -->
+            <div class="progress-step active flex flex-col items-center z-10">
+                <div class="step-number w-10 h-10 rounded-full flex items-center justify-center mb-2 text-white font-bold bg-gradient-to-br from-vietravel-blue to-vietravel-teal shadow-lg">
+                    1
+                </div>
+                <span class="text-sm font-semibold text-gray-800">NHẬP THÔNG TIN</span>
+            </div>
+
+            <!-- Step 2 - Xử lý khác nhau khi có/không booking_id -->
+            <div th:if="${booking_id}" class="progress-step flex flex-col items-center z-10">
+                <a th:href="'/Client/orderBooking/Payment/' + ${booking_id}" class="flex flex-col items-center group">
+                    <div class="step-number w-10 h-10 rounded-full flex items-center justify-center mb-2 bg-white text-gray-400 font-bold border-2 border-gray-200 group-hover:bg-vietravel-teal/10 group-hover:border-vietravel-teal transition-colors shadow-md">
+                        2
+                    </div>
+                    <span class="text-sm font-medium text-gray-500 group-hover:text-gray-700 transition-colors">THANH TOÁN</span>
+                </a>
+            </div>
+            <div th:unless="${booking_id}" class="progress-step flex flex-col items-center z-10">
+                <div class="flex flex-col items-center">
+                    <div class="step-number w-10 h-10 rounded-full flex items-center justify-center mb-2 bg-white text-gray-400 font-bold border-2 border-gray-200">
+                        2
+                    </div>
+                    <span class="text-sm font-medium text-gray-500">THANH TOÁN</span>
+                </div>
+            </div>
+
+            <!-- Step 3 - Inactive -->
+            <div class="progress-step flex flex-col items-center z-10">
+                <div class="flex flex-col items-center">
+                    <div class="step-number w-10 h-10 rounded-full flex items-center justify-center mb-2 bg-white text-gray-400 font-bold border-2 border-gray-200">
+                        3
+                    </div>
+                    <span class="text-sm font-medium text-gray-500">HOÀN TẤT</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-6">
+        <!-- Left Column (Form) -->
+        <div class="w-full lg:w-7/12">
+            <div class="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 tour-card">
+                <!-- Thông tin liên hệ -->
+                <div class="mb-8">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-user-circle text-vietravel-blue mr-3 text-xl floating-icon"></i>
+                            <span class="bg-gradient-to-r from-vietravel-blue to-vietravel-teal bg-clip-text text-transparent">THÔNG TIN LIÊN LẠC</span>
+                        </h2>
+<!--                        <div th:if="${user == null}" class="flex items-center">-->
+<!--                            <a href="/login" class="text-vietravel-orange hover:text-vietravel-blue text-sm font-medium flex items-center px-3 py-1 rounded-full bg-orange-50 hover:bg-blue-50 transition-colors">-->
+<!--                                <i class="fas fa-sign-in-alt mr-1"></i> Đăng nhập ngay-->
+<!--                            </a>-->
+<!--                        </div>-->
+                    </div>
+
+                    <p th:if="${user == null}" class="text-gray-600 text-sm mb-4 bg-blue-50 border-l-4 border-vietravel-blue p-3 rounded-lg flex items-start">
+                        <i class="fas fa-info-circle text-vietravel-blue mr-2 mt-0.5"></i>
+                        <span><a href="/login" class="text-vietravel-orange hover:underline font-medium">Đăng nhập</a> để nhận ưu đãi, tích điểm và quản lý đơn hàng dễ dàng hơn!</span>
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="block text-gray-700 text-sm font-medium">Họ tên <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <i class="fas fa-user absolute left-3 top-1/2 transform -translate-y-1/2 text-vietravel-blue text-sm"></i>
+                                <input type="text" id="userFullName" class="border border-gray-200 pl-9 pr-4 py-3 rounded-lg w-full text-sm focus:ring-2 focus:ring-vietravel-blue focus:border-vietravel-blue transition-all shadow-sm"
+                                       placeholder="Nhập họ tên" required th:value="${user?.full_name ?: ''}">
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="block text-gray-700 text-sm font-medium">Điện thoại <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <i class="fas fa-phone absolute left-3 top-1/2 transform -translate-y-1/2 text-vietravel-blue text-sm"></i>
+                                <input type="tel" id="userPhone" class="border border-gray-200 pl-9 pr-4 py-3 rounded-lg w-full text-sm focus:ring-2 focus:ring-vietravel-blue focus:border-vietravel-blue transition-all shadow-sm"
+                                       placeholder="Nhập số điện thoại" required th:value="${user?.phone_number ?: ''}">
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="block text-gray-700 text-sm font-medium">Email <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-vietravel-blue text-sm"></i>
+                                <input type="email" id="userEmail" class="border border-gray-200 pl-9 pr-4 py-3 rounded-lg w-full text-sm focus:ring-2 focus:ring-vietravel-blue focus:border-vietravel-blue transition-all shadow-sm"
+                                       placeholder="Nhập email" required th:value="${user?.email ?: ''}">
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="block text-gray-700 text-sm font-medium">Địa chỉ</label>
+                            <div class="relative">
+                                <i class="fas fa-map-marker-alt absolute left-3 top-1/2 transform -translate-y-1/2 text-vietravel-blue text-sm"></i>
+                                <input type="text" id="userAddress" class="border border-gray-200 pl-9 pr-4 py-3 rounded-lg w-full text-sm focus:ring-2 focus:ring-vietravel-blue focus:border-vietravel-blue transition-all shadow-sm"
+                                       placeholder="Nhập địa chỉ" th:value="${user?.address ?: ''}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hành khách -->
+                <div class="mb-8">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-users text-vietravel-orange mr-3 text-xl floating-icon"></i>
+                        <span class="bg-gradient-to-r from-vietravel-orange to-vietravel-yellow bg-clip-text text-transparent">HÀNH KHÁCH</span>
+                    </h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Người lớn -->
+                        <div class="border border-gray-100 rounded-lg p-4 bg-gradient-to-br from-white to-blue-50 hover:border-vietravel-blue transition-all shadow-sm hover:shadow-md">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <div class="font-semibold text-gray-800" th:adult-data="${tour.tour_adult_price}">Người lớn</div>
+                                    <div class="text-xs text-gray-500">Từ 12 trở lên</div>
+                                </div>
+                                <div class="text-vietravel-blue font-medium text-sm price-tag px-2 py-1 rounded-full">
+                                    <span th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + '₫/người'}"></span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between mt-3">
+                                <button class="counter-btn minus w-8 h-8 flex items-center justify-center border border-gray-200 bg-white rounded-lg cursor-pointer text-sm transition-all hover:bg-vietravel-blue hover:text-white hover:border-vietravel-blue">
+                                    <i class="fas fa-minus text-xs"></i>
+                                </button>
+                                <input type="number" id="adultCount" value="1" min="1"
+                                       class="w-12 text-center border border-gray-200 py-1 text-sm focus:ring-2 focus:ring-vietravel-blue focus:border-vietravel-blue rounded-lg mx-2 shadow-inner">
+                                <button class="counter-btn plus w-8 h-8 flex items-center justify-center border border-gray-200 bg-white rounded-lg cursor-pointer text-sm transition-all hover:bg-vietravel-blue hover:text-white hover:border-vietravel-blue">
+                                    <i class="fas fa-plus text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Trẻ em -->
+                        <div class="border border-gray-100 rounded-lg p-4 bg-gradient-to-br from-white to-blue-50 hover:border-vietravel-blue transition-all shadow-sm hover:shadow-md" th:if="${tour.tour_child_price != null}">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <div class="font-semibold text-gray-800" th:child-data="${tour.tour_child_price}">Trẻ em</div>
+                                    <div class="text-xs text-gray-500">Từ 5 - 11 tuổi</div>
+                                </div>
+                                <div class="text-vietravel-blue font-medium text-sm price-tag px-2 py-1 rounded-full">
+                                    <span th:text="${#numbers.formatInteger(tour.tour_child_price, 3, 'POINT') + '₫/người'}"></span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between mt-3">
+                                <button class="counter-btn minus w-8 h-8 flex items-center justify-center border border-gray-200 bg-white rounded-lg cursor-pointer text-sm transition-all hover:bg-vietravel-blue hover:text-white hover:border-vietravel-blue">
+                                    <i class="fas fa-minus text-xs"></i>
+                                </button>
+                                <input type="number" id="childCount" value="0" min="0"
+                                       class="w-12 text-center border border-gray-200 py-1 text-sm focus:ring-2 focus:ring-vietravel-blue focus:border-vietravel-blue rounded-lg mx-2 shadow-inner">
+                                <button class="counter-btn plus w-8 h-8 flex items-center justify-center border border-gray-200 bg-white rounded-lg cursor-pointer text-sm transition-all hover:bg-vietravel-blue hover:text-white hover:border-vietravel-blue">
+                                    <i class="fas fa-plus text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Trẻ nhỏ -->
+                        <div class="border border-gray-100 rounded-lg p-4 bg-gradient-to-br from-white to-blue-50 hover:border-vietravel-blue transition-all shadow-sm hover:shadow-md" th:if="${tour.tour_infant_price != null}">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <div class="font-semibold text-gray-800" th:infant-data="${tour.tour_infant_price}">Trẻ nhỏ</div>
+                                    <div class="text-xs text-gray-500">Từ 2 - 4 tuổi</div>
+                                </div>
+                                <div class="text-vietravel-blue font-medium text-sm price-tag px-2 py-1 rounded-full">
+                                    <span th:text="${#numbers.formatInteger(tour.tour_infant_price, 3, 'POINT') + '₫/người'}"></span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between mt-3">
+                                <button class="counter-btn minus w-8 h-8 flex items-center justify-center border border-gray-200 bg-white rounded-lg cursor-pointer text-sm transition-all hover:bg-vietravel-blue hover:text-white hover:border-vietravel-blue">
+                                    <i class="fas fa-minus text-xs"></i>
+                                </button>
+                                <input type="number" id="infantCount" value="0" min="0"
+                                       class="w-12 text-center border border-gray-200 py-1 text-sm focus:ring-2 focus:ring-vietravel-blue focus:border-vietravel-blue rounded-lg mx-2 shadow-inner">
+                                <button class="counter-btn plus w-8 h-8 flex items-center justify-center border border-gray-200 bg-white rounded-lg cursor-pointer text-sm transition-all hover:bg-vietravel-blue hover:text-white hover:border-vietravel-blue">
+                                    <i class="fas fa-plus text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-info-circle text-vietravel-teal mr-3 text-xl floating-icon"></i>
+                        <span class="bg-gradient-to-r from-vietravel-teal to-vietravel-blue bg-clip-text text-transparent">THÔNG TIN HÀNH KHÁCH</span>
+                    </h2>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg border-l-4 border-vietravel-orange shadow-sm">
+                            <div class="text-sm flex items-start">
+                                <i class="fas fa-exclamation-circle text-vietravel-orange mr-2 mt-0.5"></i>
+                                <p class="text-vietravel-orange font-medium">Nhân viên tư vấn sẽ liên hệ Quý khách trong thời gian sớm nhất để hỗ trợ. Quý khách vui lòng chú ý điện thoại và email như đã đăng ký.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ghi chú -->
+                <div class="mb-4">
+                    <h2 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-edit text-vietravel-yellow mr-3 text-xl floating-icon"></i>
+                        <span class="bg-gradient-to-r from-vietravel-yellow to-vietravel-orange bg-clip-text text-transparent">GHI CHÚ</span>
+                    </h2>
+                    <p class="text-gray-600 text-sm mb-3">Quý khách có ghi chú lưu ý gì, hãy nói với chúng tôi</p>
+                    <div class="relative">
+                        <textarea id="note" class="border border-gray-200 px-4 py-3 rounded-lg w-full text-sm focus:ring-2 focus:ring-vietravel-blue focus:border-vietravel-blue transition-all h-24 shadow-sm"
+                                  placeholder="Vui lòng nhập nội dung lời nhắn bằng tiếng Anh hoặc tiếng Việt"></textarea>
+                        <div class="absolute bottom-2 right-2 text-xs text-gray-400 bg-white/80 px-1 rounded">
+                            <span id="note-counter">0</span>/200
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column (Summary) -->
+        <div class="w-full lg:w-5/12">
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 sticky top-6 tour-card">
+                <!-- Tóm tắt tour -->
+                <div class="p-6 border-b border-gray-100">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-map-marked-alt text-vietravel-blue mr-2 floating-icon"></i>
+                        <span class="bg-gradient-to-r from-vietravel-blue to-vietravel-teal bg-clip-text text-transparent">TÓM TẮT CHUYẾN ĐI</span>
+                    </h2>
+
+                    <div class="flex items-start gap-4 mb-4 p-3 bg-gradient-to-r from-blue-50 to-teal-50 rounded-lg shadow-sm">
+                        <img class="w-16 h-16 object-cover rounded-lg shadow-md border-2 border-white"
+                             th:src="${tourPics[0]}" alt="tour image">
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-800 text-base mb-1" th:text="${tour.tour_name}"></h3>
+                            <div class="flex items-center text-xs text-gray-500 mb-2">
+                                <i class="fas fa-hashtag text-vietravel-blue mr-1"></i>
+                                <span th:text="'Mã tour: ' + ${tour.tour_id}" id="tour_id"></span>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <div class="flex items-center text-xs text-white bg-gradient-to-r from-vietravel-teal to-vietravel-blue px-2 py-1 rounded-full">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    <span th:text="${tour.tour_duration} + ' ngày'"></span>
+                                </div>
+                                <!-- Thêm hiển thị số chỗ tối đa -->
+                                <div class="flex items-center text-xs text-white bg-gradient-to-r from-vietravel-orange to-vietravel-yellow px-2 py-1 rounded-full">
+                                    <i class="fas fa-users mr-1"></i>
+                                    <span th:text="'Còn ' + ${max_num_guest} + ' chỗ'"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ngày đi và về -->
+                    <div class="space-y-4">
+                        <!-- Khởi hành -->
+                        <div class="flex items-start bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:border-vietravel-blue transition-colors contact-card">
+                            <div class="bg-vietravel-blue/10 p-2 rounded-full mr-3 mt-0.5 flex-shrink-0">
+                                <i class="fas fa-plane-departure text-vietravel-blue text-lg w-5 h-5"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="font-medium text-xs text-gray-500 mb-1">KHỞI HÀNH</p>
+                                        <p class="text-sm font-semibold text-gray-800 mb-1" th:text="${#temporals.format(start_date, 'dd/MM/yyyy')}"></p>
+                                    </div>
+                                    <span class="bg-blue-50 text-vietravel-blue text-xs px-2 py-1 rounded-full">
+                        <i class="fas fa-calendar-day mr-1"></i> Ngày đi
+                    </span>
+                                </div>
+
+                                <div class="mt-2 flex items-center justify-between bg-gradient-to-r from-blue-50 to-teal-50 p-2 rounded-lg">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-map-marker-alt text-red-400 mr-2"></i>
+                                        <span class="location text-xs font-medium text-gray-700 truncate" th:data-location="${tour.tour_start_location}"></span>
+                                    </div>
+
+                                    <div class="mx-2 flex items-center">
+                                        <div class="h-px bg-gray-300 w-8"></div>
+                                        <i class="fas fa-plane text-vietravel-blue mx-1 text-xs"></i>
+                                        <div class="h-px bg-gray-300 w-8"></div>
+                                    </div>
+
+                                    <div class="flex items-center">
+                                        <i class="fas fa-map-marker-alt text-green-400 mr-2"></i>
+                                        <span class="location text-xs font-medium text-gray-700 truncate" th:data-location="${tour.tour_end_location}"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Kết thúc -->
+                        <div class="flex items-start bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:border-vietravel-blue transition-colors contact-card">
+                            <div class="bg-vietravel-blue/10 p-2 rounded-full mr-3 mt-0.5 flex-shrink-0">
+                                <i class="fas fa-plane-arrival text-vietravel-blue text-lg w-5 h-5"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="font-medium text-xs text-gray-500 mb-1">KẾT THÚC</p>
+                                        <p class="text-sm font-semibold text-gray-800 mb-1" th:text="${#temporals.format(end_date, 'dd/MM/yyyy')}"></p>
+                                    </div>
+                                    <span class="bg-blue-50 text-vietravel-blue text-xs px-2 py-1 rounded-full">
+                        <i class="fas fa-calendar-check mr-1"></i> Ngày về
+                    </span>
+                                </div>
+
+                                <div class="mt-2 flex items-center justify-between bg-gradient-to-r from-blue-50 to-teal-50 p-2 rounded-lg">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-map-marker-alt text-green-400 mr-2"></i>
+                                        <span class="location text-xs font-medium text-gray-700 truncate" th:data-location="${tour.tour_end_location}"></span>
+                                    </div>
+
+                                    <div class="mx-2 flex items-center">
+                                        <div class="h-px bg-gray-300 w-8"></div>
+                                        <i class="fas fa-plane text-vietravel-blue mx-1 text-xs transform"></i>
+                                        <div class="h-px bg-gray-300 w-8"></div>
+                                    </div>
+
+                                    <div class="flex items-center">
+                                        <i class="fas fa-map-marker-alt text-red-400 mr-2"></i>
+                                        <span class="location text-xs font-medium text-gray-700 truncate" th:data-location="${tour.tour_start_location}"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chi tiết giá -->
+                <div class="p-6">
+                    <div class="flex justify-between font-semibold text-gray-700 text-sm mb-3">
+                        <span>KHÁCH HÀNG + PHỤ THU</span>
+                        <span id="total-price" class="font-bold text-vietravel-orange"
+                              th:text="${#numbers.formatInteger((tour.tour_adult_price + (tour.tour_child_price != null ? tour.tour_child_price : 0) + (tour.tour_infant_price != null ? tour.tour_infant_price : 0)) * (1 - (tour.tour_discount != null ? tour.tour_discount/100 : 0)), 3, 'POINT') + '₫'}"></span>
+                    </div>
+
+                    <div class="space-y-2 mb-4 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Người lớn ×<span id="adult-count">1</span></span>
+                            <span class="font-medium text-vietravel-blue" id="adult-total"
+                                  th:text="${#numbers.formatInteger(tour.tour_adult_price * (1 - (tour.tour_discount != null ? tour.tour_discount/100 : 0)), 3, 'POINT') + '₫'}">
+                            </span>
+                        </div>
+                        <div class="flex justify-between" th:if="${tour.tour_child_price != null}">
+                            <span class="text-gray-600">Trẻ em ×<span id="child-count">0</span></span>
+                            <span class="font-medium text-vietravel-blue" id="child-total"
+                                  th:text="${#numbers.formatInteger(tour.tour_child_price * (1 - (tour.tour_discount != null ? tour.tour_discount/100 : 0)), 3, 'POINT') + '₫'}"></span>
+                        </div>
+                        <div class="flex justify-between" th:if="${tour.tour_infant_price != null}">
+                            <span class="text-gray-600">Trẻ nhỏ ×<span id="infant-count">0</span></span>
+                            <span class="font-medium text-vietravel-blue" id="infant-total"
+                                  th:text="${#numbers.formatInteger(tour.tour_infant_price * (1 - (tour.tour_discount != null ? tour.tour_discount/100 : 0)), 3, 'POINT') + '₫'}"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Phụ thu phòng đơn</span>
+                            <span class="font-medium text-vietravel-blue">0₫</span>
+                        </div>
+                    </div>
+
+                    <!-- Mã giảm giá -->
+                    <div class="mb-4" onclick="openDiscountModal()">
+                        <div class="flex items-center justify-between bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-3 cursor-pointer hover:from-yellow-100 hover:to-orange-100 transition-colors group border border-yellow-100">
+                            <div class="flex items-center">
+                                <i class="fas fa-tag text-vietravel-orange mr-2 group-hover:text-vietravel-yellow transition-colors"></i>
+                                <span  class="text-vietravel-orange font-medium text-sm group-hover:text-vietravel-yellow transition-colors">Thêm mã giảm giá</span>
+                            </div>
+                            <i class="fas fa-chevron-right text-vietravel-orange text-xs group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                    </div>
+
+                    <!-- Điều khoản -->
+                    <div class="mb-4">
+                        <div class="flex items-start">
+                            <input type="checkbox" id="terms" name="acceptTerms" class="h-4 w-4 text-vietravel-blue focus:ring-vietravel-blue border-gray-300 rounded mt-1 mr-3" required>
+                            <label for="terms" class="text-gray-700 text-xs">
+                                Tôi đồng ý với <a href="#" class="text-vietravel-blue hover:underline">Chính sách bảo vệ dữ liệu cá nhân</a> và các điều khoản.
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Tổng tiền -->
+                    <div class="border-t border-gray-100 my-4"></div>
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="font-bold text-gray-800">Tổng tiền</span>
+                        <div class="text-right">
+                            <div th:if="${tour.tour_discount != null and tour.tour_discount > 0}" class="text-sm line-through text-gray-400">
+                                <span th:text="${#numbers.formatInteger(tour.tour_adult_price + (tour.tour_child_price != null ? tour.tour_child_price : 0) + (tour.tour_infant_price != null ? tour.tour_infant_price : 0), 3, 'POINT') + '₫'}"></span>
+                            </div>
+                            <span class="text-2xl font-bold text-vietravel-orange" id="final-total"
+                                  th:text="${#numbers.formatInteger((tour.tour_adult_price + (tour.tour_child_price != null ? tour.tour_child_price : 0) + (tour.tour_infant_price != null ? tour.tour_infant_price : 0)) * (1 - (tour.tour_discount != null ? tour.tour_discount/100 : 0)), 3, 'POINT') + '₫'}">
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Nút đặt tour -->
+                    <div class="space-y-3">
+                        <button id="submitBooking" type="button" class="btn-book text-white font-semibold py-3 px-6 rounded-lg text-sm hover:opacity-90 transition-all w-full flex items-center justify-center">
+                            <i class="fas fa-shopping-cart mr-2"></i> ĐẶT TOUR NGAY
+                        </button>
+                        <button type="button" class="btn-consult text-white font-semibold py-3 px-6 rounded-lg text-sm hover:opacity-90 transition-all w-full flex items-center justify-center">
+                            <i class="fas fa-phone-alt mr-2"></i> Liên hệ tư vấn
+                        </button>
+                    </div>
+
+                    <!-- Bảo mật thanh toán -->
+                    <div class="mt-4 flex items-center justify-center space-x-2 text-xs text-gray-500">
+                        <i class="fas fa-lock text-vietravel-blue"></i>
+                        <span>Bảo mật thanh toán</span>
+                        <i class="fas fa-shield-alt text-vietravel-blue"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="discountModal" class="discount-modal fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+    <div class="bg-white rounded-xl w-full max-w-md overflow-hidden shadow-xl">
+        <!-- Modal Header -->
+        <div class="bg-gradient-to-r from-vietravel-blue to-vietravel-teal p-4 text-white">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xl font-bold flex items-center">
+                    <i class="fas fa-tag mr-2"></i>
+                    Mã Giảm Giá
+                </h3>
+                <button onclick="closeDiscountModal()" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-5">
+            <!-- Ô nhập mã -->
+            <div class="mb-6 hidden">
+                <div class="relative flex shadow-sm ">
+                    <input type="text" id="discountCode"
+                           class="flex-1 border border-gray-200 rounded-l-lg py-3 px-4 focus:ring-2 focus:ring-vietravel-blue focus:border-vietravel-blue text-sm"
+                           placeholder="Nhập mã giảm giá">
+                    <button onclick="applyDiscount()"
+                            class="bg-gradient-to-r from-vietravel-orange to-vietravel-yellow text-white font-semibold py-3 px-4 rounded-r-lg hover:opacity-90 transition-opacity text-sm">
+                        Áp dụng
+                    </button>
+                </div>
+                <p id="discountMessage" class="text-sm mt-2 px-2 hidden"></p>
+            </div>
+
+            <!-- Danh sách mã -->
+            <div class="mb-4" th:if="${not #lists.isEmpty(vouchers)}">
+                <h4 class="font-semibold text-gray-700 mb-3 flex items-center text-sm">
+                    <i class="fas fa-fire-alt text-vietravel-orange mr-2"></i>
+                    MÃ KHUYẾN MÃI PHỔ BIẾN
+                </h4>
+
+                <div class="space-y-3">
+                    <!-- Hiển thị danh sách voucher từ Thymeleaf -->
+                    <div th:each="voucher : ${vouchers}"
+                         onclick="selectCoupon(this.getAttribute('data-voucher-code'), this.getAttribute('data-voucher-discount'), this.getAttribute('data-voucher-type'))"
+                         class="coupon-card border-l-vietravel-blue border-gray-100 border rounded-lg p-3 bg-gray-50 cursor-pointer"
+                         th:data-voucher-code='${voucher.voucher_code}'
+                         th:data-voucher-discount='${voucher.voucher_discount}'
+                         th:data-voucher-type='${voucher.voucher_type}'>
+                        <!-- Nội dung voucher -->
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="font-bold" th:text="${voucher.voucher_code}"
+                                     th:class="${voucher.voucher_discount > 15 ? 'text-vietravel-orange' : 'text-vietravel-blue'}"></div>
+                                <div class="text-xs text-gray-600 mt-1" th:text="${voucher.voucher_description}"></div>
+                            </div>
+                            <div th:class="${voucher.voucher_discount > 15 ?
+                      'bg-vietravel-orange/10 text-vietravel-orange' :
+                      'bg-vietravel-blue/10 text-vietravel-blue'}
+                  + ' px-3 py-1 rounded-full text-xs font-bold'">
+                                <span th:if="${voucher.voucher_type == 'AMOUNT'}" th:text="'-' + ${#numbers.formatInteger(voucher.voucher_discount, 0, 'COMMA') + 'đ'}"></span>
+                                <span th:if="${voucher.voucher_type == 'PERCENT'}" th:text="'-' + ${voucher.voucher_discount} + '%'"></span>
+                            </div>
+                        </div>
+                        <div class="text-xs text-vietravel-orange mt-2 flex items-center">
+                            <i class="fas fa-clock mr-1"></i>
+                            HSD: <span th:text="${#temporals.format(voucher.voucher_end_date, 'dd/MM/yyyy')}"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hiển thị khi không có voucher -->
+            <div th:if="${vouchers.size() == 0}" class="text-center py-6 bg-gray-50 rounded-lg">
+                <i class="fas fa-tag text-gray-400 text-2xl mb-2"></i>
+                <p class="text-gray-500 text-sm">Hiện không có mã giảm giá khả dụng</p>
+            </div>
+
+            <!-- Footer -->
+            <div class="text-center text-xs text-gray-500 bg-gray-50 p-2 rounded-lg mt-4">
+                <p>Mỗi đơn hàng chỉ áp dụng 1 mã giảm giá</p>
+            </div>
+        </div>
+    </div>
+</div>
+<footer th:replace="client_html/fragment/headerANDfooter :: footer"></footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Hàm xử lý tên địa điểm
+        function cleanLocationName(location) {
+            return location.replace(/^(Tỉnh|Thành phố|phố)\s*/i, '');
+        }
+
+        // Áp dụng cho tất cả các phần tử có class location
+        document.querySelectorAll('.location').forEach(el => {
+            const originalLocation = el.getAttribute('data-location');
+            el.textContent = cleanLocationName(originalLocation);
+        });
+
+        // Lấy giá tour từ Thymeleaf
+        const adultPrice = [[${tour.tour_adult_price}]];
+        const childPrice = [[${tour.tour_child_price}]];
+        const infantPrice = [[${tour.tour_infant_price}]];
+        const maxGuest = [[${max_num_guest}]]; // Lấy số lượng khách tối đa
+
+        // Xử lý tăng/giảm số lượng
+        document.querySelectorAll('.counter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const isMinus = this.classList.contains('minus');
+                const input = this.parentElement.querySelector('input');
+                let value = parseInt(input.value);
+                const min = parseInt(input.min);
+                const max = parseInt(input.max || maxGuest); // Sử dụng maxGuest làm giới hạn tối đa
+
+                // Tính tổng số khách hiện tại
+                const currentTotalGuests = calculateTotalGuests();
+
+                if (isMinus && value > min) {
+                    input.value = value - 1;
+                    updateCounterButtons(input);
+                    updatePrice();
+                } else if (!isMinus) {
+                    // Kiểm tra nếu tổng số khách chưa vượt quá giới hạn
+                    if (currentTotalGuests < maxGuest) {
+                        input.value = value + 1;
+                        updateCounterButtons(input);
+                        updatePrice();
+                    } else {
+                        showMaxGuestAlert();
+                    }
+                }
+
+                // Hiệu ứng click
+                this.classList.add('active:scale-90');
+                setTimeout(() => {
+                    this.classList.remove('active:scale-90');
+                }, 100);
+            });
+        });
+
+        // Hàm tính tổng số khách hiện tại
+        function calculateTotalGuests() {
+            const adultCount = parseInt(document.getElementById('adultCount').value) || 0;
+            const childCount = parseInt(document.getElementById('childCount')?.value || 0);
+            const infantCount = parseInt(document.getElementById('infantCount')?.value || 0);
+            return adultCount + childCount + infantCount;
+        }
+
+        // Hiển thị thông báo khi vượt quá số khách tối đa
+        function showMaxGuestAlert() {
+            // Kiểm tra xem thông báo đã tồn tại chưa
+            let alertElement = document.getElementById('max-guest-alert');
+
+            if (!alertElement) {
+                alertElement = document.createElement('div');
+                alertElement.id = 'max-guest-alert';
+                alertElement.className = 'fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-lg z-50 flex items-start max-w-md';
+                alertElement.innerHTML = `
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-circle text-red-500 text-xl mr-3 mt-0.5"></i>
+                </div>
+                <div>
+                    <p class="font-semibold">Đã đạt số lượng khách tối đa!</p>
+                    <p class="text-sm mt-1">Tour này chỉ có thể đặt tối đa ${maxGuest} khách. Vui lòng kiểm tra lại.</p>
+                </div>
+                <button onclick="this.parentElement.remove()" class="ml-4 text-red-500 hover:text-red-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+
+                document.body.appendChild(alertElement);
+
+                // Tự động ẩn sau 5 giây
+                setTimeout(() => {
+                    alertElement.remove();
+                }, 5000);
+            }
+        }
+
+        // Cập nhật trạng thái nút tăng/giảm
+        function updateCounterButtons(input) {
+            const value = parseInt(input.value);
+            const min = parseInt(input.min);
+            const max = parseInt(input.max || maxGuest);
+            const currentTotalGuests = calculateTotalGuests();
+
+            const minusBtn = input.previousElementSibling;
+            const plusBtn = input.nextElementSibling;
+
+            minusBtn.classList.toggle('disabled', value <= min);
+            plusBtn.classList.toggle('disabled', value >= max || currentTotalGuests >= maxGuest);
+        }
+
+        // Cập nhật khi thay đổi giá trị input
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.addEventListener('change', function() {
+                const min = parseInt(this.min);
+                const max = parseInt(this.max || maxGuest);
+                let value = parseInt(this.value);
+                const currentTotalGuests = calculateTotalGuests();
+
+                if (isNaN(value)) value = min;
+                if (value < min) value = min;
+                if (value > max) value = max;
+
+                // Kiểm tra tổng số khách không vượt quá maxGuest
+                const otherGuests = currentTotalGuests - (parseInt(this.value) || 0);
+                if (value + otherGuests > maxGuest) {
+                    value = maxGuest - otherGuests;
+                    if (value < min) value = min;
+                    showMaxGuestAlert();
+                }
+
+                this.value = value;
+                updateCounterButtons(this);
+                updatePrice();
+            });
+
+            // Khởi tạo trạng thái ban đầu
+            updateCounterButtons(input);
+        });
+
+        // ... (phần còn lại của hàm updatePrice và các hàm khác giữ nguyên)
+        // Cập nhật giá khi thay đổi số lượng
+        function updatePrice() {
+            const adultCount = parseInt(document.getElementById('adultCount').value) || 0;
+            const childCount = parseInt(document.getElementById('childCount')?.value || 0);
+            const infantCount = parseInt(document.getElementById('infantCount')?.value || 0);
+
+            // Lấy giá gốc và discount từ Thymeleaf
+            const adultOriginalPrice = [[${tour.tour_adult_price}]];
+            const childOriginalPrice = [[${tour.tour_child_price}]];
+            const infantOriginalPrice = [[${tour.tour_infant_price}]];
+            const discount = [[${tour.tour_discount != null ? tour.tour_discount : 0}]];
+
+            // Tính giá sau khi giảm
+            const adultPrice = adultOriginalPrice * (1 - discount/100);
+            const childPrice = childOriginalPrice * (1 - discount/100);
+            const infantPrice = infantOriginalPrice * (1 - discount/100);
+
+            const adultTotal = adultCount * adultPrice;
+            const childTotal = childCount * childPrice;
+            const infantTotal = infantCount * infantPrice;
+
+            const subtotal = adultTotal + childTotal + infantTotal;
+
+            // Update counts
+            document.getElementById('adult-count').textContent = adultCount;
+            if (document.getElementById('child-count')) {
+                document.getElementById('child-count').textContent = childCount;
+            }
+            if (document.getElementById('infant-count')) {
+                document.getElementById('infant-count').textContent = infantCount;
+            }
+
+            // Update prices
+            document.getElementById('adult-total').textContent = formatCurrency(adultTotal);
+            if (document.getElementById('child-total')) {
+                document.getElementById('child-total').textContent = childCount > 0 ? formatCurrency(childTotal) : '0₫';
+            }
+            if (document.getElementById('infant-total')) {
+                document.getElementById('infant-total').textContent = infantCount > 0 ? formatCurrency(infantTotal) : '0₫';
+            }
+
+            document.getElementById('total-price').textContent = formatCurrency(subtotal);
+            document.getElementById('final-total').textContent = formatCurrency(subtotal);
+
+            // Hiển thị thông tin giảm giá nếu có
+            if(discount > 0) {
+                const discountElement = document.getElementById('discount-info');
+                if(!discountElement) {
+                    const priceDetails = document.querySelector('.space-y-2.mb-4.text-sm');
+                    const discountHtml = `
+            <div class="flex justify-between items-center pt-2 border-t border-gray-100" id="discount-info">
+                <span class="text-gray-600">Giảm giá <span class="text-green-500">${discount}%</span></span>
+                <span class="font-medium text-green-600">-${formatCurrency((adultOriginalPrice * adultCount + childOriginalPrice * childCount + infantOriginalPrice * infantCount) * discount/100)}</span>
+            </div>
+        `;
+                    priceDetails.insertAdjacentHTML('beforeend', discountHtml);
+                } else {
+                    discountElement.querySelector('span.text-green-500').textContent = `${discount}%`;
+                    discountElement.querySelector('span.text-green-600').textContent = `-${formatCurrency((adultOriginalPrice * adultCount + childOriginalPrice * childCount + infantOriginalPrice * infantCount) * discount/100)}`;
+                }
+            }
+        }
+
+        // Định dạng tiền tệ
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN').format(amount) + '₫';
+        }
+
+        // Khởi tạo giá trị ban đầu
+        updatePrice();
+    });
+    // Biến lưu trữ mã giảm giá hiện tại
+    let currentDiscountCode = '';
+    let currentDiscountValue = 0;
+
+    // Mở modal
+    function openDiscountModal() {
+        document.getElementById('discountModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    // Đóng modal
+    function closeDiscountModal() {
+        document.getElementById('discountModal').classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+
+    // Chọn mã từ danh sách
+    function selectCoupon(code, discount, type) {
+        document.getElementById('discountCode').value = code;
+        currentDiscountCode = code;
+        currentDiscountValue = parseFloat(discount);
+        currentDiscountType = type;
+
+        // Highlight voucher được chọn
+        document.querySelectorAll('.coupon-card').forEach(card => {
+            card.classList.remove('border-blue-500', 'bg-blue-50');
+        });
+        event.currentTarget.classList.add('border-blue-500', 'bg-blue-50');
+
+        // Cập nhật tổng tiền ngay lập tức
+        applyDiscount(code, discount, type)
+    }
+
+    // Áp dụng mã giảm giá
+    function applyDiscount(code, discount, type) {
+
+        const messageEl = document.getElementById('discountMessage');
+
+        if (!code) {
+            messageEl.textContent = 'Vui lòng nhập mã giảm giá';
+            messageEl.classList.remove('hidden');
+            messageEl.classList.add('text-red-500');
+            return;
+        }
+
+        // Giả sử mã nhập vào có giá trị giảm 10%
+        currentDiscountCode = code;
+        currentDiscountValue = parseFloat(discount); // Giả sử giảm 10%
+        currentDiscountType = type;
+
+        // Cập nhật tổng tiền và đóng modal
+        updateTotalWithDiscount();
+        closeDiscountModal();
+    }
+
+    // Hàm tính toán và cập nhật tổng tiền
+    function updateTotalWithDiscount() {
+        // Lấy giá trị từ tổng tiền sau giảm giá tour (đã bao gồm giảm 55%)
+        const totalElement = document.getElementById('total-price');
+        let subtotal = parseFloat(totalElement.textContent.replace(/[^\d]/g, ''));
+
+        // Áp dụng giảm giá từ voucher (nếu có)
+        let voucherDiscountAmount = 0;
+        if (currentDiscountValue > 0) {
+            if (currentDiscountType === 'PERCENT') {
+                voucherDiscountAmount = subtotal * currentDiscountValue / 100;
+            } else {
+                voucherDiscountAmount = currentDiscountValue;
+            }
+        }
+
+        const finalTotal = subtotal - voucherDiscountAmount;
+
+        // Cập nhật giao diện
+        document.getElementById('final-total').textContent = formatCurrency(finalTotal);
+
+        // Hiển thị thông tin giảm giá voucher (nằm dưới giảm giá tour)
+        const discountInfoEl = document.getElementById('discount-info');
+        if (currentDiscountValue > 0) {
+            if (!discountInfoEl) {
+                const priceDetails = document.querySelector('.space-y-2.mb-4.text-sm');
+                const discountHtml = `
+                    <div class="flex justify-between items-center pt-2 border-t border-gray-100" id="discount-info">
+                        <span class="text-gray-600">Giảm giá voucher <span class="text-green-500">${currentDiscountValue}${currentDiscountType == 'PERCENT' ? '%' : '₫'}</span> (${currentDiscountCode})</span>
+                        <span class="font-medium text-green-600">-${formatCurrency(voucherDiscountAmount)}</span>
+                    </div>
+                `;
+                priceDetails.insertAdjacentHTML('beforeend', discountHtml);
+            } else {
+                discountInfoEl.querySelector('span.text-green-500').textContent =
+                    `${currentDiscountValue}${currentDiscountType === 'PERCENT' ? '%' : '₫'} (${currentDiscountCode})`;
+                discountInfoEl.querySelector('span.text-green-600').textContent =
+                    `-${formatCurrency(voucherDiscountAmount)}`;
+            }
+        } else if (discountInfoEl) {
+            discountInfoEl.remove();
+        }
+    }
+
+    // Định dạng tiền tệ
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('vi-VN').format(amount) + '₫';
+    }
+
+    // Xử lý sự kiện nhấn nút đặt tour
+    document.getElementById('submitBooking').addEventListener('click', function() {
+        // Validate điều khoản
+        if (!document.getElementById('terms').checked) {
+            alert('Vui lòng đồng ý với điều khoản và chính sách');
+            return;
+        }
+
+        // Lấy dữ liệu từ form
+        const bookingData = {
+            tour_id: "[[${tour.tour_id}]]",
+            user_id: "[[${user?.user_id ?: ''}]]",
+            user_full_name: document.getElementById('userFullName').value,
+            user_email: document.getElementById('userEmail').value,
+            user_phone_number: document.getElementById('userPhone').value,
+            user_address: document.getElementById('userAddress').value,
+            tour_name: "[[${tour.tour_name}]]",
+            start_date: "[[${start_date}]]",
+            total_price: parseFloat(document.getElementById('final-total').textContent.replace(/[^\d]/g, '')),
+            number_of_adults: parseInt(document.getElementById('adultCount').value),
+            number_of_children: parseInt(document.getElementById('childCount')?.value || 0),
+            number_of_infants: parseInt(document.getElementById('infantCount')?.value || 0),
+            voucher_discount: currentDiscountValue,
+            note: document.getElementById('note').value
+        };
+        console.log(bookingData);
+        // Validate dữ liệu
+        if (!bookingData.user_full_name || !bookingData.user_email || !bookingData.user_phone_number) {
+            alert('Vui lòng điền đầy đủ thông tin bắt buộc');
+            return;
+        }
+
+        // Hiệu ứng loading
+        const submitBtn = document.getElementById('submitBooking');
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Đang xử lý...';
+        submitBtn.disabled = true;
+
+        // Gửi dữ liệu bằng AJAX
+        fetch('/Client/orderBooking/addBooking', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(bookingData)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    console.log(data);
+                    localStorage.setItem("pendingBooking", JSON.stringify(data));
+                    window.location.href = `/Client/orderBooking/Payment/${data.booking_id}`;
+                } else {
+                    alert(data.message || 'Đã có lỗi xảy ra khi đặt tour');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(error.message || 'Đã có lỗi xảy ra khi kết nối đến server');
+            })
+            .finally(() => {
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.disabled = false;
+            });
+    });
+
+    // Event delegation cho các voucher
+    document.getElementById('discountModal')?.addEventListener('click', function(e) {
+        const voucherCard = e.target.closest('.coupon-card');
+        if (voucherCard) {
+            const voucherCode = voucherCard.getAttribute('data-voucher-code');
+            const voucherDiscount = voucherCard.getAttribute('data-voucher-discount');
+            const voucherType = voucherCard.getAttribute('data-voucher-type');
+            selectCoupon(voucherCode, voucherDiscount, voucherType);
+        }
+    });
+
+    // Xử lý sự kiện nhấn Enter trong ô nhập mã
+    document.getElementById('discountCode')?.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            applyDiscount();
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Chỉ xử lý cho người dùng chưa đăng nhập
+        const userLoggedIn = "[[${user_id}]]";
+        console.log(userLoggedIn);
+        if (!userLoggedIn) {
+            const pendingBooking = localStorage.getItem('pendingBooking');
+
+            if (pendingBooking) {
+                try {
+                    const bookingData = JSON.parse(pendingBooking);
+                    const continuePaymentBtn = document.getElementById('continuePaymentBtn');
+
+                    // Nếu không có booking_id từ server nhưng có trong localStorage
+                    if (!continuePaymentBtn && bookingData.booking_id) {
+                        // Tạo nút thanh toán mới
+                        const newPaymentBtn = document.createElement('a');
+                        newPaymentBtn.id = 'continuePaymentBtn';
+                        newPaymentBtn.href = `/Client/orderBooking/Payment/${bookingData.booking_id}`;
+                        newPaymentBtn.className = 'text-vietravel-blue hover:text-vietravel-orange font-medium flex items-center transition-all hover:-translate-x-1';
+                        newPaymentBtn.innerHTML = 'Bạn có đơn đặt tour chưa thanh toán <i class="fas fa-arrow-right ml-2"></i>';
+
+                        // Thêm vào DOM
+                        const container = document.querySelector('.flex.justify-between.items-center.mb-6');
+                        const spacer = container.querySelector('#w-8');
+                        container.insertBefore(newPaymentBtn, spacer.nextSibling);
+                    }
+                } catch (e) {
+                    console.error('Error parsing booking data:', e);
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>

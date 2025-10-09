@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thống Kê - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .stat-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .card-header {
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 0.75rem;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+<div class="flex">
+    <!-- Sidebar -->
+    <aside th:replace="~{admin_html/fragment/sidebar :: sidebar}"></aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-6">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Thống Kê Tổng Quan</h1>
+            <p class="text-gray-600">Các chỉ số và biểu đồ thống kê hệ thống</p>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+            <!-- Total Users Card -->
+            <div class="stat-card bg-white p-5 rounded-lg shadow-sm border-l-blue-500">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
+                        <i class="fas fa-users text-lg"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Tổng khách hàng</p>
+                        <h3 class="text-2xl font-bold text-gray-800" th:text="${users.size()}">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Tours Card -->
+            <div class="stat-card bg-white p-5 rounded-lg shadow-sm border-l-green-500">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
+                        <i class="fas fa-map-marked-alt text-lg"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Tổng tour</p>
+                        <h3 class="text-2xl font-bold text-gray-800" th:text="${tours.size()}">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Bookings Card -->
+            <div class="stat-card bg-white p-5 rounded-lg shadow-sm border-l-purple-500">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-600 mr-4">
+                        <i class="fas fa-calendar-check text-lg"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Tổng đặt tour</p>
+                        <h3 class="text-2xl font-bold text-gray-800" th:text="${AllBookings.size()}">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Revenue Card -->
+            <div class="stat-card bg-white p-5 rounded-lg shadow-sm border-l-yellow-500">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-600 mr-4">
+                        <i class="fas fa-money-bill-wave text-lg"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Tổng doanh thu</p>
+                        <h3 class="text-2xl font-bold text-gray-800" th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">0 VNĐ</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Popular Tour Card -->
+            <div class="stat-card bg-white p-5 rounded-lg shadow-sm border-l-indigo-500">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-indigo-100 text-indigo-600 mr-4">
+                        <i class="fas fa-fire text-lg"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm">Tour phổ biến nhất</p>
+                        <h3 class="text-xl font-bold text-gray-800 truncate"
+                            th:if="${!popularTours.isEmpty()}"
+                            th:text="${popularTours[0][0]}">
+                            Chưa có dữ liệu
+                        </h3>
+                        <h3 class="text-xl font-bold text-gray-800" th:unless="${!popularTours.isEmpty()}">
+                            Chưa có dữ liệu
+                        </h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Users This Month Card -->
+            <div class="stat-card bg-white p-5 rounded-lg shadow-sm border-l-teal-500">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-teal-100 text-teal-600 mr-4">
+                        <i class="fas fa-user-plus text-lg"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-500 text-sm"
+                           th:text="'Người dùng mới trong tháng gần nhất (' + (${!userGrowth.isEmpty()} ? ${userGrowth[userGrowth.size() - 1][1] + '/' + userGrowth[userGrowth.size() - 1][0]} : '') + ')'">
+                        </p>
+                        <h3 class="text-2xl font-bold text-gray-800"
+                            th:text="${!userGrowth.isEmpty() ? userGrowth[userGrowth.size() - 1][2] : 0} + ' người'">
+                            0
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Combined Chart -->
+            <div class="bg-white rounded-lg shadow-sm p-5">
+                <div class="card-header mb-4">
+                    <h2 class="text-lg font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-chart-line text-blue-500 mr-2"></i>
+                        Doanh thu & Đặt tour
+                    </h2>
+                </div>
+                <div class="chart-container">
+                    <canvas id="combinedChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Ratings Chart -->
+            <div class="bg-white rounded-lg shadow-sm p-5">
+                <div class="card-header mb-4">
+                    <h2 class="text-lg font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-star-half-alt text-yellow-500 mr-2"></i>
+                        Phân bổ đánh giá
+                    </h2>
+                </div>
+                <div class="chart-container">
+                    <canvas id="ratingsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- User Growth Chart -->
+            <div class="bg-white rounded-lg shadow-sm p-5">
+                <div class="card-header mb-4">
+                    <h2 class="text-lg font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-user-plus text-purple-500 mr-2"></i>
+                        Tăng trưởng người dùng
+                    </h2>
+                </div>
+                <div class="chart-container">
+                    <canvas id="userGrowthChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Popular Tours Chart -->
+            <div class="bg-white rounded-lg shadow-sm p-5">
+                <div class="card-header mb-4">
+                    <h2 class="text-lg font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-trophy text-red-500 mr-2"></i>
+                        Tour phổ biến
+                    </h2>
+                </div>
+                <div class="chart-container">
+                    <canvas id="popularToursChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Bookings Table -->
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="p-5 border-b">
+                <h2 class="text-lg font-semibold text-gray-800 flex items-center">
+                    <i class="fas fa-history text-green-500 mr-2"></i>
+                    Đặt Tour Gần Đây
+                </h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khách hàng</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tour</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày đặt</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                    </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tr th:each="booking : ${bookings}" class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" th:text="${booking.booking_id}"></td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold" th:text="${#strings.substring(booking.user_full_name, 0, 1)}"></div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900" th:text="${booking.user_full_name}"></div>
+                                    <div class="text-sm text-gray-500" th:text="${booking.user_email}"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${booking.tour_name}"></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${#temporals.format(booking.booking_date, 'dd/MM/yyyy')}"></td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                                <span th:switch="${booking.status}" class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full">
+                                    <span th:case="'Pending payment'" class="bg-gray-100 text-gray-800">Chờ thanh toán</span>
+                                    <span th:case="'Cash'" class="bg-yellow-100 text-yellow-800">Tiền mặt</span>
+                                    <span th:case="'Cancelled'" class="bg-red-100 text-red-800">Đã hủy</span>
+                                    <span th:case="'Paid'" class="bg-green-100 text-green-800">Đã thanh toán</span>
+                                    <span th:case="'Completed'" class="bg-blue-100 text-blue-800">Hoàn thành</span>
+                                </span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        const userGrowth = /*[[${userGrowth}]]*/ [];
+        // Chart options configuration
+        const chartOptions = {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        font: {
+                            family: "'Inter', sans-serif",
+                            size: 12
+                        },
+                        padding: 20
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    titleFont: { size: 14 },
+                    bodyFont: { size: 12 },
+                    padding: 12,
+                    cornerRadius: 4
+                }
+            },
+            elements: {
+                line: {
+                    tension: 0.3
+                }
+            }
+        };
+
+        // Combined Chart
+        const combinedCtx = document.getElementById('combinedChart');
+        console.log(/*[[${monthLabels}]]*/);
+        console.log(/*[[${revenueData}]]*/);
+        if (combinedCtx) {
+            new Chart(combinedCtx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: /*[[${monthLabels}]]*/ [],
+                    datasets: [
+                        {
+                            label: 'Doanh thu (VND)',
+                            data: /*[[${revenueData}]]*/ [],
+                            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                            yAxisID: 'y',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Số đặt tour',
+                            data: /*[[${bookingCountData}]]*/ [],
+                            type: 'line',
+                            borderColor: 'rgba(239, 68, 68, 1)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            yAxisID: 'y1',
+                            pointBackgroundColor: 'rgba(239, 68, 68, 1)',
+                            pointRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    ...chartOptions,
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Doanh thu (VND)',
+                                font: { weight: 'bold' }
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString('vi-VN') + '₫';
+                                }
+                            },
+                            grid: {
+                                drawOnChartArea: true
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Số đặt tour',
+                                font: { weight: 'bold' }
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            },
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Ratings Chart
+        const ratingsCtx = document.getElementById('ratingsChart');
+        if (ratingsCtx) {
+            new Chart(ratingsCtx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['1 sao', '2 sao', '3 sao', '4 sao', '5 sao'],
+                    datasets: [{
+                        data: [
+                            /*[[${rating1}]]*/ 0,
+                            /*[[${rating2}]]*/ 0,
+                            /*[[${rating3}]]*/ 0,
+                            /*[[${rating4}]]*/ 0,
+                            /*[[${rating5}]]*/ 0
+                        ],
+                        backgroundColor: [
+                            'rgba(239, 68, 68, 0.7)',
+                            'rgba(249, 115, 22, 0.7)',
+                            'rgba(234, 179, 8, 0.7)',
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(16, 185, 129, 0.7)'
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            align: 'center'
+                        }
+                    }
+                }
+            });
+        }
+
+        // User Growth Chart
+        const userGrowthCtx = document.getElementById('userGrowthChart');
+        if (userGrowthCtx) {
+            const userGrowthData = /*[[${userGrowth}]]*/ [];
+            const growthLabels = userGrowthData.map(item => {
+                const monthNames = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4",
+                    "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8",
+                    "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
+                return `${monthNames[item[1] - 1]}/${item[0]}`;
+            });
+            const growthValues = userGrowthData.map(item => item[2]);
+
+            new Chart(userGrowthCtx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: growthLabels,
+                    datasets: [{
+                        label: 'Số người dùng mới',
+                        data: growthValues,
+                        borderColor: 'rgba(139, 92, 246, 1)',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true,
+                        pointBackgroundColor: 'rgba(139, 92, 246, 1)',
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Popular Tours Chart
+        const popularToursCtx = document.getElementById('popularToursChart');
+        if (popularToursCtx) {
+            const popularTours = /*[[${popularTours}]]*/ [];
+
+            new Chart(popularToursCtx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: popularTours.map(t => t[0]),
+                    datasets: [{
+                        label: 'Số đặt tour',
+                        data: popularTours.map(t => t[1]),
+                        backgroundColor: 'rgba(245, 158, 11, 0.7)',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    ...chartOptions,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+</body>
+</html>

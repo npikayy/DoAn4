@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Banner Tour</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        .drop-zone {
+            transition: all 0.3s ease;
+        }
+        .drop-zone--over {
+            border-color: #3b82f6;
+            background-color: #f0f9ff;
+        }
+        .preview-image {
+            transition: all 0.2s ease;
+        }
+        .preview-image:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .remove-btn {
+            transition: opacity 0.2s ease;
+        }
+        .banner-card {
+            transition: all 0.2s ease;
+        }
+        .banner-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #3b82f6;
+        }
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+<div class="min-h-screen flex">
+    <!-- Sidebar -->
+    <aside th:replace="~{admin_html/fragment/sidebar :: sidebar}"></aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">Quản lý Banner Tour</h1>
+        </div>
+
+        <!-- Upload Banner Section -->
+        <div class="bg-white p-6 rounded-lg shadow-sm mb-8">
+            <h2 class="text-xl font-semibold mb-4">Thêm Banner Mới</h2>
+
+            <div class="drop-zone border-2 border-dashed border-gray-300 rounded-lg p-10 text-center mb-6" id="dropZone">
+                <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
+                <label for="fileInput" class="cursor-pointer">
+                    <i class="fas fa-cloud-upload-alt text-4xl text-blue-500 mb-3"></i>
+                    <h3 class="mt-2 text-lg font-medium text-gray-900">Kéo thả ảnh vào đây hoặc click để chọn</h3>
+                    <p class="mt-1 text-sm text-gray-500">Hỗ trợ upload nhiều ảnh cùng lúc (JPG, PNG, tối đa 5MB/ảnh)</p>
+                </label>
+                <input type="hidden" id="tour_id" th:value="${tour_id}">
+            </div>
+
+            <div class="preview-area grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="previewArea"></div>
+
+            <div class="mt-6 text-right">
+                <button id="uploadButton" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg shadow-sm transition flex items-center justify-center ml-auto">
+                    <i class="fas fa-upload mr-2"></i> Upload Banner
+                </button>
+            </div>
+        </div>
+
+        <!-- Banner List Section -->
+        <div class="bg-white p-6 rounded-lg shadow-sm">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Danh sách Banner</h2>
+                <div class="text-sm text-gray-500" th:text="'Tổng số: ' + ${banners.size()}"></div>
+            </div>
+
+            <div th:if="${banners.isEmpty()}" class="text-center py-12">
+                <div class="flex flex-col items-center justify-center text-gray-400">
+                    <i class="fas fa-image text-4xl mb-3"></i>
+                    <p class="text-lg">Chưa có banner nào</p>
+                    <p class="text-sm mt-1">Hãy thêm banner mới bằng cách kéo thả ảnh vào khu vực bên trên</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" th:unless="${banners.isEmpty()}">
+                <div th:each="banner : ${banners}" class="banner-card bg-white rounded-lg shadow-md overflow-hidden border border-gray-100">
+                    <div class="relative">
+                        <img th:src="${banner.banner_url}" class="w-full h-48 object-cover" alt="Banner">
+                        <div class="absolute top-2 right-2 flex space-x-2">
+                            <a th:href="@{/admin/banners/deleteBanner/{id}(id=${banner.banner_id})}"
+                               class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-md transition-colors"
+                               onclick="return confirm('Bạn có chắc chắn muốn xóa banner này?')">
+                                <i class="fas fa-trash text-xs"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium" th:text="${banner.is_showed} ? 'Đang hiển thị' : 'Đã ẩn'"></span>
+                            <a th:href="@{/admin/banners/changeStatus/{id}(id=${banner.banner_id})}"
+                               class="switch">
+                                <input type="checkbox" th:checked="${banner.is_showed}" onclick="this.parentNode.click(); return false;">
+                                <span class="slider"></span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    // Constants
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+    // DOM Elements
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+    const previewArea = document.getElementById('previewArea');
+    const uploadButton = document.getElementById('uploadButton');
+    const tourId = document.getElementById('tour_id').value;
+
+    // File handling functions
+    function isValidFile(file) {
+        return ALLOWED_TYPES.includes(file.type) && file.size <= MAX_FILE_SIZE;
+    }
+
+    function showFileError(file) {
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            alert(`File ${file.name} không phải là hình ảnh (JPG/PNG/WEBP) và sẽ bị bỏ qua`);
+        } else if (file.size > MAX_FILE_SIZE) {
+            alert(`File ${file.name} vượt quá 5MB và sẽ bị bỏ qua`);
+        }
+    }
+
+    function createPreviewItem(file, index) {
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            const previewItem = document.createElement('div');
+            previewItem.className = 'preview-image relative group border border-gray-200 rounded-lg overflow-hidden';
+
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = 'w-full h-40 object-cover';
+            img.alt = file.name;
+
+            const infoOverlay = document.createElement('div');
+            infoOverlay.className = 'absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white';
+            infoOverlay.innerHTML = `
+                <p class="text-sm truncate">${file.name}</p>
+                <p class="text-xs">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+            `;
+
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-btn absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100';
+            removeBtn.innerHTML = '<i class="fas fa-times text-xs"></i>';
+            removeBtn.onclick = () => {
+                files.splice(index, 1);
+                previewItem.remove();
+            };
+
+            previewItem.append(img, infoOverlay, removeBtn);
+            previewArea.appendChild(previewItem);
+        };
+
+        reader.readAsDataURL(file);
+    }
+
+    function handleFiles(selectedFiles) {
+        files = Array.from(selectedFiles).filter(file => {
+            if (!isValidFile(file)) {
+                showFileError(file);
+                return false;
+            }
+            return true;
+        });
+
+        previewArea.innerHTML = '';
+        files.forEach((file, index) => createPreviewItem(file, index));
+    }
+
+    // Drag and drop handlers
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    function highlight() {
+        dropZone.classList.add('drop-zone--over');
+    }
+
+    function unhighlight() {
+        dropZone.classList.remove('drop-zone--over');
+    }
+
+    // Upload function
+    async function uploadFiles() {
+        if (files.length === 0) {
+            alert('Vui lòng chọn ít nhất một ảnh để upload');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('tourId', tourId);
+        files.forEach(file => formData.append('files', file));
+
+        uploadButton.disabled = true;
+        uploadButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Đang upload...';
+
+        try {
+            const response = await fetch('/admin/banners/addBanner', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert('Upload banner thành công!');
+                window.location.reload();
+            } else {
+                alert('Lỗi: ' + (data.message || 'Upload thất bại'));
+            }
+        } catch (error) {
+            alert('Lỗi: ' + error.message);
+        } finally {
+            uploadButton.disabled = false;
+            uploadButton.innerHTML = '<i class="fas fa-upload mr-2"></i> Upload Banner';
+        }
+    }
+
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', () => {
+        fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        dropZone.addEventListener('drop', e => {
+            const dt = e.dataTransfer;
+            handleFiles(dt.files);
+        });
+
+        uploadButton.addEventListener('click', uploadFiles);
+    });
+</script>
+</body>
+</html>

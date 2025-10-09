@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="tour_note" class="bg-white py-12">
+    <div class="container mx-auto px-4">
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-6 rounded-lg shadow-md">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <svg class="h-8 w-8 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6">Những điều cần lưu ý khi đăng ký tour</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <!-- Column 1 -->
+                        <div class="space-y-6">
+                            <!-- Giấy tờ -->
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                                <div class="flex items-center mb-3">
+                                    <div class="bg-blue-100 p-2 rounded-full mr-3">
+                                        <i class="fas fa-passport text-blue-600"></i>
+                                    </div>
+                                    <h4 class="text-lg font-semibold text-gray-800">Giấy tờ tùy thân</h4>
+                                </div>
+                                <ul class="list-disc pl-5 space-y-2 text-gray-600">
+                                    <li>Mang theo <strong>bản gốc CMND/CCCD</strong> hoặc hộ chiếu còn hiệu lực (ít nhất 6 tháng)</li>
+                                    <li>Trẻ em dưới 14 tuổi cần mang theo <strong>bản sao giấy khai sinh</strong> có công chứng</li>
+                                    <li>Khách hàng là trẻ em đi cùng người thân cần mang <strong>giấy ủy quyền</strong> của cha mẹ (nếu không đi cùng)</li>
+                                    <li>Đối với tour quốc tế: hộ chiếu phải còn ít nhất 4 trang trống và thời hạn đủ theo yêu cầu</li>
+                                </ul>
+                            </div>
+
+                            <!-- Hành lý -->
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                                <div class="flex items-center mb-3">
+                                    <div class="bg-green-100 p-2 rounded-full mr-3">
+                                        <i class="fas fa-suitcase-rolling text-green-600"></i>
+                                    </div>
+                                    <h4 class="text-lg font-semibold text-gray-800">Quy định hành lý</h4>
+                                </div>
+                                <ul class="list-disc pl-5 space-y-2 text-gray-600">
+                                    <li>Hành lý xách tay <strong>không quá 7kg</strong> và kích thước không vượt quá 56x36x23cm</li>
+                                    <li>Chất lỏng mang theo phải đựng trong chai <strong>dưới 100ml</strong> và để trong túi trong suốt</li>
+                                    <li>Không mang theo <strong>vật sắc nhọn, chất dễ cháy nổ</strong> trong hành lý xách tay</li>
+                                    <li>Hành lý ký gửi tối đa <strong>20kg</strong> (tùy hãng hàng không)</li>
+                                    <li>Mang theo <strong>thuốc cá nhân</strong> trong hành lý xách tay với đơn thuốc kèm theo</li>
+                                </ul>
+                            </div>
+
+                            <!-- Sức khỏe -->
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                                <div class="flex items-center mb-3">
+                                    <div class="bg-red-100 p-2 rounded-full mr-3">
+                                        <i class="fas fa-heartbeat text-red-600"></i>
+                                    </div>
+                                    <h4 class="text-lg font-semibold text-gray-800">Sức khỏe & Y tế</h4>
+                                </div>
+                                <ul class="list-disc pl-5 space-y-2 text-gray-600">
+                                    <li>Khách có <strong>bệnh nền, phụ nữ mang thai</strong> cần thông báo trước khi đăng ký tour</li>
+                                    <li>Mang đủ <strong>thuốc đặc trị</strong> cho toàn bộ hành trình + 2-3 ngày dự phòng</li>
+                                    <li>Đối với tour biển đảo: mang theo <strong>kem chống nắng, thuốc chống say sóng</strong></li>
+                                    <li>Tour vùng cao: mang theo <strong>áo ấm, thuốc cảm, giảm đau đầu</strong></li>
+                                    <li>Mua <strong>bảo hiểm du lịch</strong> để được hỗ trợ y tế tốt nhất</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Column 2 -->
+                        <div class="space-y-6">
+                            <!-- Thanh toán -->
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                                <div class="flex items-center mb-3">
+                                    <div class="bg-purple-100 p-2 rounded-full mr-3">
+                                        <i class="fas fa-money-bill-wave text-purple-600"></i>
+                                    </div>
+                                    <h4 class="text-lg font-semibold text-gray-800">Chính sách thanh toán</h4>
+                                </div>
+                                <ul class="list-disc pl-5 space-y-2 text-gray-600">
+                                    <li>Đặt cọc <strong>30-50%</strong> giá trị tour khi đăng ký</li>
+                                    <li>Thanh toán <strong>100%</strong> trước ngày khởi hành ít nhất 7 ngày</li>
+                                    <li>Chấp nhận thanh toán qua <strong>chuyển khoản, thẻ tín dụng, tiền mặt</strong></li>
+                                    <li>Giá tour không bao gồm <strong>tiền tip cho HDV/tài xế</strong> (50.000-100.000đ/ngày)</li>
+                                    <li>Mang theo <strong>tiền mặt</strong> để chi tiêu cá nhân và mua sắm đặc sản</li>
+                                </ul>
+                            </div>
+
+                            <!-- Hủy tour -->
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                                <div class="flex items-center mb-3">
+                                    <div class="bg-orange-100 p-2 rounded-full mr-3">
+                                        <i class="fas fa-calendar-times text-orange-600"></i>
+                                    </div>
+                                    <h4 class="text-lg font-semibold text-gray-800">Chính sách hủy tour</h4>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full text-sm text-gray-600">
+                                        <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-2 text-left">Thời gian hủy</th>
+                                            <th class="px-4 py-2 text-left">Phí hủy</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr class="border-b">
+                                            <td class="px-4 py-2">Trên 30 ngày</td>
+                                            <td class="px-4 py-2">Hoàn 100%</td>
+                                        </tr>
+                                        <tr class="border-b">
+                                            <td class="px-4 py-2">15-30 ngày</td>
+                                            <td class="px-4 py-2">Phí 30% giá tour</td>
+                                        </tr>
+                                        <tr class="border-b">
+                                            <td class="px-4 py-2">7-14 ngày</td>
+                                            <td class="px-4 py-2">Phí 50% giá tour</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-4 py-2">Dưới 7 ngày</td>
+                                            <td class="px-4 py-2">Không hoàn phí</td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <p class="mt-3 text-sm text-gray-500">* Trường hợp bất khả kháng (thiên tai, dịch bệnh...) sẽ được xử lý theo quy định của nhà nước</p>
+                            </div>
+
+                            <!-- Lưu ý khác -->
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                                <div class="flex items-center mb-3">
+                                    <div class="bg-cyan-100 p-2 rounded-full mr-3">
+                                        <i class="fas fa-info-circle text-cyan-600"></i>
+                                    </div>
+                                    <h4 class="text-lg font-semibold text-gray-800">Lưu ý khác</h4>
+                                </div>
+                                <ul class="list-disc pl-5 space-y-2 text-gray-600">
+                                    <li>Chương trình có thể thay đổi tùy theo <strong>điều kiện thời tiết</strong> hoặc tình hình thực tế</li>
+                                    <li>Khách hàng tự chịu trách nhiệm về <strong>giấy tờ và hành lý cá nhân</strong> trong suốt hành trình</li>
+                                    <li>Đối với khách có yêu cầu <strong>ăn chay</strong>, vui lòng thông báo trước 3 ngày</li>
+                                    <li>Trẻ em dưới 5 tuổi <strong>miễn phí</strong> (ngủ chung với bố mẹ), từ 5-11 tuổi tính 75% giá tour</li>
+                                    <li>Mang theo <strong>đồ dùng cá nhân</strong> cần thiết: kem đánh răng, bàn chải, đồ bơi, giày thể thao...</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thông báo quan trọng -->
+                    <div class="mt-8 bg-red-50 border border-red-200 p-5 rounded-lg">
+                        <div class="flex items-center mb-3">
+                            <i class="fas fa-exclamation-triangle text-red-500 mr-2 text-xl"></i>
+                            <h4 class="text-lg font-bold text-red-600">THÔNG BÁO QUAN TRỌNG</h4>
+                        </div>
+                        <div class="text-red-700 space-y-2">
+                            <p>1. <strong>Không mang theo</strong> vật phẩm cấm theo quy định của hàng không và pháp luật</p>
+                            <p>2. <strong>Bắt buộc mang giày thể thao</strong> khi tham gia các hoạt động trekking, leo núi</p>
+                            <p>3. <strong>Xuất trình giấy tờ gốc</strong> khi làm thủ tục lên máy bay/xuất cảnh</p>
+                            <p>4. <strong>Không hút thuốc</strong> trên xe và tại các điểm tham quan có quy định cấm</p>
+                            <p>5. <strong>Giữ trật tự</strong> và tuân thủ hướng dẫn của HDV tại các điểm tham quan</p>
+                        </div>
+                    </div>
+
+                    <!-- Liên hệ hỗ trợ -->
+                    <div class="mt-6 bg-blue-50 border border-blue-200 p-4 rounded-lg flex items-center">
+                        <div class="mr-4 text-blue-600">
+                            <i class="fas fa-headset text-3xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800">Cần hỗ trợ thêm?</h4>
+                            <p class="text-gray-600">Liên hệ hotline <strong class="text-blue-600">1900 1234</strong> hoặc email <strong class="text-blue-600">support@travelo.com.vn</strong> để được tư vấn</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

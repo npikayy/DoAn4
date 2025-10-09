@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Voucher - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .voucher-design {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .voucher-design:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .voucher-perforation {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 100%;
+            width: 15px;
+            background: radial-gradient(circle at center, #f8fafc 40%, transparent 40%);
+            background-size: 10px 20px;
+            background-repeat: repeat-y;
+        }
+
+        .discount-badge {
+            background: linear-gradient(45deg, #f59e0b, #f97316);
+            color: white;
+            font-weight: bold;
+            border-radius: 20px;
+            padding: 4px 12px;
+            display: inline-block;
+        }
+
+        .tab-button {
+            transition: all 0.2s ease;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .tab-button.active {
+            background-color: #4f46e5;
+            color: white;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .empty-state {
+            background-color: #f8fafc;
+            border: 2px dashed #e2e8f0;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+<div class="flex">
+    <!-- Sidebar -->
+    <aside th:replace="~{admin_html/fragment/sidebar :: sidebar}"></aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-x-hidden overflow-y-auto">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Header Section -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">Quản Lý Voucher</h1>
+                    <p class="text-gray-600 mt-1">
+                        <span th:text="${vouchers.size()}"></span> voucher hiện có
+                    </p>
+                </div>
+                <div class="mt-4 md:mt-0 flex space-x-3">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" id="searchInput" placeholder="Tìm kiếm voucher..."
+                               class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <button onclick="openCreateVoucherModal()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center">
+                        <i class="fas fa-plus mr-2"></i> Tạo mới
+                    </button>
+                </div>
+            </div>
+
+            <!-- Voucher Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="voucherContainer">
+                <!-- Empty State -->
+                <div class="col-span-full empty-state hidden rounded-xl p-8 text-center">
+                    <div class="mx-auto w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 mb-4">
+                        <i class="fas fa-tag text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Không có voucher nào</h3>
+                    <p class="text-gray-500 max-w-md mx-auto">Hiện tại không có voucher nào. Hãy tạo voucher mới!</p>
+                </div>
+
+                <!-- Voucher Cards -->
+                <div th:each="voucher : ${vouchers}"
+                     class="voucher-design p-5"
+                     th:data-id="${voucher.voucher_id}"
+                     th:data-code="${voucher.voucher_code.toLowerCase()}"
+                     th:data-desc="${voucher.voucher_description.toLowerCase()}">
+
+                    <div class="voucher-perforation"></div>
+
+                    <!-- Voucher Content -->
+                    <div class="flex items-start mb-4">
+                        <div class="flex-1">
+                            <div class="flex items-center mb-2">
+                                <span class="discount-badge mr-3">
+                                    GIẢM GIÁ <span th:text="${voucher.voucher_discount} + (${voucher.voucher_type} == 'PERCENT' ? '%' : '₫')"></span>
+                                </span>
+                                <span class="text-sm text-gray-500" th:text="${voucher.voucher_type == 'PERCENT' ? 'Giảm theo %' : 'Giảm theo số tiền'}"></span>
+                            </div>
+
+                            <h3 class="text-xl font-bold text-gray-800 mb-1" th:text="${voucher.voucher_code}"></h3>
+                            <p class="text-gray-600 text-sm mb-3" th:text="${voucher.voucher_description}"></p>
+
+                            <div class="flex items-center text-sm text-gray-500">
+                                <i class="far fa-calendar-alt mr-2"></i>
+                                <span>HSD: </span>
+                                <span class="font-medium ml-1" th:text="${#temporals.format(voucher.voucher_end_date, 'dd/MM/yyyy')}"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Voucher Footer -->
+                    <div class="flex justify-between items-center pt-3 border-t border-gray-200 mt-4">
+                        <span class="text-xs text-gray-500">Mã: <span th:text="${voucher.voucher_id}"></span></span>
+                        <div class="flex space-x-2">
+                            <a th:href="@{/admin/vouchers/deleteVoucher/{id}(id=${voucher.voucher_id})}"
+                               onclick="return confirm('Bạn có chắc chắn muốn xóa voucher này?')"
+                                    class="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-sm font-medium transition-all duration-200 flex items-center">
+                                <i class="fas fa-trash mr-1.5"></i> Xóa
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<div id="createVoucherModal" class="fixed z-50 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm transition-opacity" aria-hidden="true"></div>
+
+        <!-- Modal container -->
+        <div class="inline-block align-middle bg-white rounded-xl shadow-2xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full overflow-hidden">
+            <!-- Modal header -->
+            <div class="bg-white px-6 py-5 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="flex items-center justify-center h-10 w-10 rounded-full bg-indigo-100 text-indigo-600">
+                            <i class="fas fa-tag text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900" id="modal-title">Tạo Voucher Mới</h3>
+                            <p class="text-sm text-gray-500">Nhập thông tin voucher để tạo mã giảm giá</p>
+                        </div>
+                    </div>
+                    <button onclick="closeCreateVoucherModal()" class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                        <i class="fas fa-times text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal body - Redesigned for better UX -->
+            <div class="bg-white px-6 py-5">
+                <div class="space-y-6">
+                    <!-- Mã Voucher -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="voucherCode" class="block text-sm font-medium text-gray-700">Mã Voucher</label>
+                            <span class="text-xs text-gray-500">Bắt buộc</span>
+                        </div>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-ticket-alt text-gray-400"></i>
+                            </div>
+                            <input type="text" id="voucherCode"
+                                   class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                                   placeholder="VD: SUMMER2023"
+                                   maxlength="20">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <span class="text-gray-400 text-xs" id="codeCounter">0/20</span>
+                            </div>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">Mã voucher phải là duy nhất, không chứa khoảng trắng</p>
+                    </div>
+
+                    <!-- Mô tả -->
+                    <div>
+                        <label for="voucherDescription" class="block text-sm font-medium text-gray-700 mb-1">Mô tả Voucher</label>
+                        <textarea id="voucherDescription" rows="3"
+                                  class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                                  placeholder="Mô tả ngắn về voucher này..."></textarea>
+                    </div>
+
+                    <!-- Giá trị và Loại giảm giá -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Giá trị -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="voucherDiscount" class="block text-sm font-medium text-gray-700">Giá trị</label>
+                                <span class="text-xs text-gray-500">Bắt buộc</span>
+                            </div>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-percentage text-gray-400"></i>
+                                </div>
+                                <input type="number" id="voucherDiscount"
+                                       class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                                       placeholder="0"
+                                       min="1"
+                                       step="1">
+                            </div>
+                        </div>
+
+                        <!-- Loại giảm giá -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="voucherType" class="block text-sm font-medium text-gray-700">Loại giảm giá</label>
+                                <span class="text-xs text-gray-500">Bắt buộc</span>
+                            </div>
+                            <div class="relative">
+                                <select id="voucherType"
+                                        class="block w-full pl-3 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm appearance-none bg-white">
+                                    <option value="PERCENT">Phần trăm (%)</option>
+                                    <option value="AMOUNT">Số tiền (₫)</option>
+                                </select>
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-chevron-down text-gray-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ngày hết hạn -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="voucherEndDate" class="block text-sm font-medium text-gray-700">Ngày hết hạn</label>
+                            <span class="text-xs text-gray-500">Bắt buộc</span>
+                        </div>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="far fa-calendar-alt text-gray-400"></i>
+                            </div>
+                            <input type="date" id="voucherEndDate"
+                                   class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                                   min="">
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">Voucher sẽ tự động hết hạn sau ngày này</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal footer -->
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between">
+                <button type="button" onclick="closeCreateVoucherModal()"
+                        class="px-5 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                    <i class="fas fa-times mr-2"></i> Hủy bỏ
+                </button>
+                <button type="button" onclick="createVoucher()"
+                        class="px-5 py-2.5 rounded-lg bg-indigo-600 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-sm transition-colors flex items-center">
+                    <i class="fas fa-plus-circle mr-2"></i> Tạo Voucher
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tìm kiếm voucher
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const cards = document.querySelectorAll('.voucher-design');
+
+                cards.forEach(card => {
+                    const code = card.getAttribute('data-code');
+                    const desc = card.getAttribute('data-desc');
+
+                    if (code.includes(searchTerm) || desc.includes(searchTerm)) {
+                        card.classList.remove('hidden');
+                    } else {
+                        card.classList.add('hidden');
+                    }
+                });
+                checkEmptyState();
+            });
+        }
+
+        // Mở modal tạo voucher
+        window.openCreateVoucherModal = function() {
+            document.getElementById('createVoucherModal').classList.remove('hidden');
+        }
+
+        // Đóng modal tạo voucher
+        window.closeCreateVoucherModal = function() {
+            document.getElementById('createVoucherModal').classList.add('hidden');
+        }
+
+        // Tạo voucher mới
+        window.createVoucher = function() {
+            const code = document.getElementById('voucherCode').value;
+            const description = document.getElementById('voucherDescription').value;
+            const discount = document.getElementById('voucherDiscount').value;
+            const type = document.getElementById('voucherType').value;
+            const endDate = document.getElementById('voucherEndDate').value;
+
+            if (!code || !description || !discount || !endDate) {
+                alert('Vui lòng điền đầy đủ thông tin');
+                return;
+            }
+
+            // Gửi request tạo voucher
+            fetch('/admin/vouchers/addVoucher', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    voucher_code: code,
+                    voucher_description: description,
+                    voucher_discount: discount,
+                    voucher_type: type,
+                    voucher_end_date: endDate
+                })
+            })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Tạo voucher thất bại');
+                })
+                .then(data => {
+                    if (data.success) {
+                        alert('Tạo voucher thành công');
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'Có lỗi xảy ra');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra khi tạo voucher');
+                });
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thêm Hình Ảnh Tour</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        .drop-zone {
+            transition: all 0.3s ease;
+        }
+        .drop-zone--over {
+            border-color: #3b82f6;
+            background-color: #f0f9ff;
+        }
+        .preview-image {
+            transition: all 0.2s ease;
+        }
+        .preview-image:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .remove-btn {
+            transition: opacity 0.2s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+<div class="min-h-screen flex">
+    <!-- Sidebar -->
+    <aside th:replace="~{admin_html/fragment/sidebar :: sidebar}"></aside>
+    <!-- Main Content -->
+    <div class="flex-1 p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">Thêm Hình Ảnh Tour</h1>
+            <a th:href="@{/admin/tours/tourSchedule/{id}(id=${tour_id})}"
+               class="my-4 inline-block px-4 py-2 font-bold rounded-md text-gray-700 bg-white hover:bg-gray-300">
+                <i class="fas fa-arrow-left mr-2"></i> Quay lại
+            </a>
+        </div>
+
+        <!-- Dropzone Area -->
+        <div class="bg-white p-6 rounded-lg shadow-sm">
+            <div class="drop-zone border-2 border-dashed border-gray-300 rounded-lg p-10 text-center mb-6" id="dropZone">
+                <input type="file" id="fileInput" accept="image/*" class="hidden">
+                <label for="fileInput" class="cursor-pointer">
+                    <i class="fas fa-cloud-upload-alt text-4xl text-blue-500 mb-3"></i>
+                    <h3 class="mt-2 text-lg font-medium text-gray-900">Kéo thả ảnh vào đây hoặc click để chọn</h3>
+                    <p class="mt-1 text-sm text-gray-500">Chỉ 1 ảnh duy nhất (JPG, PNG, tối đa 5MB)</p>
+                </label>
+                <input type="hidden" id="day" th:value="${day}">
+                <input type="hidden" id="tour_id" th:value="${tour_id}">
+            </div>
+
+            <!-- Preview Area - Chỉ hiển thị 1 ảnh -->
+            <div class="preview-area flex justify-center" id="previewArea"></div>
+
+            <div class="mt-6 text-right">
+                <button id="uploadButton" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg shadow-sm transition flex items-center justify-center ml-auto">
+                    <i class="fas fa-upload mr-2"></i> Upload Ảnh
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const previewArea = document.getElementById('previewArea');
+        const uploadButton = document.getElementById('uploadButton');
+        const tourId = document.getElementById('tour_id').value;
+        const day = document.getElementById('day').value;
+        let selectedFile = null;
+
+        // Xử lý khi chọn file
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files && e.target.files[0]) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        // Xử lý kéo thả file
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            dropZone.classList.add('drop-zone--over');
+        }
+
+        function unhighlight() {
+            dropZone.classList.remove('drop-zone--over');
+        }
+
+        dropZone.addEventListener('drop', function(e) {
+            const dt = e.dataTransfer;
+            if (dt.files && dt.files[0]) {
+                handleFile(dt.files[0]);
+            }
+        });
+
+        // Xử lý file được chọn/kéo thả (chỉ 1 file)
+        function handleFile(file) {
+            // Kiểm tra file
+            if (!file.type.match('image.*')) {
+                alert('File không phải là hình ảnh (JPG/PNG)');
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File ảnh không được vượt quá 5MB');
+                return;
+            }
+
+            selectedFile = file;
+            previewArea.innerHTML = '';
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewItem = document.createElement('div');
+                previewItem.className = 'preview-image relative group border border-gray-200 rounded-lg overflow-hidden w-64';
+
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'w-full h-40 object-cover';
+                img.alt = file.name;
+
+                const infoOverlay = document.createElement('div');
+                infoOverlay.className = 'absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 text-white';
+                infoOverlay.innerHTML = `
+                    <p class="text-sm truncate">${file.name}</p>
+                    <p class="text-xs">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                `;
+
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-btn absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center';
+                removeBtn.innerHTML = '<i class="fas fa-times text-xs"></i>';
+                removeBtn.onclick = function() {
+                    selectedFile = null;
+                    previewArea.innerHTML = '';
+                };
+
+                previewItem.appendChild(img);
+                previewItem.appendChild(infoOverlay);
+                previewItem.appendChild(removeBtn);
+                previewArea.appendChild(previewItem);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Xử lý upload
+        uploadButton.addEventListener('click', function() {
+            if (!selectedFile) {
+                alert('Vui lòng chọn ảnh để upload');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', selectedFile); // Đổi từ 'files' sang 'file' (số ít)
+            formData.append('tourId', tourId);
+            formData.append('day', day);
+
+            uploadButton.disabled = true;
+            uploadButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Đang upload...';
+
+            fetch('/admin/tours/tourSchedule/imageEdit', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Upload ảnh thành công!');
+                        window.location.href = `/admin/tours/tourSchedule/${tourId}`;
+                    } else {
+                        alert('Lỗi: ' + (data.message || 'Upload thất bại'));
+                    }
+                })
+                .catch(error => {
+                    alert('Lỗi: ' + error.message);
+                })
+                .finally(() => {
+                    uploadButton.disabled = false;
+                    uploadButton.innerHTML = '<i class="fas fa-upload mr-2"></i> Upload Ảnh';
+                });
+        });
+    });
+</script>
+</body>
+</html>

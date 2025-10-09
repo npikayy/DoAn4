@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Ký - Travel Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Preconnect to Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Load multiple font options with fallbacks -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Remix icons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FF6B35',
+                        'primary-dark': '#E55A2B',
+                        secondary: '#2A4365',
+                        accent: '#38B2AC'
+                    },
+                    fontFamily: {
+                        sans: ['Roboto', 'Open Sans', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Đảm bảo font fallback hoạt động tốt */
+        body {
+            font-family: 'Roboto', 'Open Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        
+        .register-bg {
+            background-image: url('https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80');
+            background-size: cover;
+            background-position: center;
+        }
+        .input-effect:focus-within {
+            border-color: #FF6B35;
+        }
+        .input-effect:focus-within i {
+            color: #FF6B35;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-6xl grid md:grid-cols-2 shadow-xl rounded-xl overflow-hidden" id="loginAccessRegister">
+        <!-- Left Side - Image -->
+        <div class="register-bg hidden md:block relative">
+            <div class="absolute inset-0 bg-secondary bg-opacity-40 flex flex-col justify-between p-12">
+                <div>
+                    <h2 class="text-white text-3xl font-bold">Travel Explorer</h2>
+                    <p class="text-white mt-2">Bắt đầu hành trình khám phá của bạn</p>
+                </div>
+                <div>
+                    <div class="bg-white bg-opacity-20 backdrop-blur-sm p-6 rounded-lg">
+                        <h3 class="text-white text-xl font-semibold mb-2">"Mỗi cuộc phiêu lưu bắt đầu từ một bước đi"</h3>
+                        <p class="text-white text-sm">Đăng ký ngay để trở thành thành viên của cộng đồng du lịch và nhận những ưu đãi đặc biệt.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Side - Register Form -->
+        <div class="bg-white p-8 md:p-12">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-secondary mb-2">Tạo tài khoản mới</h1>
+                <p class="text-gray-600">Chào mừng bạn! Vui lòng điền thông tin để tạo tài khoản.</p>
+            </div>
+            
+            <div th:if="${errorMessage}" class="mb-6 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded" role="alert">
+                <div class="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span th:text="${errorMessage}"></span>
+                </div>
+            </div>
+            
+            <form method="post" class="space-y-5">
+                <div class="space-y-4">
+                    <!-- Họ và tên -->
+                    <div class="relative input-effect">
+                        <div class="flex items-center border-2 border-gray-300 rounded-lg overflow-hidden">
+                            <span class="pl-4 pr-2">
+                                <i class="ri-id-card-fill text-gray-400 text-xl"></i>
+                            </span>
+                            <input type="text" id="fullName" name="fullName" required placeholder="Họ và tên" 
+                                class="w-full py-3 px-2 outline-none text-gray-700">
+                        </div>
+                    </div>
+                    
+                    <!-- Email -->
+                    <div class="relative input-effect">
+                        <div class="flex items-center border-2 border-gray-300 rounded-lg overflow-hidden">
+                            <span class="pl-4 pr-2">
+                                <i class="ri-mail-fill text-gray-400 text-xl"></i>
+                            </span>
+                            <input type="email" id="email" name="email" required placeholder="Email" 
+                                class="w-full py-3 px-2 outline-none text-gray-700">
+                        </div>
+                    </div>
+                    
+                    <!-- Tên tài khoản -->
+                    <div class="relative input-effect">
+                        <div class="flex items-center border-2 border-gray-300 rounded-lg overflow-hidden">
+                            <span class="pl-4 pr-2">
+                                <i class="ri-user-line text-gray-400 text-xl"></i>
+                            </span>
+                            <input type="text" id="username" name="username" required placeholder="Tên tài khoản" 
+                                class="w-full py-3 px-2 outline-none text-gray-700">
+                        </div>
+                    </div>
+                    
+                    <!-- Mật khẩu -->
+                    <div class="relative input-effect">
+                        <div class="flex items-center border-2 border-gray-300 rounded-lg overflow-hidden">
+                            <span class="pl-4 pr-2">
+                                <i class="ri-lock-line text-gray-400 text-xl"></i>
+                            </span>
+                            <input type="password" id="password" name="password" required placeholder="Mật khẩu" 
+                                class="w-full py-3 px-2 outline-none text-gray-700" onkeyup="checkPasswords()">
+                            <button type="button" id="togglePassword" class="pr-4">
+                                <i class="ri-eye-off-line text-gray-400 text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Nhập lại mật khẩu -->
+                    <div class="relative input-effect">
+                        <div class="flex items-center border-2 border-gray-300 rounded-lg overflow-hidden">
+                            <span class="pl-4 pr-2">
+                                <i class="ri-lock-line text-gray-400 text-xl"></i>
+                            </span>
+                            <input type="password" id="confirmPassword" required placeholder="Nhập lại mật khẩu" 
+                                class="w-full py-3 px-2 outline-none text-gray-700" onkeyup="checkPasswords()">
+                            <button type="button" id="toggleConfirmPassword" class="pr-4">
+                                <i class="ri-eye-off-line text-gray-400 text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" id="submitButton" disabled class="w-full bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 mt-6">
+                    Tạo tài khoản
+                </button>
+            </form>
+            
+            <div class="mt-8 text-center">
+                <p class="text-gray-600">
+                    Bạn đã có tài khoản?
+                    <a href="/login" class="text-primary hover:text-primary-dark font-medium ml-1">Đăng nhập</a>
+                </p>
+            </div>
+            
+            <!-- Travel-themed decorative elements -->
+            <div class="mt-8 flex justify-center space-x-6">
+                <div class="text-center">
+                    <i class="ri-map-pin-line text-2xl text-primary"></i>
+                    <p class="text-xs text-gray-500 mt-1">Điểm đến</p>
+                </div>
+                <div class="text-center">
+                    <i class="ri-suitcase-line text-2xl text-primary"></i>
+                    <p class="text-xs text-gray-500 mt-1">Tour</p>
+                </div>
+                <div class="text-center">
+                    <i class="ri-camera-line text-2xl text-primary"></i>
+                    <p class="text-xs text-gray-500 mt-1">Kỷ niệm</p>
+                </div>
+                <div class="text-center">
+                    <i class="ri-heart-line text-2xl text-primary"></i>
+                    <p class="text-xs text-gray-500 mt-1">Trải nghiệm</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Đảm bảo font được tải đúng cách
+        document.fonts.ready.then(function() {
+            console.log('Fonts loaded successfully');
+        });
+        
+        // Toggle password visibility
+        document.getElementById('togglePassword').addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            const icon = this.querySelector('i');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('ri-eye-off-line');
+                icon.classList.add('ri-eye-line');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('ri-eye-line');
+                icon.classList.add('ri-eye-off-line');
+            }
+        });
+        
+        // Toggle confirm password visibility
+        document.getElementById('toggleConfirmPassword').addEventListener('click', function() {
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            const icon = this.querySelector('i');
+            
+            if (confirmPasswordInput.type === 'password') {
+                confirmPasswordInput.type = 'text';
+                icon.classList.remove('ri-eye-off-line');
+                icon.classList.add('ri-eye-line');
+            } else {
+                confirmPasswordInput.type = 'password';
+                icon.classList.remove('ri-eye-line');
+                icon.classList.add('ri-eye-off-line');
+            }
+        });
+        
+        // Check if passwords match
+        function checkPasswords() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const submitButton = document.getElementById('submitButton');
+            
+            if (password && confirmPassword && password === confirmPassword) {
+                submitButton.disabled = false;
+                submitButton.classList.remove('bg-gray-400');
+                submitButton.classList.add('bg-primary', 'hover:bg-primary-dark');
+            } else {
+                submitButton.disabled = true;
+                submitButton.classList.remove('bg-primary', 'hover:bg-primary-dark');
+                submitButton.classList.add('bg-gray-400');
+            }
+        }
+    </script>
+</body>
+</html>

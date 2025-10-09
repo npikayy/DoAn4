@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết Người dùng - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .detail-card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+            font-size: 2rem;
+            background: linear-gradient(135deg, #6366f1, #10b981);
+        }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .badge i {
+            margin-right: 0.25rem;
+        }
+
+        .badge-active {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-inactive {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .gender-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+        }
+
+        .gender-male {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        .gender-female {
+            background-color: #fce7f3;
+            color: #9d174d;
+        }
+
+        .gender-other {
+            background-color: #e5e7eb;
+            color: #4b5563;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+<div class="flex">
+    <!-- Sidebar -->
+    <aside th:replace="~{admin_html/fragment/sidebar :: sidebar}"></aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-x-hidden overflow-y-auto">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Header Section -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">Chi tiết Khách hàng</h1>
+                    <div class="flex items-center mt-2">
+                        <span class="text-gray-600">Username:</span>
+                        <span class="font-medium ml-2" th:text="${customer.username}"></span>
+                        <span class="ml-4 badge badge-active">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Đang hoạt động</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="mt-4 md:mt-0 flex space-x-3">
+                    <a href="/admin/customers" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 flex items-center">
+                        <i class="fas fa-arrow-left mr-2"></i> Quay lại
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left Column -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Personal Information -->
+                    <div class="detail-card p-6">
+                        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-customer-circle text-indigo-500 mr-2"></i> Thông tin cá nhân
+                        </h2>
+                        <div class="flex flex-col md:flex-row items-start md:items-center">
+                            <div class="avatar rounded-full mr-6 mb-4 md:mb-0"
+                                 th:text="${#strings.substring(customer.full_name, 0, 1).toUpperCase()}"></div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
+                                <div>
+                                    <label class="block text-sm text-gray-500">Họ và tên</label>
+                                    <p class="font-medium" th:text="${customer.full_name}"></p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-500">Giới tính</label>
+                                    <p class="font-medium">
+                                        <span th:switch="${customer.gender}" class="gender-badge">
+                                            <span th:case="'Nam'" class="gender-male">
+                                                <i class="fas fa-mars"></i> Nam
+                                            </span>
+                                            <span th:case="'Nữ'" class="gender-female">
+                                                <i class="fas fa-venus"></i> Nữ
+                                            </span>
+                                            <span th:case="*" class="gender-other">
+                                                <i class="fas fa-genderless"></i> chưa cập nhật
+                                            </span>
+                                        </span>
+                                    </p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-500">Ngày sinh</label>
+                                    <p class="font-medium" th:text="${#temporals.format(customer.date_of_birth, 'dd/MM/yyyy')}"></p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-500">Tuổi</label>
+                                    <p th:if="${customer.date_of_birth != null}"
+                                       th:text="${#temporals.format(customer.date_of_birth, 'dd/MM/yyyy') + ' (' + (#dates.year(#dates.createNow()) - customer.date_of_birth.getYear()) + ' tuổi)'}">
+                                    </p>
+                                    <p th:unless="${customer.date_of_birth != null}" class="text-gray-500">
+                                        Chưa có thông tin ngày sinh
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="detail-card p-6">
+                        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-address-book text-indigo-500 mr-2"></i> Thông tin liên hệ
+                        </h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm text-gray-500">Email</label>
+                                <p class="font-medium" th:text="${customer.email}"></p>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-500">Số điện thoại</label>
+                                <p class="font-medium" th:text="${customer.phone_number}"></p>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm text-gray-500">Địa chỉ</label>
+                                <p class="font-medium" th:text="${customer.address}"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Right Column -->
+                <div class="space-y-6">
+                    <!-- Account Information -->
+                    <div class="detail-card p-6">
+                        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-customer-shield text-indigo-500 mr-2"></i> Thông tin tài khoản
+                        </h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm text-gray-500">Username</label>
+                                <p class="font-medium" th:text="${customer.username}"></p>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-500">Ngày tạo tài khoản</label>
+                                <p class="font-medium" th:text="${#temporals.format(customer.created_at, 'dd/MM/yyyy')}"></p>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-500">Trạng thái</label>
+                                <p class="font-medium">
+                                    <span class="badge badge-active">
+                                        <i class="fas fa-check-circle"></i> Đang hoạt động
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gradient-to-br from-white to-indigo-50 rounded-xl shadow-lg p-6 mt-3 md:p-8">
+                <!-- Header with gradient background -->
+                <div class="bg-gradient-to-br from-blue-600 to-teal-500 rounded-lg p-4 mb-6 text-white">
+                    <h2 class="text-2xl font-bold flex items-center">
+                        Đơn hàng gần đây
+                    </h2>
+                </div>
+                <!-- All Bookings Tab -->
+                <div id="all-tab">
+                    <div class="grid gap-5">
+                        <!-- Booking Cards -->
+                        <div th:each="booking : ${bookings}" class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300">
+                            <!-- Status ribbon -->
+                            <div th:classappend="${(booking.status == 'Pending payment') ? 'bg-amber-500' :
+                                          (booking.status == 'Paid') ? 'bg-green-500' :
+                                          (booking.status == 'Cash') ? 'bg-blue-500' :
+                                          (booking.status == 'Cancelled') ? 'bg-red-500' :
+                                          (booking.status == 'Completed') ? 'bg-purple-500' : 'bg-gray-500'}"
+                                 class="h-1 w-full"></div>
+
+                            <div class="p-5">
+                                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                                    <div class="flex-1">
+                                        <div class="flex items-start justify-between">
+                                            <h3 class="text-xl font-bold text-gray-800" th:text="${booking.tour_name}"></h3>
+                                            <span th:classappend="${(booking.status == 'Pending payment') ? 'bg-amber-100 text-amber-800' :
+                                          (booking.status == 'Paid') ? 'bg-green-100 text-green-800' :
+                                          (booking.status == 'Cash') ? 'bg-blue-100 text-blue-800' :
+                                          (booking.status == 'Cancelled') ? 'bg-red-100 text-red-800' :
+                                          (booking.status == 'Completed') ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'}"
+                                                  class="px-3 py-1 rounded-full text-xs font-semibold">
+                                        <span th:text="${(booking.status == 'Pending payment') ? 'Chờ thanh toán' :
+                                              (booking.status == 'Paid') ? 'Đã thanh toán' :
+                                              (booking.status == 'Cash') ? 'Tiền mặt' :
+                                              (booking.status == 'Cancelled') ? 'Đã hủy' :
+                                              (booking.status == 'Completed') ? 'Hoàn thành' : 'Hoàn thành'}"></span>
+                                    </span>
+                                        </div>
+
+                                        <div class="mt-3 flex items-center text-sm text-gray-500">
+                                            <i class="fas fa-hashtag text-indigo-500 mr-1"></i>
+                                            <span th:text="'Mã đơn: ' + ${booking.booking_id}"></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Price and action buttons -->
+                                    <div class="flex flex-col items-end">
+                                        <div class="text-right">
+                                            <p class="text-sm text-gray-500">Tổng cộng</p>
+                                            <p class="text-2xl font-bold text-indigo-600" th:text="${#numbers.formatInteger(booking.total_price, 3, 'POINT') + '₫'}"></p>
+                                        </div>
+
+                                        <div class="mt-4 flex flex-col sm:flex-row gap-2">
+                                            <a th:href="'/admin/tourBookings/detail/'+ ${booking.getBooking_id()}"
+                                               class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center">
+                                                <i class="fas fa-info-circle mr-2"></i> Chi tiết
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div th:if="${bookings.empty}" class="bg-gradient-to-br from-gray-50 to-indigo-50 border-2 border-dashed border-indigo-200 rounded-xl p-8 text-center">
+                            <div class="inline-block bg-indigo-100 p-4 rounded-full mb-4">
+                                <i class="fas fa-suitcase text-indigo-600 text-4xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-700 mb-2">Khách hàng này chưa có đơn đặt tour nào</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+</main>
+</div>
+</div>
+</body>
+</html>

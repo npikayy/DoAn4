@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết Tour</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/vn.js"></script>
+    <style>
+        /* Thông báo (nếu cần) */
+        .custom-alert {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #f44336;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            z-index: 10000;
+            animation: fadeInOut 3s ease-in-out;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; }
+            10%, 90% { opacity: 1; }
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        .delete-image-btn {
+            position: absolute;
+            top: -0.5rem;
+            right: -0.5rem;
+            z-index: 10;
+            border: 2px solid white;
+        }
+        .delete-image-btn:hover {
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+        }
+        .schedule-day {
+            position: relative;
+            padding-left: 2rem;
+        }
+        .schedule-day:before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: #3b82f6;
+            border-radius: 2px;
+        }
+        .prose img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+        .action-btn {
+            transition: all 0.2s ease;
+        }
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+<div class="min-h-screen flex">
+    <!-- Sidebar -->
+    <aside th:replace="~{admin_html/fragment/sidebar :: sidebar}"></aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-4 md:p-8">
+        <!-- Header with action buttons -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <div>
+                <h1 class="text-2xl mb-3 font-bold text-gray-800">Chi tiết Tour</h1>
+                <a href="/admin/tours" class="mt-3 px-4 py-2 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-200 transition action-btn">
+                    <i class="fas fa-arrow-left mr-2"></i>Quay lại
+                </a>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-4 md:mt-0">
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    <a th:href="@{'/admin/tours/editTour/' + ${tour.tour_id}}"
+                       class="flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition action-btn">
+                        <i class="fas fa-edit mr-2"></i>Chỉnh sửa
+                    </a>
+                    <a th:href="@{'/admin/tours/addImage/' + ${tour.tour_id}}"
+                       class="flex items-center justify-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition action-btn">
+                        <i class="fas fa-images mr-2"></i>Ảnh
+                    </a>
+                    <a th:href="'/admin/tours/tourSchedule/' + ${tour.tour_id}"
+                       class="flex items-center justify-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md transition action-btn">
+                        <i class="fas fa-calendar-alt mr-2"></i>Lịch trình
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Column - Images and Basic Info -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Image Gallery -->
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div class="relative h-80 md:h-96 w-full bg-gray-100">
+                        <img id="mainImage"
+                             th:if="${tourPics.size() > 0}"
+                             th:src="${tourPics[0]}"
+                             class="w-full h-full object-cover transition duration-300">
+                        <img th:if="${tourPics.size() == 0}"
+                             src="/img/default-tour.jpg"
+                             class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-4 grid grid-cols-4 gap-2">
+                        <div th:each="pic,iter : ${tourPics}" class="relative group h-24">
+                            <img th:src="${pic}"
+                                 class="w-full h-full object-cover rounded cursor-pointer hover:opacity-75 transition"
+                                 onclick="document.getElementById('mainImage').src=this.src">
+                            <form th:action="@{'/admin/tours/deleteImage?imageUrl=' + ${pic}}"
+                                  method="POST"
+                                  class="absolute top-0 right-0">
+                                <button type="submit"
+                                        class="delete-image-btn bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center transition-all"
+                                        onclick="return confirm('Bạn có chắc muốn xóa ảnh này?')"
+                                        title="Xóa ảnh">
+                                    <i class="fas fa-times text-xs"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tour Schedule -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-800 border-b pb-2">Lịch trình chi tiết</h2>
+                        <a th:href="'/admin/tours/tourSchedule/' + ${tour.tour_id}"
+                           class="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                            <i class="fas fa-edit mr-1"></i> Chỉnh sửa
+                        </a>
+                    </div>
+                    <div class="space-y-4" th:if="${schedules != null and !schedules.isEmpty()}">
+                        <div th:each="schedule : ${schedules}" class="schedule-day pl-4">
+                            <div class="font-bold text-gray-800" th:text="'Ngày ' + ${schedule.day} + ': ' + ${schedule.title}"></div>
+                            <div class="text-sm text-gray-600 mt-1" th:text="${schedule.body}"></div>
+                        </div>
+                    </div>
+                    <div th:if="${schedules == null or schedules.isEmpty()}" class="text-center text-gray-500 py-4">
+                        Chưa có lịch trình nào được thiết lập
+                    </div>
+                </div>
+                <!-- User Reviews Section -->
+                <div class="mt-8 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="font-semibold text-lg text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-star text-yellow-500 mr-2"></i>
+                        Đánh giá từ khách hàng
+                        <span th:if="${tourRatings.size() == 0}" class="ml-2 text-sm font-normal text-gray-500">(Chưa có đánh giá)</span>
+                    </h3>
+
+                    <!-- Review List - Hiển thị từ dữ liệu thực -->
+                    <div class="space-y-4" th:unless="${tourRatings.size() == 0}">
+                        <!-- Mỗi đánh giá -->
+                        <div th:each="rating : ${tourRatings}" class="p-4 border border-gray-100 rounded-lg hover:shadow-md transition-shadow">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold mr-3"
+                                         th:text="${rating.user.username.substring(0,1).toUpperCase()} +
+                                 ${rating.user.username.length() > 1 ? rating.user.username.substring(1,2).toUpperCase() : ''}">
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium" th:text="${rating.user.full_name}">Tên người dùng</h4>
+                                        <div class="flex items-center mt-1">
+                                            <!-- Đơn giản hóa phần hiển thị sao -->
+                                            <div class="flex items-center">
+                                                <!-- Hiển thị số sao -->
+                                                <div class="flex mr-2">
+                                                    <th:block th:each="i : ${#numbers.sequence(1, 5)}">
+                                                        <i th:class="${i <= rating.rating} ? 'fas fa-star text-yellow-400' : 'far fa-star text-yellow-400'"></i>
+                                                    </th:block>
+                                                </div>
+                                                <!-- Hiển thị điểm số -->
+                                                <span class="font-medium text-gray-700" th:text="${rating.rating} + '/5'">5/5</span>
+                                            </div>
+                                            <span class="text-xs ml-2 text-gray-500"
+                                                  th:text="${#temporals.format(rating.rating_date, 'dd/MM/yyyy')}">01/01/2023</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-3 text-gray-700" th:text="${rating.comment} ?: 'Không có bình luận'">
+                                Nội dung đánh giá sẽ hiển thị ở đây...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column - Tour Details -->
+            <div class="space-y-6">
+                <!-- Tour Information Card -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <h2 class="text-xl font-bold text-gray-800" th:text="${tour.tour_name}"></h2>
+                        <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold"
+                              th:text="|${tour.tour_duration}N${tour.tour_duration - 1}Đ|"></span>
+                    </div>
+
+                    <!-- Rating and Discount -->
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-1 bg-yellow-50 px-3 py-1 rounded-full">
+                            <span class="text-yellow-600 font-bold"
+                                  th:text="${tour.tour_rating != null ? tour.tour_rating : '0'}"></span>
+                            <i class="fas fa-star text-yellow-400"></i>
+                            <span th:if="${tour.tour_discount != null}"
+                                  class="ml-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold"
+                                  th:text="'-' + ${tour.tour_discount} + '%'"></span>
+                        </div>
+
+                        <!-- Discount edit button -->
+                        <button onclick="openDiscountModal()"
+                                class="flex items-center text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full transition">
+                            <i class="fas fa-percentage mr-1 text-blue-500"></i>
+                            <span th:text="${tour.tour_discount != null} ? 'Sửa giảm giá' : 'Thêm giảm giá'"></span>
+                        </button>
+                    </div>
+
+                    <!-- Price Section -->
+                    <div class="bg-blue-50 rounded-lg p-4 mb-4">
+                        <div class="flex justify-between my-2">
+                            <h3 class="text-lg font-semibold text-blue-800 mb-2">Giá tour</h3>
+                            <button onclick="openPriceModal()"
+                                    class="flex items-center text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full transition">
+                                <i class="fas fa-edit mr-1 text-blue-500"></i>
+                                <span>Sửa giá</span>
+                            </button>
+                        </div>
+                        <div class="space-y-2">
+                            <!-- Adult Price -->
+                            <div class="flex flex-col">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-700">Người lớn:</span>
+                                    <div class="flex flex-col items-end">
+                                        <span class="text-gray-500 line-through text-sm"
+                                              th:if="${tour.tour_discount != null && tour.tour_discount > 0}"
+                                              th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + ' VND'}">
+                                        </span>
+                                        <span class="font-bold text-blue-600"
+                                              th:text="${#numbers.formatInteger(
+                                              tour.tour_discount != null ?
+                                              (tour.tour_adult_price * (100 - tour.tour_discount) / 100) :
+                                              tour.tour_adult_price,
+                                              3, 'POINT') + ' VND'}">
+                                        </span>
+                                    </div>
+                                </div>
+                                <span class="text-xs text-red-500 self-end"
+                                      th:if="${tour.tour_discount != null && tour.tour_discount > 0}"
+                                      th:text="'-' + ${tour.tour_discount} + '%'">
+                                </span>
+                            </div>
+
+                            <!-- Child Price -->
+                            <div th:if="${tour.tour_child_price != null}" class="flex flex-col">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-700">Trẻ em:</span>
+                                    <div class="flex flex-col items-end">
+                                        <span class="text-gray-500 line-through text-sm"
+                                              th:if="${tour.tour_discount != null && tour.tour_discount > 0}"
+                                              th:text="${#numbers.formatInteger(tour.tour_child_price, 3, 'POINT') + ' VND'}">
+                                        </span>
+                                        <span class="font-bold text-blue-600"
+                                              th:text="${#numbers.formatInteger(
+                                              tour.tour_discount != null ?
+                                              (tour.tour_child_price * (100 - tour.tour_discount) / 100) :
+                                              tour.tour_child_price,
+                                              3, 'POINT') + ' VND'}">
+                                        </span>
+                                    </div>
+                                </div>
+                                <span class="text-xs text-red-500 self-end"
+                                      th:if="${tour.tour_discount != null && tour.tour_discount > 0}"
+                                      th:text="'-' + ${tour.tour_discount} + '%'">
+                                </span>
+                            </div>
+
+                            <!-- Infant Price -->
+                            <div th:if="${tour.tour_infant_price != null}" class="flex flex-col">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-700">Em bé:</span>
+                                    <div class="flex flex-col items-end">
+                                        <span class="text-gray-500 line-through text-sm"
+                                              th:if="${tour.tour_discount != null && tour.tour_discount > 0}"
+                                              th:text="${#numbers.formatInteger(tour.tour_infant_price, 3, 'POINT') + ' VND'}">
+                                        </span>
+                                        <span class="font-bold text-blue-600"
+                                              th:text="${#numbers.formatInteger(
+                                              tour.tour_discount != null ?
+                                              (tour.tour_infant_price * (100 - tour.tour_discount) / 100) :
+                                              tour.tour_infant_price,
+                                              3, 'POINT') + ' VND'}">
+                                        </span>
+                                    </div>
+                                </div>
+                                <span class="text-xs text-red-500 self-end"
+                                      th:if="${tour.tour_discount != null && tour.tour_discount > 0}"
+                                      th:text="'-' + ${tour.tour_discount} + '%'">
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tour Details -->
+                    <div class="space-y-3">
+                        <div class="flex items-start">
+                            <i class="fas fa-map-marker-alt text-blue-500 mt-1 mr-3"></i>
+                            <div>
+                                <span class="font-semibold text-gray-700">Khu vực: </span>
+                                <span class="text-gray-600" th:text="${tour.tour_region == 'NORTH'} ? 'Miền Bắc' :
+                                (${tour.tour_region == 'CENTRAL'} ? 'Miền Trung' :
+                                (${tour.tour_region == 'SOUTHEAST'} ? 'Miền Đông Nam Bộ' : 'Miền Tây Nam Bộ'))"></span>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-route text-blue-500 mt-1 mr-3"></i>
+                            <div>
+                                <span class="font-semibold text-gray-700">Hành trình: </span>
+                                <span class="text-gray-600">
+                                    <span th:text="${tour.tour_start_location}"></span>
+                                    <i class="fas fa-arrow-right mx-2 text-xs text-gray-400"></i>
+                                    <span th:text="${tour.tour_end_location}"></span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-users text-blue-500 mt-1 mr-3"></i>
+                            <div>
+                                <span class="font-semibold text-gray-700">Số lượng tối đa: </span>
+                                <span class="text-gray-600" th:text="${tour.tour_max_number_of_people + ' khách'}"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Tour Dates Section - Tailwind Only -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-calendar-day text-blue-500 mr-2"></i>
+                            Ngày khởi hành
+                        </h2>
+                        <button onclick="openAddDateModal()"
+                                class="px-3 py-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition flex items-center text-sm">
+                            <i class="fas fa-plus mr-1"></i> Thêm ngày
+                        </button>
+                    </div>
+
+                    <!-- Dates List -->
+                    <div th:if="${startDates != null and !startDates.isEmpty()}" class="space-y-3">
+                        <div th:each="date : ${startDates}"
+                             class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition"
+                             th:data-start-date="${#temporals.format(date.start_date, 'yyyy-MM-dd')}">
+
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full font-medium">
+                                    <span th:text="${dateStat.count}"></span>
+                                </div>
+                                <div>
+                                    <div class="flex items-center font-medium">
+                                        <i class="fas fa-calendar-day text-blue-400 mr-2"></i>
+                                        <span th:text="${#temporals.format(date.start_date, 'dd/MM/yyyy')}"></span>
+                                    </div>
+                                    <div class="text-sm text-gray-500 mt-1">
+                                        <span th:text="${date.guest_number} + ' khách đã đặt ngày này'"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <form th:action="@{'/admin/tours/deleteStartDate/' + ${tour.tour_id}+'/' + ${date.start_date_id}}" method="GET">
+                                <button type="submit"
+                                        class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition"
+                                        onclick="return confirm('Bạn có chắc muốn xóa ngày khởi hành này?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div th:if="${startDates == null or startDates.isEmpty()}" class="text-center py-6">
+                        <i class="far fa-calendar-plus text-gray-300 text-3xl mb-2"></i>
+                        <p class="text-gray-500 mb-3">Chưa có ngày khởi hành nào</p>
+                        <button onclick="openAddDateModal()"
+                                class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition text-sm">
+                            <i class="fas fa-plus mr-1"></i> Thêm ngày khởi hành
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Enhanced Tour Description & Services -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <h2 class="text-xl font-bold text-gray-800">Mô tả tour</h2>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                              th:class="${tour.tour_type == 'PREMIUM'} ? 'bg-purple-100 text-purple-800' :
+      (${tour.tour_type == 'INTERNATIONAL'} ? 'bg-blue-100 text-blue-800' :
+      (${tour.tour_type == 'DOMESTIC'} ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'))">
+                            <span th:switch="${tour.tour_type}">
+                                <span th:case="PREMIUM">Premium</span>
+                                <span th:case="INTERNATIONAL">Quốc Tế</span>
+                                <span th:case="DOMESTIC">Trong Nước</span>
+                                <span th:case="BUDGET">Tiết Kiệm</span>
+                            </span>
+                        </span>
+                    </div>
+
+                    <div th:utext="${tour.tour_description}" class="prose max-w-none text-gray-700 mb-6">
+                        Mô tả chi tiết về tour du lịch...
+                    </div>
+
+                    <!-- Special Offer -->
+                    <div
+                            class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg mb-6 relative">
+                        <button onclick="openSpecialOfferModal()"
+                                class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                                title="Chỉnh sửa ưu đãi">
+                            <i class="fas fa-edit"></i>
+                        </button>
+
+                        <div>
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zm7-10a1 1 0 01.967.744L14.146 7.2 13.047 14.01c-.04.3.068.586.275.789.207.203.49.31.79.31.413 0 .814-.206 1.03-.547l2.755-4.533a1 1 0 00.242-.646 1 1 0 00-.242-.646l-2.755-4.533a1.07 1.07 0 00-.114-.152 1 1 0 00-.916-.305l-5.479.915a1 1 0 01-.967-.744L10 2.051 9.053.244a1 1 0 00-.598-.494 1 1 0 00-.91.152L4.755 4.515a1 1 0 00-.242.646c0 .228.087.446.242.646l2.755 4.533c.216.341.617.547 1.03.547.3 0 .583-.107.79-.31.207-.203.314-.489.275-.789L5.854 7.2 7.053.744A1 1 0 018 2z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-yellow-800">Ưu đãi đặc biệt</h3>
+                                <div class="mt-2 text-sm text-yellow-700" th:utext="${tour.special_offer}">
+                                    <p>Giảm 10% cho nhóm từ 4 người trở lên</p>
+                                </div>
+                                <div th:unless="${tour.special_offer != null and !tour.special_offer.isEmpty()}" class="mt-2 text-sm text-yellow-700">
+                                    <p>Chưa có ưu đãi</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Chọn Ngày -->
+<div id="dateModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-5">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xl font-bold text-white">
+                    <i class="fas fa-calendar-star mr-2"></i>
+                    Chọn ngày khởi hành
+                </h3>
+                <button onclick="closeDateModal()" class="text-white hover:text-blue-100 transition">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div class="p-5">
+            <form th:action="@{'/admin/tours/addStartDate/' + ${tour.tour_id}}" method="POST" id="dateForm">
+                <!-- Date Picker -->
+                <div class="mb-6">
+                    <label for="modalDateInput" class="block text-sm font-medium text-gray-700 mb-3">
+                        <i class="fas fa-calendar-check mr-2 text-blue-500"></i>
+                        Ngày khởi hành
+                    </label>
+                    <div class="relative">
+                        <input type="text"
+                               id="modalDateInput"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="dd/mm/yyyy"
+                               readonly
+                               data-input> <!-- Thêm attr data-input để Flatpickr nhận diện -->
+                        <input type="hidden" name="startDate" id="modalSelectedDate">
+                    </div>
+                    <div class="mt-2 text-xs text-gray-500 flex items-center">
+                        <span class="inline-block w-2 h-2 bg-red-500 rounded-full mr-1"></span>
+                        Ngày đã có sẵn
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="closeDateModal()" class="btn-cancel">
+                        <i class="fas fa-times mr-1"></i> Hủy
+                    </button>
+                    <button type="submit" class="btn-confirm">
+                        <i class="fas fa-check mr-1"></i> Xác nhận
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Discount Modal -->
+<div id="discountModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-gray-800">Chỉnh sửa giảm giá</h3>
+            <button onclick="closeDiscountModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form th:action="@{'/admin/tours/updateDiscount/' + ${tour.tour_id}}" method="POST">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Phần trăm giảm giá (%)</label>
+                    <input type="number" name="discount"
+                           th:value="${tour.tour_discount != null} ? ${tour.tour_discount} : ''"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                           min="0" max="100" placeholder="Nhập % giảm giá (0-100)">
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeDiscountModal()"
+                            class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md transition">
+                        Hủy
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition">
+                        Lưu thay đổi
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Price Modal -->
+<div id="priceModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-gray-800">Chỉnh sửa giá tour</h3>
+            <button onclick="closePriceModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form th:action="@{'/admin/tours/updatePrices/' + ${tour.tour_id}}" id="updatePricesForm" method="POST">
+            <div class="space-y-4">
+                <!-- Adult Price -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Giá người lớn (VNĐ)</label>
+                    <input type="text" name="adultPrice" id="editAdultPrice"
+                           th:value="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT')}"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="Nhập giá người lớn" required>
+                </div>
+
+                <!-- Child Price -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Giá trẻ em (VNĐ)</label>
+                    <input type="text" name="childPrice" id="editChildPrice"
+                           th:value="${tour.tour_child_price != null} ? ${#numbers.formatInteger(tour.tour_child_price, 3, 'POINT')} : ''"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="Nhập giá trẻ em">
+                </div>
+
+                <!-- Infant Price -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Giá trẻ nhỏ (VNĐ)</label>
+                    <input type="text" name="infantPrice" id="editInfantPrice"
+                           th:value="${tour.tour_infant_price != null} ? ${#numbers.formatInteger(tour.tour_infant_price, 3, 'POINT')} : ''"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="Nhập giá trẻ nhỏ">
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closePriceModal()"
+                            class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md transition">
+                        Hủy
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition">
+                        Lưu thay đổi
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Special Offer Modal -->
+<div id="specialOfferModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-gray-800">Chỉnh sửa ưu đãi đặc biệt</h3>
+            <button onclick="closeSpecialOfferModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form th:action="@{'/admin/tours/updateSpecialOffer/' + ${tour.tour_id}}" method="POST">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nội dung ưu đãi</label>
+                    <textarea name="specialOffer" rows="4"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                              th:text="${tour.special_offer}"
+                              placeholder="Nhập nội dung ưu đãi đặc biệt"></textarea>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeSpecialOfferModal()"
+                            class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-md transition">
+                        Hủy
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition">
+                        Lưu thay đổi
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Format currency input in modal
+    function formatCurrencyInput(input) {
+        input.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value) {
+                e.target.value = parseInt(value).toLocaleString('vi-VN');
+            } else {
+                e.target.value = '';
+            }
+        });
+    }
+    function openAddDateModal() {
+        // 1. Lấy danh sách ngày đã chọn (đảm bảo không trùng lặp và hợp lệ)
+        const dateElements = document.querySelectorAll('[data-start-date]');
+        const existingDates = [];
+
+        dateElements.forEach(el => {
+            const dateStr = el.getAttribute('data-start-date');
+            if (dateStr && isValidDate(dateStr)) {
+                existingDates.push(dateStr);
+            }
+        });
+
+        console.log("Ngày đã tồn tại:", existingDates);
+
+        // 2. Kiểm tra nếu Flatpickr đã tồn tại thì destroy trước
+        const existingPicker = flatpickr("#modalDateInput");
+        if (existingPicker) {
+            existingPicker.destroy();
+        }
+
+        // 3. Khởi tạo Flatpickr mới
+        const fp = flatpickr("#modalDateInput", {
+            dateFormat: "d/m/Y",
+            minDate: "today",
+            locale: "vn",
+            disable: existingDates,
+
+            // 4. Hiển thị ngày đã chọn với màu đỏ
+            onDayCreate: function(dObj, dStr, fp, dayElem, date) {
+                if (!date || !dayElem) return;
+
+                const dateStr = formatDateToYMD(date);
+                if (existingDates.includes(dateStr)) {
+                    // QUAN TRỌNG: Thêm class và style trực tiếp
+                    dayElem.classList.add('disabled-date', 'no-pointer');
+
+                    // Đảm bảo style áp dụng ngay lập tức
+                    dayElem.style.backgroundColor = '#ffebee';
+                    dayElem.style.color = '#f44336';
+                    dayElem.style.borderColor = '#f44336';
+                    dayElem.style.textDecoration = 'line-through';
+
+                    // Thêm marker đỏ
+                    const marker = document.createElement('span');
+                    marker.style.position = 'absolute';
+                    marker.style.bottom = '3px';
+                    marker.style.left = '50%';
+                    marker.style.transform = 'translateX(-50%)';
+                    marker.style.width = '6px';
+                    marker.style.height = '6px';
+                    marker.style.backgroundColor = '#f44336';
+                    marker.style.borderRadius = '50%';
+
+                    dayElem.innerHTML = `<span>${date.getDate()}</span>`;
+                    dayElem.appendChild(marker);
+                }
+            },
+
+            // 5. Xử lý khi chọn ngày
+            onChange: function(selectedDates) {
+                const hiddenInput = document.getElementById('modalSelectedDate');
+                if (selectedDates && selectedDates.length > 0) {
+                    const selectedDateStr = formatDateToYMD(selectedDates[0]);
+                    if (existingDates.includes(selectedDateStr)) {
+                        this.clear();
+                        showAlert('Ngày này đã được chọn!');
+                    } else {
+                        hiddenInput.value = selectedDateStr;
+                    }
+                } else {
+                    hiddenInput.value = '';
+                }
+            }
+        });
+
+        // 6. Mở modal
+        document.getElementById('dateModal').classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+
+        // 7. Focus vào input sau khi modal hiển thị
+        setTimeout(() => {
+            const input = document.getElementById('modalDateInput');
+            if (input) input.focus();
+        }, 100);
+    }
+
+    // Hàm định dạng ngày thành YYYY-MM-DD
+    function formatDateToYMD(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    // Kiểm tra định dạng ngày
+    function isValidDate(dateStr) {
+        return /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
+    }
+
+    // Hiển thị thông báo
+    function showAlert(message) {
+        const alertBox = document.createElement('div');
+        alertBox.className = 'custom-alert';
+        alertBox.textContent = message;
+        document.body.appendChild(alertBox);
+
+        setTimeout(() => {
+            alertBox.remove();
+        }, 3000);
+    }
+
+    // Đóng modal
+    function closeDateModal() {
+        document.getElementById('dateModal').classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    }
+
+    // Xử lý submit form
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('dateForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                if (!document.getElementById('modalSelectedDate').value) {
+                    e.preventDefault();
+                    showAlert('Vui lòng chọn ngày khởi hành!');
+                }
+            });
+        }
+    });
+
+        // Discount modal functions
+        function openDiscountModal() {
+        document.getElementById('discountModal').classList.remove('hidden');
+    }
+
+        function closeDiscountModal() {
+        document.getElementById('discountModal').classList.add('hidden');
+    }
+
+        // Price modal functions
+        function openPriceModal() {
+        document.getElementById('priceModal').classList.remove('hidden');
+    }
+
+        function closePriceModal() {
+        document.getElementById('priceModal').classList.add('hidden');
+    }
+
+        // Special Offer Modal functions
+        function openSpecialOfferModal() {
+        document.getElementById('specialOfferModal').classList.remove('hidden');
+    }
+
+        function closeSpecialOfferModal() {
+        document.getElementById('specialOfferModal').classList.add('hidden');
+    }
+
+        // Apply formatting to price inputs
+        document.addEventListener('DOMContentLoaded', function() {
+        formatCurrencyInput(document.getElementById('editAdultPrice'));
+        formatCurrencyInput(document.getElementById('editChildPrice'));
+        formatCurrencyInput(document.getElementById('editInfantPrice'));
+
+        // Handle form submission - convert formatted values back to numbers
+        document.querySelector('#editPriceForm').addEventListener('submit', function(e) {
+        const inputs = [
+    { element: document.getElementById('editAdultPrice'), name: 'adultPriceValue' },
+    { element: document.getElementById('editChildPrice'), name: 'childPriceValue' },
+    { element: document.getElementById('editInfantPrice'), name: 'infantPriceValue' }
+        ];
+
+        inputs.forEach(input => {
+        if (input.element && input.element.value) {
+        // Create hidden input with numeric value
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = input.name;
+        hiddenInput.value = input.element.value.replace(/\D/g, '');
+        this.appendChild(hiddenInput);
+
+        // Disable the formatted input
+        input.element.disabled = true;
+    }
+    });
+    });
+    });
+</script>
+</body>
+</html>

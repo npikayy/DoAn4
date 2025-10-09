@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gửi và Xác minh OTP</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<svg class="login__blob" viewBox="0 0 566 840" xmlns="http://www.w3.org/2000/svg">
+    <mask id="mask0" mask-type="alpha">
+        <path d="M342.407 73.6315C388.53 56.4007 394.378 17.3643 391.538
+            0H566V840H0C14.5385 834.991 100.266 804.436 77.2046 707.263C49.6393
+            591.11 115.306 518.927 176.468 488.873C363.385 397.026 156.98 302.824
+            167.945 179.32C173.46 117.209 284.755 95.1699 342.407 73.6315Z"/>
+    </mask>
+
+    <g mask="url(#mask0)">
+        <path d="M342.407 73.6315C388.53 56.4007 394.378 17.3643 391.538
+            0H566V840H0C14.5385 834.991 100.266 804.436 77.2046 707.263C49.6393
+            591.11 115.306 518.927 176.468 488.873C363.385 397.026 156.98 302.824
+            167.945 179.32C173.46 117.209 284.755 95.1699 342.407 73.6315Z"/>
+
+        <!-- Insert your image (recommended size: 1000 x 1200) -->
+        <image class="login__img" href="/img/bg-password.jpg"/>
+    </g>
+</svg>
+<div class="login container grid" id="loginAccessRegister">
+    <!--===== LOGIN ACCESS =====-->
+    <div class="login__access">
+        <h1 class="login__title">Lấy lại mật khẩu.</h1>
+        <div class="login__area">
+            <div th:if="${message}" class="alert alert-danger" role="alert">
+                <svg xmlns="http://www.w3.org/2000/svg" style="width: 1.5rem; height: 1.5rem; margin-right: 0.5rem;" fill="currentColor" class="bi bi-exclamation-circle" viewBox="0 0 16 16">
+                    <path d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 1 8 0a8 8 0 0 1 0 16z"/>
+                    <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zm.93-6.481c.287-.14.569.106.637.47l.007.09-.002 3.01c0 .36-.268.65-.637.732l-.09.007a.548.548 0 0 1-.538-.641l.002-3.01c0-.36.268-.65.637-.732z"/>
+                </svg>
+                <span th:text="${message}"></span>
+            </div>
+            <form method="post" class="login__form">
+                <div class="login__content grid">
+                    <div class="login_box">
+                        <input th:if="${email}" type="email" class="login__input" th:value="${email}" id="email" name="email" placeholder="" disabled>
+                    </div>
+                    <label for="email" class="login__label">Email</label>
+
+                </div>
+                <div class="login__form">
+                    <div class="login__box">
+                        <input type="text" class="login__input" id="otp" name="otp" placeholder="" required>
+                        <label for="otp" class="login__label">Nhập mã OTP</label>
+                    </div>
+                    <button type="submit" class="login__button">Xác minh OTP</button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+<!-- Thêm Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    window.onload = function() {
+        history.replaceState(null, null, location.href); // Ghi đè lịch sử hiện tại
+        window.onpopstate = function() {
+            history.replaceState(null, null, location.href); // Ngăn nút "Back"
+        };
+    };
+</script>
+</body>
+</html>

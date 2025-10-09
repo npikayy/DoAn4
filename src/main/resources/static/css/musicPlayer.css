@@ -1,0 +1,174 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@100..900&display=swap");
+
+:root {
+    /*========== Font and typography ==========*/
+    /*.5rem = 8px | 1rem = 16px ...*/
+    --body-font: "Montserrat", system-ui;
+    --big-font-size: 1.5rem;
+    --normal-font-size: .938rem;
+    --small-font-size: .813rem;
+    --tiny-font-size: .688rem;
+}
+@media screen and (min-width: 1150px) {
+    :root {
+        --big-font-size: 3rem;
+        --normal-font-size: 1rem;
+        --small-font-size: .875rem;
+        --tiny-font-size: .75rem;
+    }
+}
+.d-none {
+    display: none;
+}
+html body{
+    background-color: #343333; !important;
+    min-width: 1200px;
+    width: 100%;
+    font-family: var(--body-font);
+    font-size: var(--normal-font-size);
+    /*background: url('/img/bg-img3.jpg') center / cover no-repeat, #333; !* Gộp background *!*/
+}
+#main-content {
+    min-height: 1200px;
+    height: auto;
+    padding: 20px 20px 200px 20px;
+    width: 100%;
+    /*background-color: #969696;*/
+}
+#aside {
+    background-color: #cecece;
+    width: auto;
+}
+.user-info-section{
+    width: 400px;
+}
+.list-group-item{
+    width: 300px;
+}
+.activated {
+    filter: invert(1);
+}
+.no-border {
+    border: none !important;
+}
+.transparent-card {
+    background: none !important;
+    border-color: none;
+    box-shadow: none;
+}
+.card-img-top {
+    height: 150px;
+    object-fit: cover;
+}
+.player {
+    backdrop-filter: blur(5px);
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 100px; /* Thay đổi chiều cao để phù hợp hơn */
+    color: #fff;
+    padding: 5px 10px; /* Điều chỉnh khoảng cách */
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.5); /* Thêm bóng đổ để nổi bật */
+    z-index: 100; /* Đảm bảo hiển thị trên cùng */
+    text-align: left; /* Căn văn bản sang trái nếu cần */
+}
+header {
+    background-image: url('/img/header-img.jpg');
+    background-size: cover; /* Ảnh sẽ phủ toàn bộ phần tử */
+    background-position: center; /* Căn giữa hình ảnh */
+    background-repeat: no-repeat; /* Không lặp lại ảnh */
+}
+
+#volume-bar, #progress-bar {
+    -webkit-appearance: none; /* Loại bỏ kiểu mặc định của trình duyệt */
+    appearance: none;
+    width: 100%; /* Độ dài thanh trượt */
+    height: 8px; /* Chiều cao thanh trượt */
+    /*background: linear-gradient(to right, #007bff, #ccc); !* Màu chuyển gradient *!*/
+    background: #423F3F; /* Màu chuyển gradient */
+    border-radius: 5px; /* Bo tròn thanh trượt */
+    outline: none;
+    cursor: pointer;
+}
+
+/* Màu của phần tay kéo (thumb) */
+#volume-bar::-webkit-slider-thumb, #progress-bar::-webkit-slider-thumb {
+    -webkit-appearance: none; /* Loại bỏ kiểu mặc định */
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    background-color: #ffffff; /* Màu của tay kéo */
+    border-radius: 50%; /* Làm tay kéo thành hình tròn */
+    cursor: pointer;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3); /* Thêm bóng đổ */
+}
+.text-ellipsis {
+    white-space: nowrap; /* Không cho xuống dòng */
+    overflow: hidden; /* Ẩn phần vượt quá vùng hiển thị */
+    text-overflow: ellipsis; /* Thêm "…" khi bị cắt */
+    width: 200px; /* Đặt chiều rộng cố định */
+}
+.card-title:hover,#favorite-button:hover,#card-title:hover,#instantPlay-button:hover,#play-pause-button:hover,#shuffle-button:hover,#loop-button:hover,#prev-button:hover,#next-button:hover,#volume-button:hover,#comment-button:hover {
+    cursor: pointer;
+    transform: scale(1.1); /* Phóng to nhẹ khi hover */
+    transition: transform 0.2s ease-in-out;
+}
+#search-song-title:hover{
+    margin-left: 20px;
+    cursor: pointer;
+    transform: scale(1.1); /* Phóng to nhẹ khi hover */
+    transition: transform 0.2s ease-in-out;
+}
+#volume-bar {
+    width: 100%;
+}
+#song-details {
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+#header-action{
+    top: 7%;
+    right: 20px ;
+    z-index: 10; /* Hiển thị phía trên các thành phần khác */
+    background: rgba(255, 255, 255, 0.9); /* Nền sáng với độ trong suốt */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Hiệu ứng bóng */
+    border-radius: 10px; /* Bo góc khung */
+    padding: 10px; /* Khoảng cách nội dung trong khung */
+}
+#search-results {
+    top: 100%; /* Đặt ngay bên dưới form */
+    left: 0;
+    z-index: 10; /* Hiển thị phía trên các thành phần khác */
+    background: rgba(255, 255, 255, 0.9); /* Nền sáng với độ trong suốt */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Hiệu ứng bóng */
+    border-radius: 10px; /* Bo góc khung */
+    max-height: 300px; /* Giới hạn chiều cao với thanh cuộn */
+    overflow-y: auto; /* Hiển thị thanh cuộn nếu nội dung dài */
+    padding: 10px; /* Khoảng cách nội dung trong khung */
+}
+#search-results div {
+    padding: 5px 10px;
+    border-bottom: 1px solid #ccc;
+}
+#search-results div:last-child {
+    border-bottom: none; /* Bỏ đường viền mục cuối cùng */
+}
+.delete-icon {
+    filter: brightness(0) saturate(100%) invert(40%) sepia(100%) saturate(500%) hue-rotate(316deg) brightness(100%);
+}
+.delete-icon:hover {
+    filter: brightness(0) saturate(100%) invert(40%) sepia(100%) saturate(500%) hue-rotate(345deg) brightness(100%);
+}
+
+

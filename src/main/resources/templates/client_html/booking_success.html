@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đặt tour thành công | Vietravel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        vietravel: {
+                            blue: '#0066b3',
+                            orange: '#f15a24',
+                            yellow: '#ffc72c',
+                            teal: '#00a99d',
+                            lightblue: '#e6f2fa',
+                            lightorange: '#fef0eb'
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f0fdfa 100%);
+        }
+        .price-tag {
+            background: linear-gradient(135deg, #ffc72c 0%, #f59e0b 100%);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+<header th:replace="client_html/fragment/headerANDfooter :: header"></header>
+<div class="container mx-auto px-4 py-8 max-w-6xl">
+    <!-- Progress Steps -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
+        <div class="flex justify-center items-center">
+            <h1 class="text-2xl font-bold text-center mb-6 bg-gradient-to-r from-vietravel-blue to-vietravel-orange bg-clip-text text-transparent">
+                ĐẶT TOUR THÀNH CÔNG
+            </h1>
+        </div>
+        <div class="flex justify-between relative px-10">
+            <!-- Progress line -->
+            <div class="absolute top-4 left-20 right-20 h-1 bg-gradient-to-r from-vietravel-teal via-vietravel-blue to-vietravel-teal z-0"></div>
+
+            <!-- Step 1 - Completed -->
+            <div class="progress-step completed flex flex-col items-center z-10">
+                <div class="step-number w-10 h-10 rounded-full flex items-center justify-center mb-2 shadow-md">
+                    <i class="fas fa-check text-sm"></i>
+                </div>
+                <span class="text-xs font-medium text-gray-600">THÔNG TIN</span>
+            </div>
+
+            <!-- Step 2 - Completed -->
+            <div class="progress-step completed flex flex-col items-center z-10">
+                <div class="step-number w-10 h-10 rounded-full flex items-center justify-center mb-2 shadow-md">
+                    <i class="fas fa-check text-sm"></i>
+                </div>
+                <span class="text-xs font-medium text-gray-600">THANH TOÁN</span>
+            </div>
+
+            <!-- Step 3 - Completed -->
+            <div class="progress-step flex flex-col items-center z-10">
+                <div class="step-number w-10 h-10 rounded-full flex items-center justify-center mb-2 bg-gradient-to-r from-vietravel-teal to-vietravel-blue text-white font-bold shadow-lg animate-pulse">
+                    <i class="fas fa-check"></i>
+                </div>
+                <span class="text-xs font-semibold text-gray-800">HOÀN TẤT</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Message -->
+    <div class="bg-white rounded-2xl shadow-lg p-8 text-center mb-8">
+        <!-- Checkmark icon -->
+        <div class="mx-auto w-24 h-24 rounded-full bg-green-50 flex items-center justify-center mb-6">
+            <i class="fas fa-check-circle text-5xl text-green-500"></i>
+        </div>
+
+        <!-- Title -->
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">ĐẶT TOUR THÀNH CÔNG!</h1>
+
+        <!-- Message -->
+        <div class="text-gray-600 mb-6 space-y-2">
+            <p>Cảm ơn bạn đã đặt tour với TÔI ĐI DU LỊCH.</p>
+            <p>Chúng tôi đã gửi thông tin xác nhận đến email của bạn.</p>
+            <p>Hẹn gặp bạn trong chuyến đi thú vị sắp tới!</p>
+        </div>
+
+        <!-- Booking Info -->
+        <div class="bg-vietravel-lightblue rounded-xl p-6 mb-6 mx-auto border border-green-100 shadow-lg max-w-2xl">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="font-bold text-gray-800 text-xl flex items-center">
+                    <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                    THÔNG TIN ĐƠN HÀNG
+                </h3>
+
+                <!-- Badge trạng thái thanh toán -->
+                <div th:switch="${booking.status}" class="mt-2">
+                    <!-- Trạng thái Paid (Đã thanh toán) -->
+                    <div th:case="'Paid'" class="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-green-400 to-green-600 shadow-md animate-pulse-slow">
+                        <i class="fas fa-check-circle text-white mr-2"></i>
+                        <span class="font-bold text-white text-sm uppercase tracking-wider">ĐÃ THANH TOÁN</span>
+                    </div>
+
+                    <!-- Trạng thái Tiền mặt -->
+                    <div th:case="'Cash'" class="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 shadow-md">
+                        <i class="fas fa-money-bill-wave text-white mr-2"></i>
+                        <span class="font-bold text-white text-sm uppercase tracking-wider">THANH TOÁN TIỀN MẶT</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <!-- Mã đơn hàng -->
+                <div>
+                    <p class="text-sm text-gray-600">Mã đơn hàng:</p>
+                    <p class="font-semibold" th:text="${booking.booking_id}">VT-${booking.booking_id}</p>
+                </div>
+
+                <!-- Ngày đặt -->
+                <div>
+                    <p class="text-sm text-gray-600">Ngày đặt:</p>
+                    <p class="font-semibold" th:text="${#temporals.format(booking.booking_date, 'dd/MM/yyyy HH:mm')}">
+                        15/08/2023 14:30
+                    </p>
+                </div>
+
+                <!-- Tên tour -->
+                <div>
+                    <p class="text-sm text-gray-600">Tên tour:</p>
+                    <p class="font-semibold" th:text="${booking.tour_name}">Hà Nội - Hạ Long - Sapa</p>
+                </div>
+
+                <!-- Ngày khởi hành -->
+                <div>
+                    <p class="text-sm text-gray-600">Ngày khởi hành:</p>
+                    <p class="font-semibold" th:text="${#temporals.format(booking.start_date, 'dd/MM/yyyy')}">20/08/2023</p>
+                </div>
+
+                <!-- Thông tin khách hàng -->
+                <div>
+                    <p class="text-sm text-gray-600">Khách hàng:</p>
+                    <p class="font-semibold" th:text="${booking.user_full_name}">Nguyễn Văn A</p>
+                </div>
+
+                <!-- Số điện thoại -->
+                <div>
+                    <p class="text-sm text-gray-600">Điện thoại:</p>
+                    <p class="font-semibold" th:text="${booking.user_phone_number}">0987654321</p>
+                </div>
+
+                <!-- Số lượng khách -->
+                <div>
+                    <p class="text-sm text-gray-600">Số lượng:</p>
+                    <p class="font-semibold">
+                        <span th:text="${booking.number_of_adults} + ' người lớn'">2 người lớn</span>
+                        <span th:if="${booking.number_of_children > 0}"
+                              th:text="', ' + ${booking.number_of_children} + ' trẻ em'">, 1 trẻ em</span>
+                        <span th:if="${booking.number_of_infants > 0}"
+                              th:text="', ' + ${booking.number_of_infants} + ' em bé'">, 1 em bé</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Ghi chú (nếu có) -->
+            <div th:if="${booking.note != null && !booking.note.isEmpty()}">
+                <p class="text-sm text-gray-600">Ghi chú:</p>
+                <p class="font-semibold italic" th:text="${booking.note}">Yêu cầu phòng đôi</p>
+            </div>
+
+            <!-- Phần tổng thanh toán -->
+            <div class="border-t border-gray-200 pt-4 mt-4">
+                <div class="flex justify-between items-center">
+                    <p class="text-lg font-bold">Tổng thanh toán:</p>
+                    <div class="flex items-center">
+                <span class="price-tag text-white font-bold py-2 px-4 rounded-lg mr-2"
+                      th:text="${#numbers.formatInteger(booking.total_price, 3, 'POINT') + '₫'}">
+                    12,500,000₫
+                </span>
+                        <i th:if="${booking.status == 'Paid'}" class="fas fa-check-circle text-green-500 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+            <a href="/Client/Home"
+               class="bg-gradient-to-r from-vietravel-blue to-vietravel-teal text-white font-semibold py-3 px-6 rounded-lg hover:opacity-90 transition-all">
+                <i class="fas fa-home mr-2"></i> VỀ TRANG CHỦ
+            </a>
+        </div>
+    </div>
+
+    <!-- Additional Info -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+        <h2 class="text-xl font-bold text-vietravel-blue mb-4 flex items-center">
+            <i class="fas fa-info-circle text-vietravel-blue mr-3"></i>
+            THÔNG TIN BỔ SUNG
+        </h2>
+        <div class="grid md:grid-cols-2 gap-6">
+            <div>
+                <h3 class="font-semibold text-gray-800 mb-2">HƯỚNG DẪN TIẾP THEO</h3>
+                <ul class="space-y-2 text-gray-600">
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-vietravel-teal mt-1 mr-2"></i>
+                        <span>Nhân viên sẽ liên hệ xác nhận trong vòng 24h</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-vietravel-teal mt-1 mr-2"></i>
+                        <span>Vui lòng kiểm tra email thường xuyên</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-vietravel-teal mt-1 mr-2"></i>
+                        <span>Mang theo CMND/Passport khi đi tour</span>
+                    </li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="font-semibold text-gray-800 mb-2">HỖ TRỢ KHÁCH HÀNG</h3>
+                <div class="space-y-3 text-gray-600">
+                    <div class="flex items-center">
+                        <i class="fas fa-phone-alt text-vietravel-blue mr-3"></i>
+                        <span>Hotline: 1900 1839</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-envelope text-vietravel-blue mr-3"></i>
+                        <span>Email: info@toididulich.com</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-map-marker-alt text-vietravel-blue mr-3"></i>
+                        <span>Văn phòng: 190 Pasteur, P.6, Q.3, TP.HCM</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<footer th:replace="client_html/fragment/headerANDfooter :: footer"></footer>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Xóa pendingBooking khi trang được tải
+        try {
+            if (localStorage.getItem('pendingBooking')) {
+                localStorage.removeItem('pendingBooking');
+                console.log('Đã xóa dữ liệu booking tạm thời');
+            }
+        } catch (e) {
+            console.error('Lỗi khi xóa localStorage:', e);
+        }
+    });
+</script>
+</body>
+</html>

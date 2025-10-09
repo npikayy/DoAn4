@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${tour == null ? 'Thêm Tour Mới' : 'Chỉnh Sửa Tour'}"></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://esgoo.net/scripts/jquery.js"></script>
+    <style>
+        .input-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .input-field {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 1px solid #E5E7EB;
+            border-radius: 0.5rem;
+            background-color: #F9FAFB;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #3B82F6;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        .input-label {
+            position: absolute;
+            top: -0.75rem;
+            left: 0.75rem;
+            padding: 0 0.25rem;
+            background-color: white;
+            color: #6B7280;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+        .input-field:focus + .input-label {
+            color: #3B82F6;
+        }
+        .btn-primary {
+            background-color: #3B82F6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover {
+            background-color: #2563EB;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .btn-danger {
+            background-color: #EF4444;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .btn-danger:hover {
+            background-color: #DC2626;
+            transform: translateY(-1px);
+        }
+        .readonly-field {
+            background-color: #F3F4F6;
+            color: #6B7280;
+        }
+        select.input-field {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.75rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+        #tour_end_country {
+            background-size: 20px 13px, 1.5em 1.5em !important;
+            background-position: 0.75rem center, right 0.75rem center !important;
+            background-repeat: no-repeat !important;
+            padding-left: 2.75rem !important;
+        }
+        .flag-icon {
+            width: 24px;
+            height: 16px;
+            object-fit: cover;
+            border-radius: 2px;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .location-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .location-tab {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: 1px solid #E5E7EB;
+            background: white;
+        }
+        .location-tab.active {
+            background-color: #3B82F6;
+            color: white;
+            border-color: #3B82F6;
+        }
+        .location-tab:hover:not(.active) {
+            background-color: #F3F4F6;
+        }
+        .city-select-wrapper {
+            margin-top: 0.5rem;
+            display: none;
+        }
+        .city-select-wrapper.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+<div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <aside th:replace="~{admin_html/fragment/sidebar :: sidebar}"></aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-6 md:p-8">
+        <div class="flex items-center justify-between mb-8">
+            <h1 class="text-2xl font-bold text-gray-800" th:text="${tour == null ? 'Thêm Tour Mới' : 'Chỉnh Sửa Tour'}"></h1>
+            <button onclick="window.history.back()" class="flex items-center text-gray-600 hover:text-gray-800">
+                <i class="fas fa-arrow-left mr-2"></i> Quay lại
+            </button>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 md:p-8">
+            <h6 class="text-red-500 font-medium mb-6 text-right" th:if="${errorMessage}" th:text="${errorMessage}"></h6>
+            <div th:unless="${tour?.tour_id}" class="text-red-500 text-sm mb-6 text-right">(*) Mã tour một khi đã tạo thì sẽ không thay đổi được</div>
+
+            <form th:action="${tour == null ? '/admin/tours/addTour' : '/admin/tours/editTour/' + tour.tour_id}"
+                  method="post" class="space-y-6">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Mã tour -->
+                    <div class="input-group">
+                        <input type="text" name="tour_id" id="tour_id" class="input-field" placeholder=" "
+                               th:value="${tour?.tour_id}" th:readonly="${tour?.tour_id != null}"
+                               th:classappend="${tour?.tour_id} ? 'readonly-field' : ''" required>
+                        <label for="tour_id" class="input-label">Mã Tour <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <!-- Tên tour -->
+                    <div class="input-group">
+                        <input type="text" name="tour_name" id="tour_name" class="input-field" placeholder=" "
+                               th:value="${tour?.tour_name}" required>
+                        <label for="tour_name" class="input-label">Tên Tour <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <!-- Loại tour -->
+                    <div class="input-group">
+                        <select name="tour_type" id="tour_type" class="input-field" required>
+                            <option value="" disabled th:selected="${tour?.tour_type == null}"> </option>
+                            <option value="DOMESTIC" th:selected="${tour?.tour_type == 'DOMESTIC'}">Tour trong nước</option>
+                            <option value="INTERNATIONAL" th:selected="${tour?.tour_type == 'INTERNATIONAL'}">Tour nước ngoài</option>
+                            <option value="PREMIUM" th:selected="${tour?.tour_type == 'PREMIUM'}">Tour cao cấp</option>
+                            <option value="BUDGET" th:selected="${tour?.tour_type == 'BUDGET'}">Tour tiết kiệm</option>
+                        </select>
+                        <label for="tour_type" class="input-label">Loại tour <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <!-- Phương tiện di chuyển -->
+                    <div class="input-group">
+                        <select name="tour_transportation" id="tour_transportation" class="input-field" required>
+                            <option value="" disabled th:selected="${tour?.tour_transportation == null}"> </option>
+                            <option value="PLANE" th:selected="${tour?.tour_transportation == 'PLANE'}">Máy bay</option>
+                            <option value="CAR" th:selected="${tour?.tour_transportation == 'CAR'}">Xe ô tô</option>
+                            <option value="TRAIN" th:selected="${tour?.tour_transportation == 'TRAIN'}">Tàu hỏa</option>
+                            <option value="BUS" th:selected="${tour?.tour_transportation == 'BUS'}">Xe khách</option>
+                        </select>
+                        <label for="tour_transportation" class="input-label">Phương tiện <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <!-- Điểm khởi hành (chỉ trong nước) -->
+                    <div class="input-group">
+                        <label for="tour_start_location" class="input-label">Điểm khởi hành <span class="text-red-500">*</span></label>
+                        <select class="input-field" id="tour_start_location" name="tour_start_location" required>
+                            <option value="">Chọn tỉnh/thành phố</option>
+                        </select>
+                    </div>
+
+                    <!-- Điểm đến -->
+                    <div class="input-group">
+                        <label for="tour_end_location" class="input-label">Điểm đến <span class="text-red-500">*</span></label>
+                        <div class="location-tabs">
+                            <div class="location-tab active" data-tab="domestic">Trong nước</div>
+                            <div class="location-tab" data-tab="international">Nước ngoài</div>
+                        </div>
+
+                        <!-- Trong nước -->
+                        <div id="end-domestic-wrapper">
+                            <select class="input-field" id="tour_end_location_domestic">
+                                <option value="">Chọn tỉnh/thành phố</option>
+                            </select>
+                        </div>
+
+                        <!-- Nước ngoài -->
+                        <div id="end-international-wrapper" style="display: none;">
+                            <select class="input-field" id="tour_end_country" style="margin-bottom: 0.5rem;">
+                                <option value="">Chọn quốc gia</option>
+                            </select>
+                            <div class="city-select-wrapper" id="city-select-wrapper">
+                                <select class="input-field" id="tour_end_city">
+                                    <option value="">Chọn thành phố</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="tour_end_location" id="tour_end_location">
+                    </div>
+
+                    <!-- Thời lượng tour -->
+                    <div class="input-group">
+                        <input type="number" name="tour_duration" id="tour_duration" class="input-field" placeholder=" "
+                               th:value="${tour?.tour_duration}" min="1" required>
+                        <label for="tour_duration" class="input-label">Thời lượng (ngày) <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <!-- Số người tối đa -->
+                    <div class="input-group">
+                        <input type="number" name="tour_max_number_of_people" id="tour_max_number_of_people" class="input-field" placeholder=" "
+                               th:value="${tour?.tour_max_number_of_people}" min="1" required>
+                        <label for="tour_max_number_of_people" class="input-label">Số người tối đa <span class="text-red-500">*</span></label>
+                    </div>
+                </div>
+
+                <!-- Mô tả tour -->
+                <div class="input-group">
+                    <textarea name="tour_description" id="tour_description" rows="4" class="input-field" placeholder=" "
+                              th:text="${tour?.tour_description}"></textarea>
+                    <label for="tour_description" class="input-label">Mô tả tour</label>
+                </div>
+
+                <div class="flex justify-end pt-4 space-x-4">
+                    <!-- Nút xóa (chỉ hiển thị khi chỉnh sửa) -->
+                    <button type="button" th:if="${tour != null}" class="btn-danger"
+                            th:data-tour-id="${tour.tour_id}" onclick="confirmDelete(this)">
+                        <i class="fas fa-trash-alt mr-2"></i> Xóa Tour
+                    </button>
+                    <!-- Nút lưu -->
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save mr-2"></i>
+                        <span th:text="${tour == null ? 'Thêm Tour' : 'Cập Nhật'}"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    let countriesData = [];
+    let vietnamProvinces = [];
+    let citiesCache = {};
+
+    $(document).ready(function() {
+        loadVietnamProvinces();
+        loadCountries();
+
+        // Xử lý tab switching cho điểm đến
+        $('.location-tab').click(function() {
+            const tabType = $(this).data('tab');
+
+            $(this).siblings().removeClass('active');
+            $(this).addClass('active');
+
+            if (tabType === 'domestic') {
+                $('#end-domestic-wrapper').show();
+                $('#end-international-wrapper').hide();
+                updateEndLocation();
+            } else {
+                $('#end-domestic-wrapper').hide();
+                $('#end-international-wrapper').show();
+                updateEndLocation();
+            }
+        });
+
+        // Xử lý khi chọn quốc gia
+        $('#tour_end_country').change(function() {
+
+            const countryName = $(this).val();
+            const selectedOption = $(this).find('option:selected');
+            const flagUrl = selectedOption.data('flag');
+            const englishName = selectedOption.data('english');
+
+            if (countryName) {
+                // Cập nhật background flag cho select
+                if (flagUrl) {
+                    $(this).css({
+                        'background-image': `url('${flagUrl}'), url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`
+                    });
+                }
+                console.log('Cập nhật thành phố');
+                // Ẩn và reset dropdown thành phố trước khi load mới
+                $('#city-select-wrapper').removeClass('active');
+                $('#tour_end_city').html('<option value="">Đang tải thành phố...</option>');
+
+                loadCitiesForCountry(englishName);
+            } else {
+                // Reset về trạng thái ban đầu
+                $(this).css({
+                    'background-image': `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`
+                });
+                $('#city-select-wrapper').removeClass('active');
+                $('#tour_end_city').html('<option value="">Chọn thành phố</option>');
+            }
+            updateEndLocation();
+        });
+
+        // Xử lý khi chọn địa điểm
+        $('#tour_start_location, #tour_end_location_domestic, #tour_end_city').change(function() {
+            updateEndLocation();
+        });
+
+        // Set giá trị ban đầu nếu đang edit
+        const tourStartLocation = $('#tour_start_location').attr('th:value');
+        const tourEndLocation = $('#tour_end_location').attr('th:value');
+
+        if (tourEndLocation) {
+            setTimeout(() => setInitialEndLocation(tourEndLocation), 1000);
+        }
+    });
+
+    function loadVietnamProvinces() {
+        $.getJSON('https://esgoo.net/api-tinhthanh/1/0.htm', function(data) {
+            if (data.error == 0) {
+                vietnamProvinces = data.data;
+                $.each(data.data, function(key, val) {
+                    const option = `<option value="${val.full_name}">${val.full_name}</option>`;
+                    $("#tour_start_location").append(option);
+                    $("#tour_end_location_domestic").append(option);
+                });
+            }
+        });
+    }
+
+    function loadCountries() {
+        fetch('https://restcountries.com/v3.1/all?fields=name,flags')
+            .then(response => response.json())
+            .then(data => {
+                countriesData = data.sort((a, b) => {
+                    const nameA = a.translations?.vie?.common || a.name.common;
+                    const nameB = b.translations?.vie?.common || b.name.common;
+                    return nameA.localeCompare(nameB);
+                });
+
+                countriesData.forEach(country => {
+                    const vietnameseName = country.translations?.vie?.common || country.name.common;
+                    const englishName = country.name.common;
+                    const flagUrl = country.flags?.png || country.flags?.svg || '';
+                    const countryCode = country.cca2;
+
+                    const option = `<option value="${vietnameseName}" data-code="${countryCode}" data-flag="${flagUrl}" data-english="${englishName}">${vietnameseName}</option>`;
+                    $("#tour_end_country").append(option);
+                });
+            })
+            .catch(error => {
+                console.error('Lỗi khi tải danh sách quốc gia:', error);
+            });
+    }
+
+    function loadCitiesForCountry(englishCountryName) {
+        // Tìm country object để lấy thông tin capital
+        const country = countriesData.find(c => c.name.common === englishCountryName);
+
+        if (!country) return;
+
+        const countryCode = country.cca2;
+
+        console.log(`https://countriesnow.space/api/v0.1/countries/cities/q?country=${encodeURIComponent(englishCountryName)}`);
+        // Gọi API lấy thành phố (GET method với query string)
+        fetch(`https://countriesnow.space/api/v0.1/countries/cities/q?country=${encodeURIComponent(englishCountryName)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error || !data.data || data.data.length === 0) {
+                    // Nếu API không có dữ liệu, thử lấy capital
+                    const cities = country.capital || ['Thành phố chính'];
+                    citiesCache[countryCode] = cities;
+                    displayCities(cities);
+                } else {
+                    const cities = data.data || [];
+                    citiesCache[countryCode] = cities;
+                    displayCities(cities);
+                }
+            })
+            .catch(error => {
+                console.error('Lỗi khi tải thành phố:', error);
+                // Fallback: hiển thị thủ đô
+                const cities = country.capital || ['Thành phố chính'];
+                citiesCache[countryCode] = cities;
+                displayCities(cities);
+            });
+    }
+
+    function displayCities(cities) {
+        const citySelect = $('#tour_end_city');
+        citySelect.html('<option value="">Chọn thành phố</option>');
+
+        if (cities.length > 0) {
+            cities.forEach(city => {
+                citySelect.append(`<option value="${city}">${city}</option>`);
+            });
+            $('#city-select-wrapper').addClass('active');
+        } else {
+            citySelect.append('<option value="">Không có dữ liệu thành phố</option>');
+            $('#city-select-wrapper').addClass('active');
+        }
+
+        updateEndLocation();
+    }
+
+    function updateEndLocation() {
+        const activeTab = $('.location-tab.active').data('tab');
+        const hiddenInput = $('#tour_end_location');
+
+        if (activeTab === 'domestic') {
+            hiddenInput.val($('#tour_end_location_domestic').val());
+        } else {
+            const country = $('#tour_end_country').val();
+            const city = $('#tour_end_city').val();
+
+            if (country && city) {
+                hiddenInput.val(`${city}, ${country}`);
+            } else if (country) {
+                hiddenInput.val(country);
+            } else {
+                hiddenInput.val('');
+            }
+        }
+    }
+
+    function setInitialEndLocation(location) {
+        // Kiểm tra xem có phải là tỉnh/thành Việt Nam không
+        const isDomestic = vietnamProvinces.some(p => p.full_name === location);
+
+        if (isDomestic) {
+            $('#tour_end_location_domestic').val(location);
+            updateEndLocation();
+        } else {
+            // Là nước ngoài
+            $('.location-tab[data-tab="international"]').click();
+
+            // Tách country và city nếu có dấu phẩy
+            if (location.includes(',')) {
+                const parts = location.split(',').map(s => s.trim());
+                const city = parts[0];
+                const country = parts[1];
+
+                $('#tour_end_country').val(country);
+
+                // Load cities và set city
+                setTimeout(() => {
+                    loadCitiesForCountry(country);
+                    setTimeout(() => {
+                        $('#tour_end_city').val(city);
+
+                        // Set flag
+                        const selectedOption = $('#tour_end_country').find('option:selected');
+                        const flagUrl = selectedOption.data('flag');
+                        if (flagUrl) {
+                            $('#selected-flag').attr('src', flagUrl).show();
+                        }
+
+                        updateEndLocation();
+                    }, 500);
+                }, 500);
+            } else {
+                $('#tour_end_country').val(location);
+
+                // Set flag khi chỉ có country
+                const selectedOption = $('#tour_end_country').find('option:selected');
+                const flagUrl = selectedOption.data('flag');
+                if (flagUrl) {
+                    $('#selected-flag').attr('src', flagUrl).show();
+                }
+
+                updateEndLocation();
+            }
+        }
+    }
+
+    function confirmDelete(button) {
+        const tourId = button.getAttribute('data-tour-id');
+        if (confirm('Bạn có chắc chắn muốn xóa tour này?\n\nHành động này không thể hoàn tác.')) {
+            window.location.href = '/admin/tours/deleteTour?tour_id=' + tourId;
+        }
+    }
+</script>
+</body>
+</html>

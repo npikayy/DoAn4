@@ -1,0 +1,257 @@
+package doan3.tourdulich.khang.controller;
+
+import doan3.tourdulich.khang.dto.TourBookingRequest;
+import doan3.tourdulich.khang.entity.tour_bookings;
+import doan3.tourdulich.khang.entity.tour_start_date;
+import doan3.tourdulich.khang.entity.tours;
+import doan3.tourdulich.khang.entity.users;
+import doan3.tourdulich.khang.repository.tourPicRepo;
+import doan3.tourdulich.khang.repository.tourRepo;
+import doan3.tourdulich.khang.repository.userRepo;
+import doan3.tourdulich.khang.repository.voucherRepo;
+import doan3.tourdulich.khang.repository.tourBookingRepo;
+import doan3.tourdulich.khang.repository.startDateRepo;
+import doan3.tourdulich.khang.service.bookingService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+@RestController
+@Slf4j
+@RequestMapping("/Client/orderBooking")
+public class clientBookingController {
+
+    @Autowired
+    private userRepo userRepo;
+    @Autowired
+    private tourRepo tourRepo;
+    @Autowired
+    private tourPicRepo tourPicRepo;
+    @Autowired
+    private voucherRepo voucherRepo;
+    @Autowired
+    private bookingService bookingService;
+    @Autowired
+    private tourBookingRepo tourBookingRepo;
+    @Autowired
+    private startDateRepo startDateRepo;
+
+    public void getCurrentUser(ModelAndView modelAndView) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = null;
+        users user = null;
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            Object principal = authentication.getPrincipal();
+
+            // Handle regular user authentication
+            if (principal instanceof UserDetails userDetails) {
+                username = userDetails.getUsername();
+            }
+            // Handle Google OAuth2 authentication
+            else if (principal instanceof org.springframework.security.oauth2.core.user.OAuth2User oauth2User) {
+                username = oauth2User.getAttribute("email"); // Get email from Google account
+            }
+
+            if (username != null) {
+                user = userRepo.findByUsername(username);
+                if (user != null) {
+                    log.info("User accessed main page: {}", username);
+                    modelAndView.addObject("user_id", user.getUser_id());
+                    modelAndView.addObject("user", user);
+                } else {
+                    log.warn("User not found in database: {}", username);
+                }
+            }
+        }
+    }
+    public void updateNumGuest(String tour_id, LocalDate start_date, int num_guest) {
+        tour_start_date startDate = startDateRepo.findByStartDateAndTourId(start_date, tour_id);
+        if (startDate != null) {
+            startDate.setGuest_number(startDate.getGuest_number() + num_guest);
+        }
+        startDateRepo.save(startDate);
+    }
+    @GetMapping("/{tour_id}/{start_date}")
+    public ModelAndView clientBooking(@PathVariable String tour_id,
+                                      @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate start_date,
+                                      ModelAndView modelAndView) {
+        getCurrentUser(modelAndView);
+        Optional<tours> tourOptional = tourRepo.findById(tour_id);
+
+        if (!tourOptional.isPresent()) {
+            modelAndView.setViewName("redirect:/error");
+            return modelAndView;
+        }
+
+        Integer num_guest = startDateRepo.findByStartDateAndTourId(start_date, tour_id).getGuest_number();
+        if (num_guest == 0) {
+            modelAndView.addObject("max_num_guest", tourOptional.get().getTour_max_number_of_people());
+        }
+        else {
+            modelAndView.addObject("max_num_guest", tourOptional.get().getTour_max_number_of_people() - num_guest);
+        }
+
+        if (modelAndView.getModel().get("user_id") != null && tourBookingRepo.existsByTourIdAndUserIdAndStartDate(tour_id, modelAndView.getModel().get("user_id").toString(), start_date)) {
+            tour_bookings tourBooking = tourBookingRepo.findByIdAndUserIdAndStartDate(tour_id, modelAndView.getModel().get("user_id").toString(), start_date);
+            if (tourBooking.getStatus().equals("Pending payment")) {
+                modelAndView.addObject("booking_id", tourBookingRepo.findByIdAndUserIdAndStartDate(tour_id, tourBooking.getUser_id(), start_date).getBooking_id());
+            }
+        }
+            tours tour = tourOptional.get();
+            LocalDate endDate = start_date.plusDays(tour.getTour_duration() - 1);
+
+            modelAndView.addObject("tourPics", tourPicRepo.findByTourId(tour_id));
+            modelAndView.addObject("start_date", start_date);
+            modelAndView.addObject("end_date", endDate);
+            modelAndView.addObject("tour", tour);
+            modelAndView.addObject("vouchers", voucherRepo.findAll());
+            modelAndView.setViewName("client_html/order_booking");
+            return modelAndView;
+        }
+
+    @PostMapping("/addBooking")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> addBooking(@RequestBody TourBookingRequest request) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            tour_bookings tourBooking = tourBookingRepo.findByIdAndUserIdAndStartDate(request.getTour_id(), request.getUser_id(), request.getStart_date());
+            // Kiểm tra booking tồn tại
+            if (tourBooking != null && !tourBooking.getStatus().equals("Cancelled")) {
+                response.put("success", false);
+                response.put("booking_id",tourBookingRepo.findByIdAndUserIdAndStartDate(request.getTour_id(),request.getUser_id(),request.getStart_date()).getBooking_id());
+                response.put("message", "Bạn đã đặt thành công rồi, vui lòng hãy tiến hành thanh toán");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            //Thêm booking vào database
+            tour_bookings booking = bookingService.addBooking(
+                    request.getTour_id(),
+                    request.getUser_id(),
+                    request.getUser_full_name(),
+                    request.getUser_email(),
+                    request.getUser_phone_number(),
+                    request.getUser_address(),
+                    request.getTour_name(),
+                    request.getStart_date(),
+                    request.getTotal_price(),
+                    request.getNumber_of_adults(),
+                    request.getNumber_of_children(),
+                    request.getNumber_of_infants(),
+                    request.getVoucher_discount(),
+                    request.getNote()
+            );
+
+            updateNumGuest(request.getTour_id(), request.getStart_date(), request.getNumber_of_adults() + request.getNumber_of_children() + request.getNumber_of_infants());
+
+            // Trả về response thành công
+            response.put("success", true);
+            response.put("booking_id", booking.getBooking_id());
+            response.put("message", "Đặt tour thành công");
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Lỗi khi đặt tour: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+    @PostMapping("/cancelBooking/{booking_id}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> deleteBooking(@PathVariable Integer booking_id, @RequestBody String cancel_reason) {
+        Optional<tour_bookings> booking = tourBookingRepo.findById(booking_id);
+
+        booking.get().setStatus("Cancelled");
+        booking.get().setCancel_reason(cancel_reason);
+        tourBookingRepo.save(booking.get());
+
+        bookingService.sendCancelNotification(booking.get().getUser_email(), booking_id);
+
+        updateNumGuest(booking.get().getTour().getTour_id(), booking.get().getStart_date(), -(booking.get().getNumber_of_adults() + booking.get().getNumber_of_children() + booking.get().getNumber_of_infants()));
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/Payment/{booking_id}")
+    public ModelAndView home(@PathVariable Integer booking_id,ModelAndView modelAndView){
+        getCurrentUser(modelAndView);
+        Optional<tour_bookings> booking = tourBookingRepo.findById(booking_id);
+
+        String bookingStatus = booking.get().getStatus();
+
+        if (bookingStatus.equals("Cancelled")) {
+            return new ModelAndView("redirect:/Client/orderBooking/booking_cancelled/"+booking_id);
+        } else if (bookingStatus.equals("Paid")||bookingStatus.equals("Cash")) {
+            return new ModelAndView("redirect:/Client/orderBooking/booking_success/"+booking_id);
+        }
+
+        modelAndView.addObject("booking",booking.get());
+        modelAndView.addObject("tour",tourRepo.findById(booking.get().getTour().getTour_id()).get());
+        modelAndView.addObject("start_date",booking.get().getStart_date());
+        modelAndView.setViewName("client_html/payment_method");
+        return modelAndView;
+    }
+    @GetMapping("/booking_success/{booking_id}")
+    public ModelAndView success(@PathVariable Integer booking_id, ModelAndView modelAndView) {
+        getCurrentUser(modelAndView);
+        modelAndView.addObject("booking",tourBookingRepo.findById(booking_id).get());
+        modelAndView.setViewName("client_html/booking_success");
+        return modelAndView;
+    }
+    @GetMapping("/payment_failed/{booking_id}")
+    public ModelAndView failed(@PathVariable Integer booking_id,ModelAndView modelAndView) {
+        getCurrentUser(modelAndView);
+        modelAndView.addObject("booking",tourBookingRepo.findById(booking_id).get());
+        modelAndView.setViewName("client_html/payment_failed");
+        return modelAndView;
+    }
+    @GetMapping("/booking_cancelled/{booking_id}")
+    public ModelAndView cancel(@PathVariable Integer booking_id,ModelAndView modelAndView) {
+        getCurrentUser(modelAndView);
+        modelAndView.addObject("booking",tourBookingRepo.findById(booking_id).get());
+        modelAndView.setViewName("client_html/booking_cancelled");
+        return modelAndView;
+    }
+    @GetMapping("/cash_payment/{booking_id}")
+    public ResponseEntity<Map<String, Object>> pending(@PathVariable Integer booking_id) {
+        Map<String, Object> response = new HashMap<>();
+        tourBookingRepo.findById(booking_id).ifPresent(booking -> {
+            booking.setStatus("Cash");
+            tourBookingRepo.save(booking);
+            bookingService.sendCashPaymentNotification(booking.getUser_email(), booking_id);
+        });
+        response.put("success", true);
+        response.put("booking_id", booking_id);
+        response.put("message", "Đặt tour thành công");
+        return ResponseEntity.ok(response);
+    }
+    @PostMapping("/confirm_cash_payment/{booking_id}")
+    public ResponseEntity<Map<String, Object>> confirmCashPayment(@PathVariable Integer booking_id) {
+        Map<String, Object> response = new HashMap<>();
+        tourBookingRepo.findById(booking_id).ifPresent(booking -> {
+            booking.setStatus("Paid");
+            tourBookingRepo.save(booking);
+            bookingService.sendPaymentSuccessNotification(booking.getUser_email(), booking_id);
+        });
+        response.put("success", true);
+        response.put("booking_id", booking_id);
+        response.put("message", "Thanh toán thanh cong");
+        return ResponseEntity.ok(response);
+    }
+}

@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập - TÔI ĐI DU LỊCH</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        travel: {
+                            primary: '#FF6B35',
+                            secondary: '#2A4365',
+                            accent: '#38B2AC',
+                            light: '#F0F5FF'
+                        }
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-in': 'slideIn 0.5s ease-out'
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        slideIn: {
+                            '0%': { opacity: '0', transform: 'translateX(-20px)' },
+                            '100%': { opacity: '1', transform: 'translateX(0)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .carousel-slide {
+            transition: opacity 1s cubic-bezier(0.65, 0.05, 0.36, 1);
+        }
+        .carousel-slide:not(.active) {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .carousel-slide.active {
+            opacity: 1;
+        }
+        .indicator-progress {
+            transition: transform linear;
+        }
+    </style>
+</head>
+<body class="bg-travel-light min-h-screen flex items-center justify-center p-4">
+<div class="w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col lg:flex-row animate-fade-in">
+
+    <!-- Left Side - Carousel Section -->
+    <div class="lg:w-1/2 relative hidden lg:block overflow-hidden group">
+        <!-- Carousel Container -->
+        <div class="relative h-full" id="carousel-slides">
+            <!-- Dynamic Slides from Thymeleaf -->
+            <div th:each="banner, iter : ${banners}"
+                 th:if="${banner.is_showed}"
+                 th:classappend="${iter.index == 0} ? 'active opacity-100' : 'opacity-0'"
+                 class="carousel-slide h-full w-full absolute inset-0 bg-cover bg-center transition-all duration-1000"
+                 th:style="'background-image: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), url(' + ${banner.banner_url} + ')'">
+
+                <div class="absolute inset-0 flex flex-col justify-between p-8 lg:p-12">
+                    <!-- Logo -->
+                    <a href="/Client/Home" class="flex items-center gap-3 animate-slide-in">
+                        <i class="ri-plane-line text-3xl text-white"></i>
+                        <h1 class="text-2xl font-bold text-white">TÔI ĐI DU LỊCH</h1>
+                    </a>
+
+                    <!-- Featured Card -->
+                    <div class="bg-white/20 backdrop-blur-sm rounded-xl p-6 border border-white/10 animate-slide-in">
+                        <div class="flex items-start gap-4">
+                            <div class="bg-travel-primary p-2 rounded-lg">
+                                <i class="ri-star-s-fill text-white text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-white">Khám phá thế giới</h3>
+                                <p class="text-white/80 text-sm mt-1">Đăng nhập để mở khóa ưu đãi đặc biệt và lưu lại những chuyến đi đáng nhớ</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Default Slide if no banners -->
+            <div th:if="${#lists.isEmpty(banners.?[is_showed == true])}"
+                 class="carousel-slide active h-full w-full bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500">
+
+                <div class="absolute inset-0 flex flex-col justify-between p-8 lg:p-12">
+                    <!-- Logo -->
+                    <div class="flex items-center gap-3 animate-slide-in">
+                        <i class="ri-plane-line text-3xl text-white"></i>
+                        <h1 class="text-2xl font-bold text-white">TÔI ĐI DU LỊCH</h1>
+                    </div>
+
+                    <!-- Featured Card -->
+                    <div class="bg-white/20 backdrop-blur-sm rounded-xl p-6 border border-white/10 animate-slide-in">
+                        <div class="flex items-start gap-4">
+                            <div class="bg-travel-primary p-2 rounded-lg">
+                                <i class="ri-star-s-fill text-white text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-white">Khám phá thế giới</h3>
+                                <p class="text-white/80 text-sm mt-1">Đăng nhập để mở khóa ưu đãi đặc biệt và lưu lại những chuyến đi đáng nhớ</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Arrows -->
+        <button th:if="${#lists.size(banners.?[is_showed == true]) > 1}"
+                class="absolute left-6 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/30 text-white rounded-full p-3 z-10 transition-all backdrop-blur-sm border border-white/20 hover:scale-110 shadow-lg"
+                id="prevBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+        </button>
+        <button th:if="${#lists.size(banners.?[is_showed == true]) > 1}"
+                class="absolute right-6 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/30 text-white rounded-full p-3 z-10 transition-all backdrop-blur-sm border border-white/20 hover:scale-110 shadow-lg"
+                id="nextBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+        </button>
+
+        <!-- Modern Indicators -->
+        <div th:if="${#lists.size(banners.?[is_showed == true]) > 1}"
+             class="absolute bottom-8 left-0 right-0 flex justify-center gap-3 z-10">
+            <button th:each="banner, iter : ${banners}"
+                    th:if="${banner.is_showed}"
+                    class="w-16 h-1.5 rounded-full bg-white/30 hover:bg-white/70 indicator-dot transition-all duration-300 overflow-hidden"
+                    th:classappend="${iter.index == 0} ? 'active' : ''"
+                    th:attr="data-slide=${iter.index}">
+                <div class="h-full bg-white origin-left scale-x-0 transition-transform duration-300 ease-out indicator-progress"></div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Right Side - Form Section -->
+    <div class="lg:w-1/2 p-8 md:p-12 relative">
+        <div class="max-w-md mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-10">
+                <h1 class="text-3xl font-bold text-travel-secondary mb-2">Chào mừng trở lại</h1>
+                <p class="text-gray-600">Đăng nhập để tiếp tục hành trình của bạn</p>
+            </div>
+
+            <!-- Error Message -->
+            <div th:if="${errorMessage}" class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start" role="alert">
+                <div class="flex-shrink-0">
+                    <i class="ri-error-warning-line text-red-500 text-xl mr-3"></i>
+                </div>
+                <div>
+                    <h4 class="text-sm font-medium text-red-800">Đăng nhập không thành công</h4>
+                    <p class="text-sm text-red-600 mt-1" th:text="${errorMessage}"></p>
+                </div>
+            </div>
+
+            <!-- Login Form -->
+            <form action="/login" method="post" class="space-y-6">
+                <!-- Username Field -->
+                <div class="relative">
+                    <i class="ri-user-line absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input
+                            type="text"
+                            name="username"
+                            id="username"
+                            placeholder="Tên tài khoản của bạn"
+                            class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-lg focus:border-travel-primary focus:ring-2 focus:ring-travel-primary/30 outline-none transition"
+                            required
+                    >
+                </div>
+
+                <!-- Password Field -->
+                <div class="relative">
+                    <i class="ri-lock-line absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    <input
+                            type="password"
+                            name="password"
+                            id="password"
+                            placeholder="Mật khẩu"
+                            class="w-full pl-12 pr-12 py-3 border border-gray-200 rounded-lg focus:border-travel-primary focus:ring-2 focus:ring-travel-primary/30 outline-none transition"
+                            required
+                    >
+                    <button
+                            type="button"
+                            class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-travel-primary transition"
+                            id="togglePassword"
+                    >
+                        <i class="ri-eye-off-line" id="passwordIcon"></i>
+                    </button>
+                </div>
+
+                <!-- Remember & Forgot -->
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" class="rounded border-gray-300 text-travel-primary focus:ring-travel-primary">
+                        <span class="text-sm text-gray-600">Ghi nhớ đăng nhập</span>
+                    </label>
+                    <a href="/forgotPassword/verifyEmail" class="text-sm text-travel-primary hover:text-travel-accent transition">Quên mật khẩu?</a>
+                </div>
+
+                <!-- Submit Button -->
+                <button
+                        type="submit"
+                        class="w-full bg-travel-primary hover:bg-travel-accent text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-all hover:shadow-lg hover:-translate-y-0.5"
+                >
+                    <span>Đăng nhập</span>
+                    <i class="ri-arrow-right-line"></i>
+                </button>
+            </form>
+
+            <!-- Social Divider -->
+            <div class="flex items-center my-6">
+                <div class="flex-1 border-t border-gray-200"></div>
+                <span class="px-4 text-sm text-gray-500">Hoặc tiếp tục với</span>
+                <div class="flex-1 border-t border-gray-200"></div>
+            </div>
+
+            <!-- Social Buttons -->
+            <div class="grid p-5">
+                <button class="flex items-center justify-center gap-2 py-2.5 px-4 border border-gray-200 rounded-lg hover:border-gray-300 transition">
+                    <img src="https://www.google.com/favicon.ico" alt="Google" class="w-5 h-5">
+                    <a href="/oauth2/authorization/google" class="text-sm">Google</a>
+                </button>
+            </div>
+
+            <!-- Registration Link -->
+            <div class="text-center mt-8 text-sm text-gray-600">
+                Chưa có tài khoản?
+                <a href="/register" class="text-travel-primary font-medium hover:text-travel-accent transition">Đăng ký ngay</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle password visibility
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    const passwordIcon = document.getElementById('passwordIcon');
+
+    togglePassword.addEventListener('click', () => {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        passwordIcon.classList.toggle('ri-eye-line');
+        passwordIcon.classList.toggle('ri-eye-off-line');
+    });
+
+    // Carousel functionality
+    const carouselSlides = document.querySelectorAll('.carousel-slide');
+    const indicators = document.querySelectorAll('.indicator-dot');
+    const progressBars = document.querySelectorAll('.indicator-progress');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+
+    let currentIndex = 0;
+    let intervalId;
+    let isPaused = false;
+    const slideInterval = 5000; // 5 seconds
+
+    function showSlide(index) {
+        // Wrap around if at ends
+        if (index >= carouselSlides.length) index = 0;
+        if (index < 0) index = carouselSlides.length - 1;
+
+        // Update slides
+        carouselSlides.forEach((slide, i) => {
+            slide.classList.toggle('active', i === index);
+            slide.classList.toggle('opacity-100', i === index);
+            slide.classList.toggle('opacity-0', i !== index);
+        });
+
+        // Update indicators
+        indicators.forEach((indicator, i) => {
+            indicator.classList.toggle('active', i === index);
+            indicator.classList.toggle('bg-white/70', i === index);
+            indicator.classList.toggle('bg-white/30', i !== index);
+
+            // Reset progress bars
+            progressBars[i].style.transform = 'scaleX(0)';
+        });
+
+        // Start progress bar animation
+        if (progressBars[index]) {
+            progressBars[index].style.transform = 'scaleX(1)';
+            progressBars[index].style.transitionDuration = slideInterval + 'ms';
+        }
+
+        currentIndex = index;
+    }
+
+    function startCarousel() {
+        intervalId = setInterval(() => {
+            if (!isPaused) {
+                showSlide(currentIndex + 1);
+            }
+        }, slideInterval);
+
+        // Start initial progress bar
+        if (progressBars[currentIndex]) {
+            progressBars[currentIndex].style.transform = 'scaleX(1)';
+            progressBars[currentIndex].style.transitionDuration = slideInterval + 'ms';
+        }
+    }
+
+    function pauseCarousel() {
+        isPaused = true;
+        clearInterval(intervalId);
+
+        // Pause progress bar animation
+        if (progressBars[currentIndex]) {
+            const computedStyle = window.getComputedStyle(progressBars[currentIndex]);
+            const transform = computedStyle.getPropertyValue('transform');
+            const matrix = transform.match(/^matrix\((.+)\)$/);
+
+            if (matrix) {
+                const values = matrix[1].split(', ');
+                const scaleX = parseFloat(values[0]);
+                progressBars[currentIndex].style.transform = `scaleX(${scaleX})`;
+                progressBars[currentIndex].style.transitionDuration = '0s';
+            }
+        }
+    }
+
+    function resumeCarousel() {
+        isPaused = false;
+        startCarousel();
+    }
+
+    // Initialize
+    if (carouselSlides.length > 1) {
+        startCarousel();
+
+        // Navigation buttons
+        if (prevBtn && nextBtn) {
+            prevBtn.addEventListener('click', () => {
+                pauseCarousel();
+                showSlide(currentIndex - 1);
+                setTimeout(resumeCarousel, slideInterval);
+            });
+
+            nextBtn.addEventListener('click', () => {
+                pauseCarousel();
+                showSlide(currentIndex + 1);
+                setTimeout(resumeCarousel, slideInterval);
+            });
+        }
+
+        // Indicator dots
+        indicators.forEach((indicator, i) => {
+            indicator.addEventListener('click', () => {
+                pauseCarousel();
+                showSlide(i);
+                setTimeout(resumeCarousel, slideInterval);
+            });
+        });
+
+        // Pause on hover
+        const carouselContainer = document.querySelector('.group');
+        if (carouselContainer) {
+            carouselContainer.addEventListener('mouseenter', pauseCarousel);
+            carouselContainer.addEventListener('mouseleave', resumeCarousel);
+        }
+    }
+</script>
+</body>
+</html>

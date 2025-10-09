@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Booking - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        /* Phong cách hóa đơn */
+        .invoice-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            position: relative;
+            border-top: 4px solid;
+        }
+
+        .invoice-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+        }
+
+        /* Màu sắc theo trạng thái */
+        .invoice-card.pending { border-top-color: #F59E0B; }
+        .invoice-card.paid { border-top-color: #10B981; }
+        .invoice-card.cash { border-top-color: #3B82F6; }
+        .invoice-card.cancelled { border-top-color: #EF4444; }
+        .invoice-card.completed { border-top-color: #8B5CF6; }
+
+        /* Header hóa đơn */
+        .invoice-header {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            padding: 1.5rem;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+
+        /* Nội dung hóa đơn */
+        .invoice-body {
+            padding: 1.5rem;
+        }
+
+        /* Footer hóa đơn */
+        .invoice-footer {
+            background: #f8fafc;
+            padding: 1rem 1.5rem;
+            border-top: 1px dashed #e2e8f0;
+        }
+
+        /* Ribbon trạng thái */
+        .status-ribbon {
+            position: absolute;
+            top: 15px;
+            right: -30px;
+            padding: 0.25rem 2rem;
+            transform: rotate(45deg);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+            text-align: center;
+            width: 120px;
+        }
+
+        .ribbon-pending { background: #F59E0B; }
+        .ribbon-paid { background: #10B981; }
+        .ribbon-cash { background: #3B82F6; }
+        .ribbon-cancelled { background: #EF4444; }
+        .ribbon-completed { background: #8B5CF6; }
+
+        /* Các mục trong hóa đơn */
+        .invoice-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        /* Hiệu ứng tab lọc */
+        .filter-tab {
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .filter-tab.active {
+            background: #4f46e5;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+        }
+
+        .filter-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: white;
+        }
+
+        /* Hiệu ứng tìm kiếm */
+        .search-box {
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .search-box:focus {
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+
+        /* Hiệu ứng xóa */
+        .fade-out {
+            animation: fadeOut 0.3s ease-out forwards;
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-20px) scale(0.95); }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+<div class="flex">
+    <!-- Sidebar -->
+    <aside th:replace="~{admin_html/fragment/sidebar :: sidebar}"></aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-x-hidden overflow-y-auto">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Header Section -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">Quản Lý đơn đặt tour</h1>
+                    <p class="text-gray-600 mt-1">
+                        <span th:text="${bookings.size()}"></span> đơn được tìm thấy
+                    </p>
+                </div>
+                <div class="mt-4 md:mt-0 flex space-x-3">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" id="searchInput" placeholder="Tìm kiếm booking..."
+                               class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 search-box">
+                    </div>
+                    <div class="relative">
+                        <select id="userFilter" class="appearance-none pl-3 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="all">Tất cả người dùng</option>
+                            <option th:each="user : ${distinctUsers}"
+                                    th:value="${user.user_id}"
+                                    th:text="${user.full_name}"></option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                            <i class="fas fa-chevron-down text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Tabs -->
+            <div class="flex space-x-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
+                <button onclick="filterByStatus('all')"
+                        class="filter-tab active px-4 py-2 rounded-lg font-medium text-sm bg-indigo-600 text-white">
+                    <i class="fas fa-list mr-1"></i> Tất cả
+                </button>
+                <button onclick="filterByStatus('Pending payment')"
+                        class="filter-tab px-4 py-2 rounded-lg font-medium text-sm bg-amber-100 text-amber-800">
+                    <i class="fas fa-clock mr-1"></i> Chờ thanh toán
+                </button>
+                <button onclick="filterByStatus('Paid')"
+                        class="filter-tab px-4 py-2 rounded-lg font-medium text-sm bg-green-100 text-green-800">
+                    <i class="fas fa-check-circle mr-1"></i> Đã thanh toán
+                </button>
+                <button onclick="filterByStatus('Cash')"
+                        class="filter-tab px-4 py-2 rounded-lg font-medium text-sm bg-blue-100 text-blue-800">
+                    <i class="fas fa-money-bill-wave mr-1"></i> Tiền mặt
+                </button>
+                <button onclick="filterByStatus('Completed')"
+                        class="filter-tab px-4 py-2 rounded-lg font-medium text-sm bg-purple-100 text-purple-800">
+                    <i class="fas fa-check-double mr-1"></i> Hoàn thành
+                </button>
+                <button onclick="filterByStatus('Cancelled')"
+                        class="filter-tab px-4 py-2 rounded-lg font-medium text-sm bg-red-100 text-red-800">
+                    <i class="fas fa-times-circle mr-1"></i> Đã hủy
+                </button>
+            </div>
+
+            <!-- Booking Cards -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" id="bookingContainer">
+                <!-- Empty State -->
+                <div class="col-span-full hidden empty-state rounded-xl p-8 text-center bg-white shadow-sm">
+                    <div class="mx-auto w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 mb-4">
+                        <i class="fas fa-suitcase text-3xl"></i>
+                    </div>
+                    <h3 class="text-xl font-medium text-gray-900 mb-2">Không có booking nào</h3>
+                    <p class="text-gray-500 max-w-md mx-auto">Không tìm thấy booking nào phù hợp với tiêu chí lọc của bạn</p>
+                </div>
+
+                <!-- Booking Invoice Cards -->
+                <div th:each="booking : ${bookings}"
+                     class="invoice-card"
+                     th:classappend="${booking.status == 'Pending payment'} ? 'pending' :
+                          (${booking.status == 'Paid'} ? 'paid' :
+                          (${booking.status == 'Cash'} ? 'cash' :
+                          (${booking.status == 'Cancelled'} ? 'cancelled' : 'completed')))"
+                     th:data-status="${booking.status}"
+                     th:data-id="${booking.booking_id}"
+                     th:data-user-id="${booking.user_id}"
+                     th:data-customer="${booking.user_full_name.toLowerCase()}"
+                     th:data-tour="${booking.tour.tour_name.toLowerCase()}"
+                     th:data-code="${booking.booking_id}">
+
+                    <!-- Ribbon trạng thái -->
+                    <div th:switch="${booking.status}" class="status-ribbon">
+                        <span th:case="'Pending payment'" class="ribbon-pending">CHỜ TT</span>
+                        <span th:case="'Paid'" class="ribbon-paid">ĐÃ TT</span>
+                        <span th:case="'Cash'" class="ribbon-cash">TIỀN MẶT</span>
+                        <span th:case="'Cancelled'" class="ribbon-cancelled">ĐÃ HỦY</span>
+                        <span th:case="'Completed'" class="ribbon-completed">HOÀN TẤT</span>
+                    </div>
+
+                    <!-- Header hóa đơn -->
+                    <div class="invoice-header">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-800" th:text="${booking.tour.tour_name}"></h3>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    <span th:text="'#' + ${booking.booking_id}"></span> •
+                                    <span th:text="${#temporals.format(booking.booking_date, 'dd/MM/yyyy HH:mm')}"></span>
+                                </p>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold text-indigo-600"
+                                     th:text="${#numbers.formatInteger(booking.total_price, 3, 'POINT') + '₫'}"></div>
+                                <span class="text-xs text-gray-500">Tổng thanh toán</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thông tin khách hàng -->
+                    <div class="invoice-body">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold mr-3"
+                                 th:text="${#strings.substring(booking.user_full_name, 0, 1).toUpperCase()}"></div>
+                            <div>
+                                <h4 class="font-semibold text-gray-800" th:text="${booking.user_full_name}"></h4>
+                                <p class="text-sm text-gray-500" th:text="${booking.user_phone_number}"></p>
+                            </div>
+                        </div>
+
+                        <!-- Chi tiết tour -->
+                        <div class="space-y-3">
+                            <div class="invoice-item">
+                                <span class="text-gray-500">Số lượng</span>
+                                <div class="flex space-x-2">
+                                    <span class="font-medium" th:text="${booking.number_of_adults} + ' người lớn'"></span>
+                                    <span th:if="${booking.number_of_children > 0}"
+                                          class="font-medium"
+                                          th:text="', ' + ${booking.number_of_children} + ' trẻ em'"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer với các action -->
+                    <div class="invoice-footer flex justify-between items-center">
+                        <a th:href="@{'/admin/tourBookings/detail/' + ${booking.booking_id}}"
+                           class="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center">
+                            <i class="fas fa-eye mr-2"></i> Xem chi tiết
+                        </a>
+
+                        <div class="flex space-x-2">
+                            <a th:if="${booking.status == 'Pending payment' || booking.status == 'Paid'}"
+                               href="#"
+                               class="px-3 py-1 bg-red-50 text-red-600 rounded-md hover:bg-red-100 text-sm font-medium flex items-center"
+                               th:data-booking-id="${booking.booking_id}"
+                               onclick="cancelBooking(event, this.getAttribute('data-booking-id'))">
+                                <i class="fas fa-times mr-1"></i> Hủy
+                            </a>
+                            <a th:if="${booking.status == 'Cash'}"
+                               href="#"
+                               class="px-3 py-1 bg-green-50 text-green-600 rounded-md hover:bg-green-100 text-sm font-medium flex items-center"
+                               th:data-booking-id="${booking.booking_id}"
+                               onclick="confirmPayment(event, this.getAttribute('data-booking-id'))">
+                                <i class="fas fa-check mr-1"></i> Xác nhận
+                            </a>
+                            <a th:if="${booking.status == 'Paid' and #temporals.createNow().toLocalDate().isAfter(booking.end_date)}"
+                               href="#"
+                               class="px-3 py-1 bg-purple-50 text-purple-600 rounded-md hover:bg-purple-100 text-sm font-medium flex items-center"
+                               th:data-booking-id="${booking.booking_id}"
+                               onclick="completeBooking(event, this.getAttribute('data-booking-id'))">
+                                <i class="fas fa-check-double mr-1"></i> Hoàn thành
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!--Confirm Cash Payment Modal -->
+<div id="confirmPaymentModal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <i class="fas fa-money-bill-wave text-green-600"></i>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Xác nhận thanh toán tiền mặt</h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500">Bạn có chắc chắn muốn xác nhận booking này đã được thanh toán bằng tiền mặt?</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" id="confirmPaymentBtn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    <span id="paymentSpinner" class="hidden mr-2">
+                        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </span>
+                    Xác nhận
+                </button>
+                <button type="button" id="cancelPaymentBtn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    Hủy bỏ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Complete Booking Modal -->
+<div id="completeBookingModal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <i class="fas fa-check-double text-purple-600"></i>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Xác nhận hoàn thành chuyến đi</h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500">Bạn có chắc chắn muốn xác nhận chuyến đi này đã hoàn thành?</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" id="confirmCompleteBtn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-purple-600 text-base font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    <span id="completeSpinner" class="hidden mr-2">
+                        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </span>
+                    Xác nhận
+                </button>
+                <button type="button" id="cancelCompleteBtn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    Hủy bỏ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--Cancel Booking Modal -->
+<div id="cancelBookingModal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <i class="fas fa-exclamation-triangle text-red-600"></i>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Xác nhận hủy booking</h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500">Bạn có chắc chắn muốn hủy booking này?</p>
+                            <div class="mt-4">
+                                <label for="cancelReason" class="block text-sm font-medium text-gray-700">Lý do hủy</label>
+                                <textarea id="cancelReason" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" id="confirmCancelBtn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    <span id="cancelSpinner" class="hidden mr-2">
+                        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </span>
+                    Xác nhận hủy
+                </button>
+                <button type="button" id="cancelCancelBtn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    Quay lại
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Biến toàn cục
+        let currentBookingId = null;
+        const cancelCancelBtn = document.getElementById('cancelCancelBtn');
+        const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+        const cancelModal = document.getElementById('cancelBookingModal');
+        const cancelSpinner = document.getElementById('cancelSpinner');
+        const searchInput = document.getElementById('searchInput');
+        const userFilter = document.getElementById('userFilter');
+        const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
+        const cancelPaymentBtn = document.getElementById('cancelPaymentBtn');
+        const confirmPaymentModal = document.getElementById('confirmPaymentModal');
+        const paymentSpinner = document.getElementById('paymentSpinner');
+        const confirmCompleteBtn = document.getElementById('confirmCompleteBtn');
+        const cancelCompleteBtn = document.getElementById('cancelCompleteBtn');
+        const completeBookingModal = document.getElementById('completeBookingModal');
+        const completeSpinner = document.getElementById('completeSpinner');
+
+        // Hệ thống lọc nâng cao
+        window.filterByStatus = function(status) {
+            // Cập nhật active tab
+            document.querySelectorAll('.filter-tab').forEach(btn => {
+                btn.classList.remove('active', 'bg-indigo-600', 'text-white');
+                btn.classList.add('bg-gray-100', 'text-gray-700');
+            });
+
+            event.target.classList.add('active');
+            event.target.classList.remove('bg-gray-100', 'text-gray-700');
+            applyFilters();
+        }
+
+        // Áp dụng tất cả bộ lọc
+        function applyFilters() {
+            const statusFilter = document.querySelector('.filter-tab.active').getAttribute('onclick').match(/'([^']+)'/)[1];
+            const userFilterValue = userFilter.value;
+            const searchTerm = searchInput.value.toLowerCase().trim();
+
+            const cards = document.querySelectorAll('.invoice-card');
+            let hasVisibleCards = false;
+
+            cards.forEach(card => {
+                const cardStatus = card.getAttribute('data-status');
+                const cardUserId = card.getAttribute('data-user-id');
+                const customer = card.getAttribute('data-customer');
+                const tour = card.getAttribute('data-tour');
+                const code = card.getAttribute('data-code');
+
+                // Kiểm tra điều kiện lọc
+                const statusMatch = statusFilter === 'all' || cardStatus === statusFilter;
+                const userMatch = userFilterValue === 'all' || cardUserId === userFilterValue;
+                const searchMatch = searchTerm === '' ||
+                    customer.includes(searchTerm) ||
+                    tour.includes(searchTerm) ||
+                    code.includes(searchTerm);
+
+                if (statusMatch && userMatch && searchMatch) {
+                    card.style.display = 'block';
+                    hasVisibleCards = true;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Hiển thị empty state nếu cần
+            const emptyState = document.querySelector('.empty-state');
+            emptyState.classList.toggle('hidden', hasVisibleCards);
+        }
+
+        // Thêm sự kiện cho dropdown lọc người dùng
+        userFilter.addEventListener('change', applyFilters);
+
+        // Sửa sự kiện tìm kiếm
+        searchInput.addEventListener('input', applyFilters);
+
+        // Hủy booking
+        window.cancelBooking = function(event, bookingId) {
+            event.preventDefault();
+            currentBookingId = bookingId;
+            cancelModal.classList.remove('hidden');
+        }
+
+        // Xử lý sự kiện xác nhận hủy
+        if (confirmCancelBtn) {
+            confirmCancelBtn.addEventListener('click', function() {
+                const cancelReason = document.getElementById('cancelReason').value;
+
+                if (!cancelReason) {
+                    alert('Vui lòng nhập lý do hủy');
+                    return;
+                }
+
+                // Hiển thị loading
+                confirmCancelBtn.disabled = true;
+                cancelSpinner.classList.remove('hidden');
+
+                // Gửi yêu cầu hủy booking
+                fetch('/Client/orderBooking/cancelBooking/' + currentBookingId, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: cancelReason
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => { throw err; });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            // Thêm hiệu ứng xóa
+                            const card = document.querySelector(`.invoice-card[data-id="${currentBookingId}"]`);
+                            card.classList.add('fade-out');
+
+                            // Hiển thị thông báo
+                            showSuccessMessage('Đã hủy booking thành công');
+
+                            // Xóa card sau khi animation kết thúc
+                            setTimeout(() => {
+                                card.remove();
+                                applyFilters(); // Cập nhật lại bộ lọc
+                            }, 300);
+                        } else {
+                            throw new Error(data.message || 'Lỗi không xác định');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Có lỗi xảy ra: ' + error.message);
+                    })
+                    .finally(() => {
+                        confirmCancelBtn.disabled = false;
+                        cancelSpinner.classList.add('hidden');
+                        cancelModal.classList.add('hidden');
+                        document.getElementById('cancelReason').value = '';
+                    });
+            });
+        }
+
+        // Hủy bỏ thao tác hủy booking
+        if (cancelCancelBtn) {
+            cancelCancelBtn.addEventListener('click', function() {
+                currentBookingId = null;
+                document.getElementById('cancelReason').value = '';
+                cancelModal.classList.add('hidden');
+            });
+        }
+
+        // Hàm mở modal xác nhận thanh toán tiền mặt
+        window.confirmPayment = function(event, bookingId) {
+            event.preventDefault();
+            currentBookingId = bookingId;
+            confirmPaymentModal.classList.remove('hidden');
+        }
+
+        // Xử lý sự kiện xác nhận thanh toán tiền mặt
+        if (confirmPaymentBtn) {
+            confirmPaymentBtn.addEventListener('click', function() {
+                // Hiển thị loading
+                confirmPaymentBtn.disabled = true;
+                paymentSpinner.classList.remove('hidden');
+
+                // Gửi yêu cầu xác nhận thanh toán
+                fetch('/Client/orderBooking/confirm_cash_payment/' + currentBookingId, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => { throw err; });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            showSuccessMessage('Đã xác nhận thanh toán tiền mặt');
+                            window.location.reload();
+                        } else {
+                            throw new Error(data.message || 'Lỗi không xác định');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Có lỗi xảy ra: ' + error.message);
+                    })
+                    .finally(() => {
+                        confirmPaymentBtn.disabled = false;
+                        paymentSpinner.classList.add('hidden');
+                        confirmPaymentModal.classList.add('hidden');
+                    });
+            });
+        }
+
+        // Hủy bỏ thao tác xác nhận thanh toán
+        if (cancelPaymentBtn) {
+            cancelPaymentBtn.addEventListener('click', function() {
+                currentBookingId = null;
+                confirmPaymentModal.classList.add('hidden');
+            });
+        }
+
+        // Hàm xác nhận hoàn thành chuyến đi
+        window.completeBooking = function(event, bookingId) {
+            event.preventDefault();
+            currentBookingId = bookingId;
+            completeBookingModal.classList.remove('hidden');
+        }
+
+        // Xử lý sự kiện xác nhận hoàn thành chuyến đi
+        if (confirmCompleteBtn) {
+            confirmCompleteBtn.addEventListener('click', function() {
+                // Hiển thị loading
+                confirmCompleteBtn.disabled = true;
+                completeSpinner.classList.remove('hidden');
+
+                // Gửi yêu cầu xác nhận hoàn thành
+                fetch('/admin/bookings/complete/' + currentBookingId, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
+                    }
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => { throw err; });
+                        }
+                    })
+                    .then(data => {
+                            if (data.success) {
+                                showSuccessMessage('Đã xác nhận hoàn thành chuyến đi');
+                                window.location.reload();
+                            } else {
+                                throw new Error(data.message || 'Lỗi không xác định');
+                            }
+                        })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('Có lỗi xảy ra: ' + error.message);
+                            })
+                            .finally(() => {
+                                confirmCompleteBtn.disabled = false;
+                                completeSpinner.classList.add('hidden');
+                                completeBookingModal.classList.add('hidden');
+                            });
+                    });
+            }
+
+            // Hủy bỏ thao tác xác nhận hoàn thành
+            if (cancelCompleteBtn) {
+                cancelCompleteBtn.addEventListener('click', function() {
+                    currentBookingId = null;
+                    completeBookingModal.classList.add('hidden');
+                });
+            }
+
+            // Hàm hiển thị thông báo thành công
+            function showSuccessMessage(message) {
+                const notification = document.createElement('div');
+                notification.className = 'fixed top-4 right-4 z-50 px-6 py-3 bg-green-500 text-white rounded-lg shadow-lg flex items-center animate-fade-in-up';
+                notification.innerHTML = `
+                <i class="fas fa-check-circle mr-2"></i>
+                <span>${message}</span>
+            `;
+                document.body.appendChild(notification);
+
+                // Tự động ẩn thông báo sau 3 giây
+                setTimeout(() => {
+                    notification.classList.add('animate-fade-out');
+                    setTimeout(() => notification.remove(), 300);
+                }, 3000);
+            }
+
+            // Thêm animation cho thông báo
+            const style = document.createElement('style');
+            style.innerHTML = `
+            @keyframes fadeInUp {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            @keyframes fadeOut {
+                from { opacity: 1; transform: translateY(0); }
+                to { opacity: 0; transform: translateY(-20px); }
+            }
+            .animate-fade-in-up {
+                animation: fadeInUp 0.3s ease-out forwards;
+            }
+            .animate-fade-out {
+                animation: fadeOut 0.3s ease-out forwards;
+            }
+        `;
+            document.head.appendChild(style);
+        });
+</script>
+</body>
+</html>

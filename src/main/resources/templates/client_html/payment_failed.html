@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh toán thất bại | Vietravel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        vietravel: {
+                            blue: '#0066b3',
+                            orange: '#f15a24',
+                            yellow: '#ffc72c',
+                            teal: '#00a99d',
+                            lightblue: '#e6f2fa',
+                            lightorange: '#fef0eb',
+                            lightred: '#fff5f5'
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f0fdfa 100%);
+        }
+        .error-detail {
+            background: linear-gradient(135deg, #fff5f5 0%, #ffebeb 100%);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+<header th:replace="client_html/fragment/headerANDfooter :: header"></header>
+<div class="container mx-auto px-4 py-8 max-w-6xl">
+    <!-- Progress Steps -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-center mb-6 bg-gradient-to-r from-vietravel-blue to-vietravel-orange bg-clip-text text-transparent">
+                THANH TOÁN THẤT BẠI
+            </h1>
+            <div class="w-10"></div> <!-- Placeholder for alignment -->
+        </div>
+        <div class="flex justify-between relative px-10">
+            <!-- Progress line -->
+            <div class="absolute top-4 left-20 right-20 h-1 bg-gray-200 z-0"></div>
+
+            <!-- Step 1 - Completed -->
+            <div class="progress-step completed flex flex-col items-center z-10">
+                <div class="step-number w-10 h-10 rounded-full flex items-center justify-center mb-2 shadow-md">
+                    <i class="fas fa-check text-sm"></i>
+                </div>
+                <span class="text-xs font-medium text-gray-600">THÔNG TIN</span>
+            </div>
+
+            <!-- Step 2 - Failed -->
+            <div class="progress-step flex flex-col items-center z-10">
+                <div class="step-number w-10 h-10 rounded-full flex items-center justify-center mb-2 bg-white text-red-500 font-bold border-2 border-red-500 shadow-md animate-pulse">
+                    <i class="fas fa-times"></i>
+                </div>
+                <span class="text-xs font-semibold text-red-500">THẤT BẠI</span>
+            </div>
+
+            <!-- Step 3 - Inactive -->
+            <div class="progress-step flex flex-col items-center z-10">
+                <div class="step-number w-10 h-10 rounded-full flex items-center justify-center mb-2 bg-white text-gray-400 font-bold border-2 border-gray-200 shadow-md">
+                    3
+                </div>
+                <span class="text-xs font-medium text-gray-500">HOÀN TẤT</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Failure Message -->
+    <div class="bg-white rounded-2xl shadow-lg p-8 text-center mb-8">
+        <!-- X icon -->
+        <div class="mx-auto w-24 h-24 rounded-full bg-red-50 flex items-center justify-center mb-6">
+            <i class="fas fa-times-circle text-5xl text-red-500 animate-pulse"></i>
+        </div>
+
+        <!-- Title -->
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">THANH TOÁN KHÔNG THÀNH CÔNG</h1>
+
+        <!-- Message -->
+        <div class="text-gray-600 mb-6 space-y-2">
+            <p>Rất tiếc quá trình thanh toán của bạn không hoàn tất.</p>
+            <p>Vui lòng kiểm tra lại thông tin thanh toán hoặc thử lại bằng phương thức khác.</p>
+            <p>Đơn hàng của bạn vẫn được giữ nguyên và có thể thanh toán lại.</p>
+        </div>
+
+        <!-- Booking Info -->
+        <div class="bg-vietravel-lightblue rounded-xl p-6 mb-6 max-w-2xl mx-auto text-left">
+            <h3 class="font-bold text-vietravel-blue text-lg mb-4 flex items-center">
+                <i class="fas fa-receipt mr-2"></i>
+                THÔNG TIN ĐƠN HÀNG
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                <div>
+                    <p class="text-sm text-gray-600">Mã đơn hàng:</p>
+                    <p class="font-semibold" th:text="${booking.booking_id}">VT-${booking.booking_id}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Tên tour:</p>
+                    <p class="font-semibold" th:text="${booking.tour_name}">Hà Nội - Hạ Long - Sapa</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Ngày khởi hành:</p>
+                    <p class="font-semibold" th:text="${#temporals.format(booking.start_date, 'dd/MM/yyyy')}">20/08/2023</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Tổng tiền:</p>
+                    <p class="font-semibold" th:text="${#numbers.formatInteger(booking.total_price, 3, 'POINT') + '₫'}">12,500,000₫</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+            <a th:href="'/Client/orderBooking/Payment/' + ${booking.booking_id}"
+               class="bg-gradient-to-r from-vietravel-orange to-vietravel-yellow text-white font-semibold py-3 px-6 rounded-lg hover:opacity-90 transition-all">
+                <i class="fas fa-redo mr-2"></i> THỬ LẠI
+            </a>
+            <a href="/Client/Home"
+               class="bg-gradient-to-r from-vietravel-blue to-vietravel-teal text-white font-semibold py-3 px-6 rounded-lg hover:opacity-90 transition-all">
+                <i class="fas fa-home mr-2"></i> VỀ TRANG CHỦ
+            </a>
+        </div>
+    </div>
+
+    <!-- Support Info -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+        <h2 class="text-xl font-bold text-vietravel-blue mb-4 flex items-center">
+            <i class="fas fa-headset text-vietravel-blue mr-3"></i>
+            TRỢ GIÚP & HỖ TRỢ
+        </h2>
+        <div class="grid md:grid-cols-2 gap-6">
+            <div>
+                <h3 class="font-semibold text-gray-800 mb-2">NGUYÊN NHÂN PHỔ BIẾN</h3>
+                <ul class="space-y-2 text-gray-600">
+                    <li class="flex items-start">
+                        <i class="fas fa-times text-red-400 mt-1 mr-2"></i>
+                        <span>Thẻ không đủ hạn mức thanh toán</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-times text-red-400 mt-1 mr-2"></i>
+                        <span>Thông tin thẻ không chính xác</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-times text-red-400 mt-1 mr-2"></i>
+                        <span>Kết nối ngân hàng tạm thời gián đoạn</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-times text-red-400 mt-1 mr-2"></i>
+                        <span>Thẻ chưa kích hoạt thanh toán online</span>
+                    </li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="font-semibold text-gray-800 mb-2">LIÊN HỆ HỖ TRỢ</h3>
+                <div class="space-y-3 text-gray-600">
+                    <div class="flex items-center">
+                        <i class="fas fa-phone-alt text-vietravel-blue mr-3"></i>
+                        <span>Hotline thanh toán: 1900 1839 (Nhánh 1)</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-envelope text-vietravel-blue mr-3"></i>
+                        <span>Email: payment-support@vietravel.com</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-clock text-vietravel-blue mr-3"></i>
+                        <span>Giờ làm việc: 8:00 - 22:00 hàng ngày</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<footer th:replace="client_html/fragment/headerANDfooter :: footer"></footer>
+</body>
+</html>

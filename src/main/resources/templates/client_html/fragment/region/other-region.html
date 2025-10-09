@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div th:fragment="asia-region" class="destination-grid grid grid-cols-2 sm:grid-cols-3 gap-4 hidden" id="asia-region">
+  <!-- Thái Lan (Lớn) -->
+  <a href="/Client/ToursList/INTERNATIONAL/Thái Lan" class="destination-card group relative h-48 sm:h-56 md:h-64 overflow-hidden rounded-lg">
+    <img src="/img/thai_lan.jpg"
+         alt="Thái Lan" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-xl text-center px-2">THÁI LAN</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-lg font-medium">Khám phá</span>
+    </div>
+  </a>
+
+  <!-- Singapore (Nhỏ) -->
+  <a href="/Client/ToursList/INTERNATIONAL/Singapore" class="destination-card group relative h-40 sm:h-48 md:h-56 overflow-hidden rounded-lg">
+    <img src="/img/singapore.jpg"
+         alt="Singapore" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-lg text-center px-2">SINGAPORE</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-md font-medium">Khám phá</span>
+    </div>
+  </a>
+
+  <!-- Indonesia (Lớn) -->
+  <a href="/Client/ToursList/INTERNATIONAL/Indonesia" class="destination-card group relative h-48 sm:h-56 md:h-64 overflow-hidden rounded-lg">
+    <img src="/img/indonesia.jpg"
+         alt="Indonesia" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-xl text-center px-2">INDONESIA</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-lg font-medium">Khám phá</span>
+    </div>
+  </a>
+
+  <!-- Nhật Bản (Lớn) -->
+  <a href="/Client/ToursList/INTERNATIONAL/Nhật Bản" class="destination-card group relative h-48 sm:h-56 md:h-64 overflow-hidden rounded-lg">
+    <img src="/img/nhat_ban.jpg"
+         alt="Nhật Bản" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-xl text-center px-2">NHẬT BẢN</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-lg font-medium">Khám phá</span>
+    </div>
+  </a>
+
+  <!-- Hàn Quốc (Nhỏ) -->
+  <a href="/Client/ToursList/INTERNATIONAL/Hàn Quốc" class="destination-card group relative h-40 sm:h-48 md:h-56 overflow-hidden rounded-lg">
+    <img src="/img/han_quoc.jpg"
+         alt="Hàn Quốc" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-lg text-center px-2">HÀN QUỐC</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-md font-medium">Khám phá</span>
+    </div>
+  </a>
+
+  <!-- Malaysia (Lớn) -->
+  <a href="/Client/ToursList/INTERNATIONAL/Malaysia" class="destination-card group relative h-48 sm:h-56 md:h-64 overflow-hidden rounded-lg">
+    <img src="/img/malaysia.jpg"
+         alt="Malaysia" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-xl text-center px-2">MALAYSIA</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-lg font-medium">Khám phá</span>
+    </div>
+  </a>
+</div>
+<div th:fragment="europe-region" class="destination-grid grid grid-cols-2 sm:grid-cols-3 gap-4 hidden" id="europe-region">
+  <!-- Tây Ban Nha (Lớn) -->
+  <a href="/Client/ToursList/INTERNATIONAL/Tây Ban Nha" class="destination-card group relative h-48 sm:h-56 md:h-64 overflow-hidden rounded-lg">
+    <img src="/img/tay_ban_nha.jpg"
+         alt="Tây Ban Nha" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-xl text-center px-2">TÂY BAN NHA</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-lg font-medium">Khám phá</span>
+    </div>
+  </a>
+
+  <!-- Thụy Sĩ (Nhỏ) -->
+  <a href="/Client/ToursList/INTERNATIONAL/Thụy Sĩ" class="destination-card group relative h-40 sm:h-48 md:h-56 overflow-hidden rounded-lg">
+    <img src="/img/thuy_si.jpg"
+         alt="Thụy Sĩ" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-lg text-center px-2">THỤY SĨ</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-md font-medium">Khám phá</span>
+    </div>
+  </a>
+
+  <!-- Hà Lan (Lớn) -->
+  <a href="/Client/ToursList/INTERNATIONAL/Hà Lan" class="destination-card group relative h-48 sm:h-56 md:h-64 overflow-hidden rounded-lg">
+    <img src="/img/ha_lan.jpg"
+         alt="Hà Lan" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-xl text-center px-2">HÀ LAN</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-lg font-medium">Khám phá</span>
+    </div>
+  </a>
+
+  <!-- Anh (Nhỏ) -->
+  <a href="/Client/ToursList/INTERNATIONAL/Anh" class="destination-card group relative h-40 sm:h-48 md:h-56 overflow-hidden rounded-lg">
+    <img src="/img/anh.jpg"
+         alt="Anh" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-lg text-center px-2">ANH</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-md font-medium">Khám phá</span>
+    </div>
+  </a>
+
+  <!-- Thụy Điển (Lớn) -->
+  <a href="/Client/ToursList/INTERNATIONAL/Thụy Điển" class="destination-card group relative h-48 sm:h-56 md:h-64 overflow-hidden rounded-lg">
+    <img src="/img/thuy_dien.jpg"
+         alt="Thụy Điển" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-xl text-center px-2">THỤY ĐIỂN</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-lg font-medium">Khám phá</span>
+    </div>
+  </a>
+
+  <!-- Na Uy (Nhỏ) -->
+  <a href="/Client/ToursList/INTERNATIONAL/Na Uy" class="destination-card group relative h-40 sm:h-48 md:h-56 overflow-hidden rounded-lg">
+    <img src="/img/na_uy.jpg"
+         alt="Na Uy" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-lg text-center px-2">NA UY</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-md font-medium">Khám phá</span>
+    </div>
+  </a>
+
+  <!-- Pháp (Lớn) -->
+  <a href="/Client/ToursList/INTERNATIONAL/Pháp" class="destination-card group relative h-48 sm:h-56 md:h-64 overflow-hidden rounded-lg">
+    <img src="/img/phap.jpg"
+         alt="Pháp" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-xl text-center px-2">PHÁP</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-lg font-medium">Khám phá</span>
+    </div>
+  </a>
+
+  <!-- Ý(Nhỏ) -->
+  <a href="/Client/ToursList/INTERNATIONAL/Ý" class="destination-card group relative h-40 sm:h-48 md:h-56 overflow-hidden rounded-lg">
+    <img src="/img/y.jpg"
+         alt="Ý" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-lg text-center px-2">Ý</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-md font-medium">Khám phá</span>
+    </div>
+  </a>
+
+  <!-- Đức (Lớn) -->
+  <a href="/Client/ToursList/INTERNATIONAL/Đức" class="destination-card group relative h-48 sm:h-56 md:h-64 overflow-hidden rounded-lg">
+    <img src="/img/duc.jpg"
+         alt="Đức" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-xl text-center px-2">Đức</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-lg font-medium">Khám phá</span>
+    </div>
+  </a>
+</div>
+
+<div th:fragment="america-region" class="destination-grid grid grid-cols-2 sm:grid-cols-3 gap-4 hidden" id="america-region">
+  <!-- Chicago (Lớn) -->
+  <a href="/Client/ToursList/INTERNATIONAL/Chicago, Hoa Kỳ" class="destination-card group relative h-48 sm:h-56 md:h-64 overflow-hidden rounded-lg">
+    <img src="/img/chicago.jpg"
+         alt="Chicago" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-xl text-center px-2">CHICAGO</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-lg font-medium">Khám phá</span>
+    </div>
+  </a>
+
+  <!-- Argentina (Nhỏ) -->
+  <a href="/Client/ToursList/INTERNATIONAL/Argentina" class="destination-card group relative h-40 sm:h-48 md:h-56 overflow-hidden rounded-lg">
+    <img src="/img/argentina.jpg"
+         alt="Argentina" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-lg text-center px-2">ARGENTINA</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-md font-medium">Khám phá</span>
+    </div>
+  </a>
+
+  <!-- Peru (Lớn) -->
+  <a href="/Client/ToursList/INTERNATIONAL/Peru" class="destination-card group relative h-48 sm:h-56 md:h-64 overflow-hidden rounded-lg">
+    <img src="/img/peru.jpg"
+         alt="Peru" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-xl text-center px-2">PERU</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-lg font-medium">Khám phá</span>
+    </div>
+  </a>
+
+  <!-- Cuba (Nhỏ) -->
+  <a href="/Client/ToursList/INTERNATIONAL/Cuba" class="destination-card group relative h-40 sm:h-48 md:h-56 overflow-hidden rounded-lg">
+    <img src="/img/cuba.jpg"
+         alt="Cuba" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-lg text-center px-2">CUBA</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-md font-medium">Khám phá</span>
+    </div>
+  </a>
+
+  <!-- Brazil (Lớn) -->
+  <a href="/Client/ToursList/INTERNATIONAL/Brazil" class="destination-card group relative h-48 sm:h-56 md:h-64 overflow-hidden rounded-lg">
+    <img src="/img/brazil.jpg"
+         alt="Brazil" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-xl text-center px-2">BRAZIL</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-lg font-medium">Khám phá</span>
+    </div>
+  </a>
+
+  <!-- Mexico (Nhỏ) -->
+  <a href="/Client/ToursList/INTERNATIONAL/Mexico" class="destination-card group relative h-40 sm:h-48 md:h-56 overflow-hidden rounded-lg">
+    <img src="/img/mexico.jpg"
+         alt="Mexico" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-lg text-center px-2">MEXICO</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-md font-medium">Khám phá</span>
+    </div>
+  </a>
+
+  <!-- New York (Lớn) -->
+  <a href="/Client/ToursList/INTERNATIONAL/New York, Hoa Kỳ" class="destination-card group relative h-48 sm:h-56 md:h-64 overflow-hidden rounded-lg">
+    <img src="/img/new_york.jpg"
+         alt="New York" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-xl text-center px-2">NEW YORK</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-lg font-medium">Khám phá</span>
+    </div>
+  </a>
+
+  <!-- Canada (Nhỏ) -->
+  <a href="/Client/ToursList/INTERNATIONAL/Canada" class="destination-card group relative h-40 sm:h-48 md:h-56 overflow-hidden rounded-lg">
+    <img src="/img/canada.jpg"
+         alt="Canada" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+
+    <div class="absolute inset-0 flex items-center justify-center">
+      <span class="text-white font-bold text-lg text-center px-2">CANADA</span>
+    </div>
+
+    <div class="absolute bottom-0 left-0 right-0 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pb-4">
+      <span class="text-white text-md font-medium">Khám phá</span>
+    </div>
+  </a>
+</div>
+</body>
+</html>

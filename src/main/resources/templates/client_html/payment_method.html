@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chọn phương thức thanh toán | Vietravel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        vietravel: {
+                            blue: '#0066b3',
+                            orange: '#f15a24',
+                            yellow: '#ffc72c',
+                            teal: '#00a99d',
+                            lightblue: '#e6f2fa',
+                            lightorange: '#fef0eb'
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite'
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-5px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f0fdfa 100%);
+        }
+        .payment-card {
+            transition: all 0.3s ease;
+            border: 2px solid #e2e8f0;
+            background: white;
+            &:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            }
+            &.selected {
+                border-color: #0066b3;
+                background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+                box-shadow: 0 4px 6px -1px rgba(0, 102, 179, 0.1);
+            }
+        }
+        .progress-step {
+            &.completed .step-number {
+                background: linear-gradient(135deg, #00a99d 0%, #0066b3 100%);
+                color: white;
+                animation: pulse-slow 2s infinite;
+            }
+            &.active .step-number {
+                background: linear-gradient(135deg, #0066b3 0%, #0083d1 100%);
+                color: white;
+                box-shadow: 0 0 0 6px rgba(0, 102, 179, 0.2);
+                animation: pulse-slow 1.5s infinite;
+            }
+        }
+        .bank-logo {
+            height: 24px;
+            width: auto;
+            object-fit: contain;
+            filter: grayscale(30%);
+            opacity: 0.8;
+            transition: all 0.3s ease;
+            &:hover {
+                filter: grayscale(0%);
+                opacity: 1;
+                transform: scale(1.1);
+            }
+        }
+        .btn-vietravel {
+            &-blue {
+                background: linear-gradient(135deg, #0066b3 0%, #0083d1 100%);
+                box-shadow: 0 4px 15px rgba(0, 102, 179, 0.3);
+                &:hover {
+                    background: linear-gradient(135deg, #005a9c 0%, #0077c2 100%);
+                }
+            }
+            &-orange {
+                background: linear-gradient(135deg, #f15a24 0%, #ff6b3b 100%);
+                box-shadow: 0 4px 15px rgba(241, 90, 36, 0.3);
+                &:hover {
+                    background: linear-gradient(135deg, #e04f1a 0%, #f05a2a 100%);
+                }
+            }
+        }
+        .floating-icon {
+            animation: float 6s ease-in-out infinite;
+        }
+        .price-tag {
+            background: linear-gradient(135deg, #ffc72c 0%, #f59e0b 100%);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+<header th:replace="client_html/fragment/headerANDfooter :: header"></header>
+<div class="container mx-auto px-4 py-8 max-w-6xl">
+    <!-- Progress Steps -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
+        <div class="flex justify-between items-center mb-6">
+            <a th:href="'/Client/orderBooking/' + ${tour.tour_id} + '/' + ${start_date}"
+               class="text-vietravel-blue hover:text-vietravel-orange font-medium flex items-center transition-all hover:-translate-x-1">
+                <i class="fas fa-arrow-left mr-2"></i> Quay lại
+            </a>
+            <h1 class="text-2xl font-bold text-center mb-6 bg-gradient-to-r from-vietravel-blue to-vietravel-orange bg-clip-text text-transparent">
+                CHỌN PHƯƠNG THỨC THANH TOÁN
+            </h1>
+            <a href="#"
+               th:data-booking-id="${booking.booking_id}"
+               onclick="cancelBooking(event, this.getAttribute('data-booking-id'))"
+               class="px-4 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg hover:from-red-600 hover:to-rose-700 transition-colors flex items-center justify-center">
+                <i class="fas fa-times mr-2"></i> Hủy
+            </a>
+        </div>
+        <div class="flex justify-between relative px-10">
+            <!-- Progress line -->
+            <div class="absolute top-4 left-20 right-20 h-1 bg-gradient-to-r from-vietravel-teal via-vietravel-blue to-vietravel-orange z-0"></div>
+
+            <!-- Step 1 - Completed -->
+            <div class="progress-step completed flex flex-col items-center z-10">
+                <div class="step-number w-10 h-10 rounded-full flex items-center justify-center mb-2 shadow-md">
+                    <i class="fas fa-check text-sm"></i>
+                </div>
+                <span class="text-xs font-medium text-gray-600">THÔNG TIN</span>
+            </div>
+
+            <!-- Step 2 - Active -->
+            <div class="progress-step active flex flex-col items-center z-10">
+                <div class="step-number w-10 h-10 rounded-full flex items-center justify-center mb-2 shadow-lg">
+                    2
+                </div>
+                <span class="text-xs font-semibold text-gray-800">THANH TOÁN</span>
+            </div>
+
+            <!-- Step 3 - Inactive -->
+            <div class="progress-step flex flex-col items-center z-10 group">
+                <div class="step-number w-10 h-10 rounded-full flex items-center justify-center mb-2 bg-white text-gray-400 font-bold border-2 border-gray-200 group-hover:bg-vietravel-orange/10 group-hover:border-vietravel-orange transition-colors shadow-md">
+                    3
+                </div>
+                <span class="text-xs font-medium text-gray-500 group-hover:text-gray-700 transition-colors">HOÀN TẤT</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-6">
+        <!-- Left Column - Payment Methods -->
+        <div class="w-full lg:w-7/12">
+            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+                <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-credit-card text-vietravel-blue mr-3 floating-icon"></i>
+                    <span class="bg-gradient-to-r from-vietravel-blue to-vietravel-teal bg-clip-text text-transparent">PHƯƠNG THỨC THANH TOÁN</span>
+                </h2>
+
+                <!-- VNPay Option -->
+                <div class="payment-card p-5 rounded-xl mb-4" id="vnpayOption" onclick="selectPayment('vnpay')">
+                    <div class="flex items-start">
+                        <div class="mr-4 mt-1">
+                            <img src="/img/vnpay-logo.png" alt="VNPay" class="h-8">
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-800 mb-1">Thanh toán qua VNPay</h3>
+                            <p class="text-sm text-gray-600 mb-3">Thanh toán trực tuyến an toàn với VNPay (ATM, Visa, MasterCard, QR Code)</p>
+                            <div class="flex flex-wrap gap-2">
+                                <!-- Vietcombank -->
+                                <img src="https://www.vietcombank.com.vn/-/media/Project/VCB-Sites/VCB/Home-page/VCB-Logo/Logo-VCB-no-60.png?ts=20240605031450"
+                                     alt="Vietcombank"
+                                     class="bank-logo"
+                                     title="Ngân hàng TMCP Ngoại thương Việt Nam">
+
+                                <!-- Agribank -->
+                                <img src="https://www.agribank.com.vn/storage/logo.png"
+                                     alt="Agribank"
+                                     class="bank-logo"
+                                     title="Ngân hàng Nông nghiệp và Phát triển Nông thôn">
+
+                                <!-- BIDV -->
+                                <img src="https://www.bidv.com.vn/Styles/bidv/Images/logo.png"
+                                     alt="BIDV"
+                                     class="bank-logo"
+                                     title="Ngân hàng TMCP Đầu tư và Phát triển Việt Nam">
+
+                                <!-- VietinBank -->
+                                <img src="https://www.vietinbank.vn/web/static/img/logo.png"
+                                     alt="VietinBank"
+                                     class="bank-logo"
+                                     title="Ngân hàng TMCP Công thương Việt Nam">
+
+                                <!-- Techcombank -->
+                                <img src="https://www.techcombank.com.vn/resources/img/logo-techcombank.png"
+                                     alt="Techcombank"
+                                     class="bank-logo"
+                                     title="Ngân hàng TMCP Kỹ thương Việt Nam">
+
+                                <!-- Một số ngân hàng phổ biến khác -->
+                                <img src="https://www.mbbank.com.vn/images/logo.png"
+                                     alt="MBBank"
+                                     class="bank-logo"
+                                     title="Ngân hàng TMCP Quân đội">
+
+                                <img src="https://www.vpbank.com.vn/images/logo.png"
+                                     alt="VPBank"
+                                     class="bank-logo"
+                                     title="Ngân hàng TMCP Việt Nam Thịnh Vượng">
+
+                                <img src="https://www.acb.com.vn/images/logo.png"
+                                     alt="ACB"
+                                     class="bank-logo"
+                                     title="Ngân hàng TMCP Á Châu">
+                            </div>
+                        </div>
+                        <div class="ml-4 mt-1">
+                            <div class="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center">
+                                <div class="w-3 h-3 rounded-full bg-vietravel-blue hidden"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VNPay Form (hidden by default) -->
+                <div id="vnpayForm" class="hidden mt-4 p-5 bg-vietravel-lightblue rounded-xl border border-vietravel-blue/30">
+                    <form th:action="@{/submitOrder}" method="post">
+                        <input type="hidden" name="bookingId" th:value="${booking.booking_id}">
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-medium mb-2 flex items-center">
+                                <i class="fas fa-money-bill-wave text-vietravel-blue mr-2"></i>
+                                Số tiền
+                            </label>
+                            <input type="text" class="w-full px-4 py-3 border border-gray-200 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-vietravel-blue focus:border-vietravel-blue"
+                                   th:value="${#numbers.formatInteger(booking.total_price, 3, 'POINT') + '₫'}" readonly>
+                            <input type="hidden" name="amount" th:value="${booking.total_price}">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-medium mb-2 flex items-center">
+                                <i class="fas fa-info-circle text-vietravel-blue mr-2"></i>
+                                Thông tin đơn hàng
+                            </label>
+                            <input type="text" name="orderInfo" class="w-full px-4 py-3 border border-gray-200 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-vietravel-blue focus:border-vietravel-blue"
+                                   th:value="'Thanh toán tour ' + ${booking.tour.tour_id}" required>
+                        </div>
+                        <button type="submit" class="w-full btn-vietravel-blue bg-red-500 text-white font-semibold py-3 px-6 rounded-lg hover:opacity-90 transition-all flex items-center justify-center">
+                            <i class="fas fa-credit-card mr-2"></i> THANH TOÁN QUA VNPAY
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Cash Option -->
+                <div class="payment-card p-5 rounded-xl" id="cashOption" onclick="selectPayment('cash')">
+                    <div class="flex items-start">
+                        <div class="mr-4 text-vietravel-orange text-2xl mt-1">
+                            <i class="fas fa-money-bill-wave floating-icon"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-800 mb-1">Thanh toán tiền mặt</h3>
+                            <p class="text-sm text-gray-600">Thanh toán trực tiếp tại văn phòng TÔI ĐI DU LỊCH</p>
+                        </div>
+                        <div class="ml-4 mt-1">
+                            <div class="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center">
+                                <div class="w-3 h-3 rounded-full bg-vietravel-blue hidden"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cash Confirmation Button (hidden by default) -->
+                <div id="cashConfirm" class="hidden mt-6">
+                    <button onclick="confirmCashPayment()"
+                            class="w-full bg-orange-500 text-white font-semibold py-3 px-6 rounded-lg hover:opacity-90 transition-all flex items-center justify-center">
+                        <i class="fas fa-check-circle mr-2"></i> XÁC NHẬN THANH TOÁN TIỀN MẶT
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Order Summary -->
+        <div class="w-full lg:w-5/12">
+            <div class="bg-white rounded-2xl shadow-lg sticky top-6 border border-gray-100 overflow-hidden">
+                <div class="bg-gradient-to-r from-vietravel-blue to-vietravel-teal p-4 text-white">
+                    <h2 class="text-xl font-bold flex items-center">
+                        <i class="fas fa-receipt mr-2"></i>
+                        <span>THÔNG TIN ĐƠN HÀNG</span>
+                    </h2>
+                </div>
+
+                <div class="p-6">
+                    <div class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <h3 class="font-semibold text-gray-800 mb-2" th:text="${booking.tour_name}"></h3>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-600">Mã tour:</span>
+                            <span class="font-medium" th:text="${booking.tour.tour_id}"></span>
+                        </div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-600">Ngày khởi hành:</span>
+                            <span class="font-medium" th:text="${#temporals.format(start_date, 'dd/MM/yyyy')}"></span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Số ngày:</span>
+                            <span class="font-medium" th:text="${tour.tour_duration} + ' ngày'"></span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 text-sm mb-4">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Người lớn:</span>
+                            <span th:text="${booking.number_of_adults} + ' × ' + ${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + '₫'}"></span>
+                        </div>
+                        <div class="flex justify-between" th:if="${booking.number_of_children > 0}">
+                            <span class="text-gray-600">Trẻ em:</span>
+                            <span th:text="${booking.number_of_children} + ' × ' + ${#numbers.formatInteger(tour.tour_child_price, 3, 'POINT') + '₫'}"></span>
+                        </div>
+                        <div class="flex justify-between" th:if="${booking.number_of_infants > 0}">
+                            <span class="text-gray-600">Trẻ nhỏ:</span>
+                            <span th:text="${booking.number_of_infants} + ' × ' + ${#numbers.formatInteger(tour.tour_infant_price, 3, 'POINT') + '₫'}"></span>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-200 my-3"></div>
+
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-bold text-gray-800">Tổng cộng:</span>
+                        <div class="text-right">
+                            <span class="text-2xl font-bold text-vietravel-orange" th:text="${#numbers.formatInteger(booking.total_price, 3, 'POINT') + '₫'}"></span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex items-center justify-center space-x-2 text-xs text-gray-500">
+                        <i class="fas fa-lock text-vietravel-blue"></i>
+                        <span>Bảo mật thanh toán</span>
+                        <i class="fas fa-shield-alt text-vietravel-blue"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Cancel Booking Modal -->
+<div id="cancelModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold">Hủy đơn đặt tour</h3>
+            <button onclick="document.getElementById('cancelModal').classList.add('hidden')"
+                    class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Lý do hủy</label>
+            <textarea id="cancelReason" rows="3"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+            <input type="hidden" id="bookingIdToCancel">
+        </div>
+
+        <div class="flex justify-end space-x-3">
+            <button type="button"
+                    onclick="document.getElementById('cancelModal').classList.add('hidden')"
+                    class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
+                Quay lại
+            </button>
+            <button id="cancelBookingButton" onclick="confirmCancelBooking()"
+                    class="px-4 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg hover:from-red-600 hover:to-rose-700 transition-colors flex items-center justify-center">
+    <span id="cancelSpinner" class="hidden mr-2">
+        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+    </span>
+                <i class="fas fa-times mr-2"></i> Hủy
+            </button>
+        </div>
+    </div>
+</div>
+<footer th:replace="client_html/fragment/headerANDfooter :: footer"></footer>
+<script>
+    // Chọn phương thức thanh toán
+    function selectPayment(method) {
+        // Reset all selections
+        document.querySelectorAll('.payment-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        document.querySelectorAll('.payment-card .bg-vietravel-blue').forEach(radio => {
+            radio.classList.add('hidden');
+        });
+
+        // Hide all forms/buttons
+        document.getElementById('vnpayForm').classList.add('hidden');
+        document.getElementById('cashConfirm').classList.add('hidden');
+
+        // Select the chosen method
+        if (method === 'vnpay') {
+            document.getElementById('vnpayOption').classList.add('selected');
+            document.getElementById('vnpayOption').querySelector('.bg-vietravel-blue').classList.remove('hidden');
+            document.getElementById('vnpayForm').classList.remove('hidden');
+        } else {
+            document.getElementById('cashOption').classList.add('selected');
+            document.getElementById('cashOption').querySelector('.bg-vietravel-blue').classList.remove('hidden');
+            document.getElementById('cashConfirm').classList.remove('hidden');
+        }
+    }
+
+    // Xác nhận thanh toán tiền mặt
+    function confirmCashPayment() {
+        if (confirm('Xác nhận thanh toán tiền mặt? Chúng tôi sẽ liên hệ với bạn để xác nhận đơn hàng.')) {
+            // Hiệu ứng loading
+            const btn = document.querySelector('#cashConfirm button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> ĐANG XỬ LÝ...';
+            btn.disabled = true;
+
+            // Gửi yêu cầu thanh toán tiền mặt
+            fetch('/Client/orderBooking/cash_payment/[[${booking.booking_id}]]', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = '/Client/orderBooking/booking_success/[[${booking.booking_id}]]';
+                    } else {
+                        alert('Có lỗi xảy ra: ' + data.message);
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra khi xử lý thanh toán');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                });
+        }
+    }
+
+    // Mặc định chọn VNPay khi trang load
+    document.addEventListener('DOMContentLoaded', function() {
+        selectPayment('vnpay');
+    });
+    // Cancel booking function
+    function cancelBooking(event, bookingId) {
+        event.preventDefault();
+        document.getElementById('bookingIdToCancel').value = bookingId;
+        document.getElementById('cancelModal').classList.remove('hidden');
+    }
+
+    // Confirm cancel booking
+    function confirmCancelBooking() {
+        // Lấy các phần tử DOM cần thiết
+        const bookingId = document.getElementById('bookingIdToCancel').value;
+        const cancelReason = document.getElementById('cancelReason').value;
+        const cancelButton = document.getElementById('cancelBookingButton');
+        const spinner = document.getElementById('cancelSpinner');
+
+        // Kiểm tra lý do hủy
+        if (!cancelReason) {
+            alert('Vui lòng nhập lý do hủy tour');
+            return;
+        }
+
+        // Vô hiệu hóa nút và hiển thị loading
+        cancelButton.disabled = true;
+        spinner.classList.remove('hidden');
+        cancelButton.classList.add('opacity-75');
+
+        // Gửi yêu cầu hủy tour
+        fetch('/Client/orderBooking/cancelBooking/' + bookingId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: cancelReason
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    alert('Đã hủy đơn hàng thành công');
+                    window.location.reload();
+                } else {
+                    throw new Error(data.message || 'Lỗi không xác định');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra: ' + error.message);
+            })
+            .finally(() => {
+                // Dù thành công hay thất bại cũng bật lại nút
+                cancelButton.disabled = false;
+                spinner.classList.add('hidden');
+                cancelButton.classList.remove('opacity-75');
+            });
+    }
+</script>
+</body>
+</html>

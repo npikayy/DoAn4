@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đơn tour đã hủy | Vietravel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        vietravel: {
+                            blue: '#0066b3',
+                            orange: '#f15a24',
+                            yellow: '#ffc72c',
+                            teal: '#00a99d',
+                            lightblue: '#e6f2fa',
+                            lightorange: '#fef0eb'
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f0fdfa 100%);
+        }
+        .cancelled-badge {
+            animation: pulse-slow 2s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+<header th:replace="client_html/fragment/headerANDfooter :: header"></header>
+<div class="container mx-auto px-4 py-8 max-w-6xl">
+    <!-- Progress Steps -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
+        <div class="flex justify-center items-center mb-6">
+            <h1 class="text-2xl font-bold text-center bg-gradient-to-r from-vietravel-blue to-vietravel-orange bg-clip-text text-transparent">
+                ĐƠN TOUR ĐÃ HỦY
+            </h1>
+        </div>
+        <div class="flex justify-between relative px-10">
+            <!-- Progress line -->
+            <div class="absolute top-4 left-20 right-20 h-1 bg-gray-200 z-0"></div>
+
+            <!-- Step 1 - Completed -->
+            <div class="progress-step completed flex flex-col items-center z-10">
+                <div class="step-number w-10 h-10 rounded-full flex items-center justify-center mb-2 shadow-md">
+                    <i class="fas fa-check text-sm"></i>
+                </div>
+                <span class="text-xs font-medium text-gray-600">THÔNG TIN</span>
+            </div>
+
+            <!-- Step 2 - Completed -->
+            <div class="progress-step completed flex flex-col items-center z-10">
+                <div class="step-number w-10 h-10 rounded-full flex items-center justify-center mb-2 shadow-md">
+                    <i class="fas fa-times text-sm"></i>
+                </div>
+                <span class="text-xs font-medium text-gray-600">THANH TOÁN</span>
+            </div>
+
+            <!-- Step 3 - Cancelled -->
+            <div class="progress-step flex flex-col items-center z-10">
+                <div class="step-number w-10 h-10 rounded-full flex items-center justify-center mb-2 bg-white text-red-500 font-bold border-2 border-red-500 shadow-md cancelled-badge">
+                    <i class="fas fa-times"></i>
+                </div>
+                <span class="text-xs font-semibold text-red-500">ĐÃ HỦY</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancellation Message -->
+    <div class="bg-white rounded-2xl shadow-lg p-8 text-center mb-8">
+        <!-- Icon X lớn màu đỏ -->
+        <div class="mx-auto w-24 h-24 rounded-full bg-red-50 flex items-center justify-center mb-6">
+            <i class="fas fa-times-circle text-5xl text-red-500 animate-pulse"></i>
+        </div>
+
+        <!-- Title -->
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">ĐƠN TOUR ĐÃ BỊ HỦY</h1>
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">LÍ DO HỦY: <span th:text="${booking.getCancel_reason()}"></span></h2>
+        <!-- Message -->
+        <div class="text-gray-600 mb-6 space-y-2">
+            <p>Chúng tôi xin thông báo đơn tour của bạn đã được hủy thành công.</p>
+            <p>Mọi khoản thanh toán (nếu có) sẽ được hoàn trả trong vòng 7-10 ngày làm việc.</p>
+            <p>Cảm ơn bạn đã quan tâm đến dịch vụ của Vietravel.</p>
+        </div>
+
+        <!-- Booking Info -->
+        <div class="bg-vietravel-lightblue rounded-xl p-6 mb-6 max-w-2xl mx-auto text-left">
+            <h3 class="font-bold text-vietravel-blue text-lg mb-4 flex items-center">
+                <i class="fas fa-receipt mr-2"></i>
+                THÔNG TIN ĐƠN HỦY
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <p class="text-sm text-gray-600">Mã đơn hàng:</p>
+                    <p class="font-semibold" th:text="${booking.booking_id}">VT-${booking.booking_id}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Ngày hủy:</p>
+                    <p class="font-semibold" th:text="${#temporals.format(booking.booking_date, 'dd/MM/yyyy HH:mm')}">
+                        20/08/2023 14:30
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Tên tour:</p>
+                    <p class="font-semibold" th:text="${booking.tour_name}">Hà Nội - Hạ Long - Sapa</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">Ngày khởi hành:</p>
+                    <p class="font-semibold" th:text="${#temporals.format(booking.start_date, 'dd/MM/yyyy')}">25/08/2023</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Buttons -->
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+            <a href="/Client/Home"
+               class="bg-gradient-to-r from-vietravel-blue to-vietravel-teal text-white font-semibold py-3 px-6 rounded-lg hover:opacity-90 transition-all">
+                <i class="fas fa-home mr-2"></i> VỀ TRANG CHỦ
+            </a>
+            <a href="/Client/ToursList"
+               class="bg-gradient-to-r from-vietravel-orange to-vietravel-yellow text-white font-semibold py-3 px-6 rounded-lg hover:opacity-90 transition-all">
+                <i class="fas fa-search mr-2"></i> TÌM TOUR KHÁC
+            </a>
+        </div>
+    </div>
+</div>
+<footer th:replace="client_html/fragment/headerANDfooter :: footer"></footer>
+</body>
+</html>

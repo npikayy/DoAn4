@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${tour == null ? 'Thêm Tour Trong Nước' : 'Chỉnh Sửa Tour Trong Nước'}"></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://esgoo.net/scripts/jquery.js"></script>
+    <style>
+        .input-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .input-field {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 1px solid #E5E7EB;
+            border-radius: 0.5rem;
+            background-color: #F9FAFB;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #3B82F6;
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        .input-label {
+            position: absolute;
+            top: -0.75rem;
+            left: 0.75rem;
+            padding: 0 0.25rem;
+            background-color: white;
+            color: #6B7280;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+        .input-field:focus + .input-label {
+            color: #3B82F6;
+        }
+        .btn-primary {
+            background-color: #3B82F6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover {
+            background-color: #2563EB;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .btn-danger {
+            background-color: #EF4444;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .btn-danger:hover {
+            background-color: #DC2626;
+            transform: translateY(-1px);
+        }
+        .readonly-field {
+            background-color: #F3F4F6;
+            color: #6B7280;
+        }
+        select.input-field {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.75rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+<div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <aside th:replace="~{admin_html/fragment/sidebar :: sidebar}"></aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-6 md:p-8">
+        <div class="flex items-center justify-between mb-8">
+            <h1 class="text-2xl font-bold text-gray-800" th:text="${tour == null ? 'Thêm Tour Trong Nước' : 'Chỉnh Sửa Tour Trong Nước'}"></h1>
+            <button onclick="window.history.back()" class="flex items-center text-gray-600 hover:text-gray-800">
+                <i class="fas fa-arrow-left mr-2"></i> Quay lại
+            </button>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm p-6 md:p-8">
+            <h6 class="text-red-500 font-medium mb-6 text-right" th:if="${errorMessage}" th:text="${errorMessage}"></h6>
+            <div th:unless="${tour?.tour_id}" class="text-red-500 text-sm mb-6 text-right">(*) Mã tour một khi đã tạo thì sẽ không thay đổi được</div>
+
+            <form th:action="${tour == null ? '/admin/tours/addTourDomestic' : '/admin/tours/editTour/' + tour.tour_id}"
+                  method="post" class="space-y-6">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Mã tour -->
+                    <div class="input-group">
+                        <input type="text" name="tour_id" id="tour_id" class="input-field" placeholder=" "
+                               th:value="${tour?.tour_id}" th:readonly="${tour?.tour_id != null}"
+                               th:classappend="${tour?.tour_id} ? 'readonly-field' : ''" required>
+                        <label for="tour_id" class="input-label">Mã Tour <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <!-- Tên tour -->
+                    <div class="input-group">
+                        <input type="text" name="tour_name" id="tour_name" class="input-field" placeholder=" "
+                               th:value="${tour?.tour_name}" required>
+                        <label for="tour_name" class="input-label">Tên Tour <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <!-- Loại tour -->
+                    <div class="input-group">
+                        <select name="tour_type" id="tour_type" class="input-field" required>
+                            <option value="" disabled th:selected="${tour?.tour_type == null}"> </option>
+                            <option value="DOMESTIC" th:selected="${tour?.tour_type == 'DOMESTIC'}">Tour trong nước</option>
+                            <option value="PREMIUM" th:selected="${tour?.tour_type == 'PREMIUM'}">Tour cao cấp</option>
+                            <option value="BUDGET" th:selected="${tour?.tour_type == 'BUDGET'}">Tour tiết kiệm</option>
+                        </select>
+                        <label for="tour_type" class="input-label">Loại tour <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <!-- Phương tiện di chuyển -->
+                    <div class="input-group">
+                        <select name="tour_transportation" id="tour_transportation" class="input-field" required>
+                            <option value="" disabled th:selected="${tour?.tour_transportation == null}"> </option>
+                            <option value="PLANE" th:selected="${tour?.tour_transportation == 'PLANE'}">Máy bay</option>
+                            <option value="CAR" th:selected="${tour?.tour_transportation == 'CAR'}">Xe ô tô</option>
+                            <option value="TRAIN" th:selected="${tour?.tour_transportation == 'TRAIN'}">Tàu hỏa</option>
+                            <option value="BUS" th:selected="${tour?.tour_transportation == 'BUS'}">Xe khách</option>
+                        </select>
+                        <label for="tour_transportation" class="input-label">Phương tiện <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <!-- Điểm khởi hành -->
+                    <div class="input-group">
+                        <label for="tour_start_location" class="input-label">Điểm khởi hành <span class="text-red-500">*</span></label>
+                        <select class="input-field" id="tour_start_location" name="tour_start_location" required>
+                            <option value="">Chọn tỉnh/thành phố</option>
+                        </select>
+                    </div>
+
+                    <!-- Điểm đến -->
+                    <div class="input-group">
+                        <label for="tour_end_location" class="input-label">Điểm đến <span class="text-red-500">*</span></label>
+                        <select class="input-field" id="tour_end_location" name="tour_end_location" required>
+                            <option value="">Chọn tỉnh/thành phố</option>
+                        </select>
+                    </div>
+
+                    <!-- Thời lượng tour -->
+                    <div class="input-group">
+                        <input type="number" name="tour_duration" id="tour_duration" class="input-field" placeholder=" "
+                               th:value="${tour?.tour_duration}" min="1" required>
+                        <label for="tour_duration" class="input-label">Thời lượng (ngày) <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <!-- Số người tối đa -->
+                    <div class="input-group">
+                        <input type="number" name="tour_max_number_of_people" id="tour_max_number_of_people" class="input-field" placeholder=" "
+                               th:value="${tour?.tour_max_number_of_people}" min="1" required>
+                        <label for="tour_max_number_of_people" class="input-label">Số người tối đa <span class="text-red-500">*</span></label>
+                    </div>
+                </div>
+
+                <!-- Mô tả tour -->
+                <div class="input-group">
+                    <textarea name="tour_description" id="tour_description" rows="4" class="input-field" placeholder=" "
+                              th:text="${tour?.tour_description}"></textarea>
+                    <label for="tour_description" class="input-label">Mô tả tour</label>
+                </div>
+
+                <div class="flex justify-end pt-4 space-x-4">
+                    <!-- Nút xóa (chỉ hiển thị khi chỉnh sửa) -->
+                    <button type="button" th:if="${tour != null}" class="btn-danger"
+                            th:data-tour-id="${tour.tour_id}" onclick="confirmDelete(this)">
+                        <i class="fas fa-trash-alt mr-2"></i> Xóa Tour
+                    </button>
+                    <!-- Nút lưu -->
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save mr-2"></i>
+                        <span th:text="${tour == null ? 'Thêm Tour' : 'Cập Nhật'}"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    let vietnamProvinces = [];
+
+    $(document).ready(function() {
+        loadVietnamProvinces();
+
+        // Set giá trị ban đầu nếu đang edit
+        const tourStartLocation = /*[[${tour?.tour_start_location}]]*/ '';
+        const tourEndLocation = /*[[${tour?.tour_end_location}]]*/ '';
+
+        if (tourStartLocation) {
+            setTimeout(() => $('#tour_start_location').val(tourStartLocation), 500);
+        }
+        if (tourEndLocation) {
+            setTimeout(() => $('#tour_end_location').val(tourEndLocation), 500);
+        }
+    });
+
+    function loadVietnamProvinces() {
+        $.getJSON('https://esgoo.net/api-tinhthanh/1/0.htm', function(data) {
+            if (data.error == 0) {
+                vietnamProvinces = data.data;
+                $.each(data.data, function(key, val) {
+                    const option = `<option value="${val.full_name}">${val.full_name}</option>`;
+                    $("#tour_start_location").append(option);
+                    $("#tour_end_location").append(option);
+                });
+            }
+        });
+    }
+
+    function confirmDelete(button) {
+        const tourId = button.getAttribute('data-tour-id');
+        if (confirm('Bạn có chắc chắn muốn xóa tour này?\n\nHành động này không thể hoàn tác.')) {
+            window.location.href = '/admin/tours/deleteTour?tour_id=' + tourId;
+        }
+    }
+</script>
+</body>
+</html>

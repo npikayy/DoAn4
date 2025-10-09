@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Tour - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            light: '#4F46E5',
+                            DEFAULT: '#4338CA',
+                            dark: '#3730A3'
+                        },
+                        secondary: {
+                            light: '#10B981',
+                            DEFAULT: '#059669',
+                            dark: '#047857'
+                        },
+                        accent: {
+                            light: '#F59E0B',
+                            DEFAULT: '#D97706',
+                            dark: '#B45309'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    },
+                    boxShadow: {
+                        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .tour-card {
+            transition: all 0.3s ease;
+        }
+        .tour-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .badge {
+            transition: all 0.2s ease;
+        }
+
+        .filter-input:focus {
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+        .hidden-card {
+            display: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+<div class="flex">
+    <!-- Sidebar -->
+    <aside th:replace="~{admin_html/fragment/sidebar :: sidebar}"></aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-x-hidden overflow-y-auto">
+        <div class="container mx-auto px-6 py-8">
+            <!-- Header Section -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-3">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">Quản Lý Tour Du Lịch</h1>
+                    <p class="text-gray-600 mt-1">Danh sách các tour du lịch hiện có trong hệ thống</p>
+                </div>
+                <div class="mt-4 md:mt-0 flex gap-3">
+                    <a href="/admin/tours/addTourDomestic" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors duration-300 shadow-sm flex items-center">
+                        <i class="fas fa-map-marked-alt mr-2"></i>
+                        Tour Trong Nước
+                    </a>
+                    <a href="/admin/tours/addTourInternational" class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors duration-300 shadow-sm flex items-center">
+                        <i class="fas fa-globe-americas mr-2"></i>
+                        Tour Nước Ngoài
+                    </a>
+                </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Bộ Lọc Tìm Kiếm</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+                    <!-- Search Field -->
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Tìm kiếm tour</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-gray-400"></i>
+                            </div>
+                            <input type="text" id="searchTourName" placeholder="Nhập tên tour, điểm đến..."
+                                   class="pl-10 w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light filter-input">
+                        </div>
+                    </div>
+
+                    <!-- Tour Type -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Loại tour</label>
+                        <div class="relative">
+                            <select id="filterTourType" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light filter-input appearance-none">
+                                <option value="">Tất cả loại tour</option>
+                                <option value="DOMESTIC">Tour trong nước</option>
+                                <option value="INTERNATIONAL">Tour nước ngoài</option>
+                                <option value="PREMIUM">Tour cao cấp</option>
+                                <option value="BUDGET">Tour tiết kiệm</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <i class="fas fa-chevron-down text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Region -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Khu vực</label>
+                        <div class="relative">
+                            <select id="filterRegion" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light filter-input appearance-none">
+                                <option value="">Tất cả khu vực</option>
+                                <option value="NORTH">Miền Bắc</option>
+                                <option value="CENTRAL">Miền Trung</option>
+                                <option value="SOUTHEAST">Miền Đông Nam Bộ</option>
+                                <option value="SOUTHWEST">Miền Tây Nam Bộ</option>
+                                <option value="INTERNATIONAL">Quốc tế</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <i class="fas fa-chevron-down text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Price Range -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Khoảng giá</label>
+                        <div class="relative">
+                            <select id="filterPriceRange" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light filter-input appearance-none">
+                                <option value="">Tất cả giá</option>
+                                <option value="0-1000000">Dưới 1 triệu</option>
+                                <option value="1000000-3000000">1 - 3 triệu</option>
+                                <option value="3000000-5000000">3 - 5 triệu</option>
+                                <option value="5000000-10000000">5 - 10 triệu</option>
+                                <option value="10000000-999999999">Trên 10 triệu</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <i class="fas fa-chevron-down text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Destination -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Điểm đến</label>
+                        <div class="relative">
+                            <select id="filterDestination" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light filter-input appearance-none">
+                                <option value="">Tất cả điểm đến</option>
+                                <option th:each="location : ${uniqueLocations}"
+                                        th:value="${location}"
+                                        th:text="${location}"></option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <i class="fas fa-chevron-down text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Departure Status -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Lịch khởi hành</label>
+                        <div class="relative">
+                            <select id="filterDepartureStatus" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light filter-input appearance-none">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="HAS_DEPARTURE">Có lịch khởi hành</option>
+                                <option value="NO_DEPARTURE">Chưa có lịch</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <i class="fas fa-chevron-down text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex items-end space-x-3 md:col-span-2">
+                        <button id="resetFilters" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-2.5 px-4 rounded-lg font-medium transition-colors duration-300">
+                            Đặt lại bộ lọc
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tours Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" th:if="${tours != null}">
+                <!-- Tour Card -->
+                <div th:each="tour : ${tours}" class="tour-card bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300"
+                     th:attr="data-name=${tour.tour_name.toLowerCase()},
+                              data-type=${tour.tour_type},
+                              data-region=${tour.tour_region},
+                              data-destination=${tour.tour_end_location},
+                              data-price=${tour.tour_discount != null ? tour.tour_adult_price * (100 - tour.tour_discount) / 100 : tour.tour_adult_price},
+                              data-has-departure=${!tourStartDates.get(tour.tour_id).isEmpty()}">
+                    <a th:href="@{'/admin/tours/detail/' + ${tour.tour_id}}" class="block">
+                        <!-- Tour Image -->
+                        <div class="relative h-48 overflow-hidden">
+                            <img th:if="${tourThumbnails.get(tour.tour_id) != null and !tourThumbnails.get(tour.tour_id).isEmpty()}"
+                                 th:src="${tourThumbnails.get(tour.tour_id)}"
+                                 alt="Tour image"
+                                 class="w-full h-full object-cover transition-transform duration-500 hover:scale-105">
+                            <img th:unless="${tourThumbnails.get(tour.tour_id) != null and !tourThumbnails.get(tour.tour_id).isEmpty()}"
+                                 src="/img/default-tour.jpg"
+                                 alt="Default tour image"
+                                 class="w-full h-full object-cover">
+
+                            <!-- Discount Badge -->
+                            <div th:if="${tour.tour_discount != null}"
+                                 class="absolute top-3 right-3 bg-accent text-white px-3 py-1 rounded-full text-xs font-bold shadow-md badge hover:bg-accent-dark">
+                                <span th:text="'-' + ${tour.tour_discount} + '%'"></span>
+                            </div>
+                        </div>
+
+                        <!-- Tour Info -->
+                        <div class="p-5">
+                            <!-- Tour Name -->
+                            <h3 class="text-lg font-bold text-gray-800 mb-2 truncate tour-name" th:text="${tour.tour_name}"></h3>
+
+                            <!-- Location -->
+                            <div class="flex items-center text-sm text-gray-600 mb-2">
+                                <i class="fas fa-map-marker-alt text-gray-500 mr-2"></i>
+                                <span class="truncate" th:text="${tour.tour_end_location}"></span>
+                            </div>
+
+                            <!-- Departure Dates -->
+                            <div class="mb-3">
+                                <div class="flex items-center text-sm text-gray-600 mb-1">
+                                    <i class="fas fa-calendar-day text-gray-500 mr-2"></i>
+                                    <span class="font-medium">Ngày khởi hành:</span>
+                                </div>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <!-- Hiển thị tối đa 3 ngày -->
+                                    <span th:each="date,iter : ${tourStartDates.get(tour.tour_id)}"
+                                          th:if="${iter.index < 3}"
+                                          class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                        <span th:text="${#temporals.format(date.start_date, 'dd/MM')}"></span>
+                                    </span>
+                                    <!-- Hiển thị số lượng ngày còn lại nếu có -->
+                                    <span th:if="${tourStartDates.get(tour.tour_id).size() > 3}"
+                                          class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
+                                        +<span th:text="${tourStartDates.get(tour.tour_id).size() - 3}"></span> ngày khác
+                                    </span>
+                                    <!-- Trường hợp không có ngày khởi hành -->
+                                    <span th:if="${tourStartDates.get(tour.tour_id).isEmpty()}"
+                                          class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
+                                        Chưa có lịch
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Price & Rating -->
+                            <div class="flex justify-between items-center mt-2 pt-3 border-t border-gray-100">
+                                <div>
+                                    <span th:if="${tour.tour_discount != null}"
+                                          class="text-lg font-bold text-primary"
+                                          th:text="${#numbers.formatInteger(tour.tour_adult_price * (100 - tour.tour_discount) / 100, 3, 'POINT') + ' VND'}"></span>
+                                    <span th:unless="${tour.tour_discount != null}"
+                                          class="text-lg font-bold text-primary"
+                                          th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + ' VND'}"></span>
+                                    <span th:if="${tour.tour_discount != null}"
+                                          class="ml-2 text-sm text-gray-500 line-through"
+                                          th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + ' VND'}"></span>
+                                </div>
+                                <div class="flex items-center bg-yellow-50 text-yellow-700 px-2 py-1 rounded-full text-xs font-semibold"
+                                     th:if="${tour.tour_rating != null}">
+                                    <span th:text="${tour.tour_rating}"></span>
+                                    <i class="fas fa-star ml-1 text-xs"></i>
+                                </div>
+                                <div class="flex items-center bg-yellow-50 text-yellow-700 px-2 py-1 rounded-full text-xs font-semibold"
+                                     th:if="${tour.tour_rating == null}">
+                                    <span>Chưa có đánh giá</span>
+                                    <i class="fas fa-star ml-1 text-xs"></i>
+                                </div>
+                            </div>
+
+                            <!-- Special Offer -->
+                            <div th:if="${tour.special_offer != null and !tour.special_offer.isEmpty()}"
+                                 class="mt-3 p-2 bg-blue-50 rounded-md text-sm text-blue-700">
+                                <i class="fas fa-gift mr-1"></i>
+                                <span class="font-medium">Ưu đãi:</span>
+                                <span class="ml-1 truncate" th:text="${tour.special_offer}"></span>
+                            </div>
+                            <div th:unless="${tour.special_offer != null and !tour.special_offer.isEmpty()}"
+                                 class="mt-3 p-2 bg-blue-50 rounded-md text-sm text-blue-700">
+                                <i class="fas fa-gift mr-1"></i>
+                                <span class="font-medium">Ưu đãi:</span>
+                                <span class="ml-1 truncate">Chưa có ưu đãi</span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="noResultsMessage" class="hidden bg-white rounded-xl shadow-sm p-12 text-center">
+                <div class="max-w-md mx-auto">
+                    <i class="fas fa-compass text-5xl text-gray-300 mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-700 mb-2">Không có tour nào được tìm thấy</h3>
+                    <p class="text-gray-500 mb-6">Không có tour nào phù hợp với tiêu chí tìm kiếm của bạn.</p>
+                    <button onclick="resetFilters()" class="inline-flex items-center px-5 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium">
+                        <i class="fas fa-sync-alt mr-2"></i>
+                        Đặt lại bộ lọc
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    // Khởi tạo Fuse.js
+    let fuse = null;
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get all filter elements
+        const searchInput = document.getElementById('searchTourName');
+        const typeFilter = document.getElementById('filterTourType');
+        const regionFilter = document.getElementById('filterRegion');
+        const priceFilter = document.getElementById('filterPriceRange');
+        const destinationFilter = document.getElementById('filterDestination');
+        const departureFilter = document.getElementById('filterDepartureStatus');
+        const resetBtn = document.getElementById('resetFilters');
+
+        // Get all tour cards
+        const tourCards = document.querySelectorAll('.tour-card');
+        const noResultsMessage = document.getElementById('noResultsMessage');
+
+        // Add event listeners
+        searchInput.addEventListener('input', filterTours);
+        typeFilter.addEventListener('change', filterTours);
+        regionFilter.addEventListener('change', filterTours);
+        priceFilter.addEventListener('change', filterTours);
+        destinationFilter.addEventListener('change', filterTours);
+        departureFilter.addEventListener('change', filterTours);
+        resetBtn.addEventListener('click', resetFilters);
+
+        // Initial filter
+        filterTours();
+
+        // Tooltips for truncated text
+        const truncateElements = document.querySelectorAll('.truncate');
+        truncateElements.forEach(el => {
+            el.addEventListener('mouseenter', function() {
+                if (this.offsetWidth < this.scrollWidth) {
+                    this.setAttribute('title', this.textContent);
+                }
+            });
+        });
+        initializeFuse();
+    });
+
+    function initializeFuse() {
+        const tourCards = document.querySelectorAll('.tour-card');
+        const tourData = Array.from(tourCards).map(card => ({
+            element: card,
+            name: card.getAttribute('data-name'),
+            destination: card.getAttribute('data-destination')
+        }));
+
+        const options = {
+            keys: ['name', 'destination'],
+            threshold: 0.4,
+            includeScore: true,
+            minMatchCharLength: 2
+        };
+
+        fuse = new Fuse(tourData, options);
+    }
+
+    function filterTours() {
+        const searchQuery = document.getElementById('searchTourName').value.toLowerCase();
+        const selectedType = document.getElementById('filterTourType').value;
+        const selectedRegion = document.getElementById('filterRegion').value;
+        const priceRange = document.getElementById('filterPriceRange').value;
+        const selectedDestination = document.getElementById('filterDestination').value;
+        const departureStatus = document.getElementById('filterDepartureStatus').value;
+
+        const tourCards = document.querySelectorAll('.tour-card');
+        let visibleCount = 0;
+
+        // Nếu có từ khóa tìm kiếm, sử dụng Fuse.js
+        if (searchQuery.trim().length >= 2) {
+            const fuseResults = fuse.search(searchQuery);
+            const matchedElements = fuseResults.map(result => result.item.element);
+
+            tourCards.forEach(card => {
+                const type = card.getAttribute('data-type');
+                const region = card.getAttribute('data-region');
+                const destination = card.getAttribute('data-destination');
+                const price = parseFloat(card.getAttribute('data-price'));
+                const hasDeparture = card.getAttribute('data-has-departure') === 'true';
+
+                // Kiểm tra xem card có trong kết quả tìm kiếm không
+                const isMatched = matchedElements.includes(card);
+                const matchesType = !selectedType || type === selectedType;
+                const matchesRegion = !selectedRegion || region === selectedRegion;
+                const matchesPrice = !priceRange || checkPriceRange(price, priceRange);
+                const matchesDestination = !selectedDestination || destination === selectedDestination;
+                const matchesDepartureStatus = !departureStatus ||
+                    (departureStatus === 'HAS_DEPARTURE' && hasDeparture) ||
+                    (departureStatus === 'NO_DEPARTURE' && !hasDeparture);
+
+                if (isMatched && matchesType && matchesRegion && matchesPrice && matchesDestination && matchesDepartureStatus) {
+                    card.classList.remove('hidden-card');
+                    visibleCount++;
+                } else {
+                    card.classList.add('hidden-card');
+                }
+            });
+        } else {
+            // Nếu không có từ khóa tìm kiếm, sử dụng bộ lọc thông thường
+            tourCards.forEach(card => {
+                const name = card.getAttribute('data-name');
+                const type = card.getAttribute('data-type');
+                const region = card.getAttribute('data-region');
+                const destination = card.getAttribute('data-destination');
+                const price = parseFloat(card.getAttribute('data-price'));
+                const hasDeparture = card.getAttribute('data-has-departure') === 'true';
+
+                const matchesSearch = name.includes(searchQuery) || destination.includes(searchQuery);
+                const matchesType = !selectedType || type === selectedType;
+                const matchesRegion = !selectedRegion || region === selectedRegion;
+                const matchesPrice = !priceRange || checkPriceRange(price, priceRange);
+                const matchesDestination = !selectedDestination || destination === selectedDestination;
+                const matchesDepartureStatus = !departureStatus ||
+                    (departureStatus === 'HAS_DEPARTURE' && hasDeparture) ||
+                    (departureStatus === 'NO_DEPARTURE' && !hasDeparture);
+
+                if (matchesSearch && matchesType && matchesRegion && matchesPrice && matchesDestination && matchesDepartureStatus) {
+                    card.classList.remove('hidden-card');
+                    visibleCount++;
+                } else {
+                    card.classList.add('hidden-card');
+                }
+            });
+        }
+
+        // Hiển thị thông báo khi không có kết quả
+        toggleNoResultsMessage(visibleCount);
+    }
+
+    function checkPriceRange(price, range) {
+        if (range === '') return true;
+        const [min, max] = range.split('-').map(Number);
+        return price >= min && price <= max;
+    }
+
+    function toggleNoResultsMessage(visibleCount) {
+        const noResultsMessage = document.getElementById('noResultsMessage');
+        if (visibleCount === 0) {
+            noResultsMessage.classList.remove('hidden');
+        } else {
+            noResultsMessage.classList.add('hidden');
+        }
+    }
+
+    function resetFilters() {
+        document.getElementById('searchTourName').value = '';
+        document.getElementById('filterTourType').value = '';
+        document.getElementById('filterRegion').value = '';
+        document.getElementById('filterPriceRange').value = '';
+        document.getElementById('filterDestination').value = '';
+        document.getElementById('filterDepartureStatus').value = '';
+        filterTours();
+    }
+</script>
+</body>
+</html>
