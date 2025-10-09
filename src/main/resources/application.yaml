@@ -1,0 +1,59 @@
+
+spring:
+    datasource:
+        url: jdbc:postgresql://localhost:5432/DoAn3
+        username: postgres
+        password: 418888
+    jpa:
+        show-sql: true
+        hibernate:
+            ddl-auto: update
+            dialect: org.hibernate.dialect.PostgreSQLDialect
+    mail:
+        host: smtp.gmail.com
+        port: 587
+        username: ""
+        password: ""
+        properties:
+            mail:
+                smtp:
+                    auth: true
+                    starttls:
+                        enable: true
+    security:
+        oauth2:
+            client:
+                registration:
+                            google:
+                                client-id: ""
+                                client-secret: ""
+                                scope: email,profile
+                                redirect-uri: "http://localhost:8080/login/oauth2/code/google"
+                provider:
+                            google:
+                                authorization-uri: "https://accounts.google.com/o/oauth2/v2/auth"
+                                token-uri: "https://oauth2.googleapis.com/token"
+                                user-info-uri: "https://openidconnect.googleapis.com/v1/userinfo"
+                                user-name-attribute: name
+    servlet:
+        multipart:
+            max-file-size: 10MB
+            max-request-size: 10MB
+            enabled: true
+
+gemini:
+    api-key: ""  # Lấy từ https://aistudio.google.com/api-keys
+    model: "gemini-1.5-pro"
+    base-url: "https://generativelanguage.googleapis.com/v1beta/models"
+
+    curl \ -H 'Content-Type: application/json' \ -d '{"contents":[{"parts":[{"text":"Explain how AI works"}]}]}' \ -X POST 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyDC1pwreghMsxkMjUVuTs8iUwkm_Fs7Ei8'
+
+ai:
+    chatbot:
+        enabled: true
+        max-tokens: 250
+        rag:
+            top-k: 3
+            similarity-threshold: 0.7
+        embedding:
+            dimension: 384
