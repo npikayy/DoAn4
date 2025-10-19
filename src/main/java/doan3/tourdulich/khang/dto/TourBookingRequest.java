@@ -20,6 +20,7 @@ public class TourBookingRequest {
     private Integer number_of_adults;
     private Integer number_of_children;
     private Integer number_of_infants;
+    private String voucherCode;
     private Integer voucher_discount;
     private String note;
 }

@@ -94,8 +94,9 @@
 
             <!-- Filter Section -->
             <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
-                <h2 class="text-lg font-semibold text-gray-800 mb-4">Bộ Lọc Tìm Kiếm</h2>
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Bộ Lọc và Sắp Xếp</h2>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+
                     <!-- Search Field -->
                     <div class="md:col-span-2">
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">Tìm kiếm tour</label>
@@ -116,8 +117,6 @@
                                 <option value="">Tất cả loại tour</option>
                                 <option value="DOMESTIC">Tour trong nước</option>
                                 <option value="INTERNATIONAL">Tour nước ngoài</option>
-                                <option value="PREMIUM">Tour cao cấp</option>
-                                <option value="BUDGET">Tour tiết kiệm</option>
                             </select>
                             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                 <i class="fas fa-chevron-down text-gray-400"></i>
@@ -127,7 +126,7 @@
 
                     <!-- Region -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Khu vực</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Khu vực</option>
                         <div class="relative">
                             <select id="filterRegion" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light filter-input appearance-none">
                                 <option value="">Tất cả khu vực</option>
@@ -182,7 +181,7 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">Lịch khởi hành</label>
                         <div class="relative">
                             <select id="filterDepartureStatus" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light filter-input appearance-none">
-                                <option value="">Tất cả trạng thái</option>
+                                <option value="">Tất cả</option>
                                 <option value="HAS_DEPARTURE">Có lịch khởi hành</option>
                                 <option value="NO_DEPARTURE">Chưa có lịch</option>
                             </select>
@@ -192,8 +191,42 @@
                         </div>
                     </div>
 
+                    <!-- Promotion Status -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Trạng thái khuyến mãi</label>
+                        <div class="relative">
+                            <select id="filterPromotionStatus" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light filter-input appearance-none">
+                                <option value="">Tất cả</option>
+                                <option value="HAS_DISCOUNT">Có khuyến mãi</option>
+                                <option value="NO_DISCOUNT">Không có khuyến mãi</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <i class="fas fa-chevron-down text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sort by -->
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Sắp xếp theo</label>
+                        <div class="relative">
+                            <select id="sortBy" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light filter-input appearance-none">
+                                <option value="">Mặc định</option>
+                                <option value="price-asc">Giá: Thấp đến Cao</option>
+                                <option value="price-desc">Giá: Cao đến Thấp</option>
+                                <option value="name-asc">Tên tour (A-Z)</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <i class="fas fa-chevron-down text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Action Buttons -->
-                    <div class="flex items-end space-x-3 md:col-span-2">
+                    <div class="md:col-span-2 flex items-end space-x-3">
+                        <button id="applyFilters" class="w-full bg-primary hover:bg-primary-dark text-white py-2.5 px-4 rounded-lg font-medium transition-colors duration-300">
+                            Áp dụng bộ lọc
+                        </button>
                         <button id="resetFilters" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-2.5 px-4 rounded-lg font-medium transition-colors duration-300">
                             Đặt lại bộ lọc
                         </button>
@@ -204,13 +237,19 @@
             <!-- Tours Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" th:if="${tours != null}">
                 <!-- Tour Card -->
-                <div th:each="tour : ${tours}" class="tour-card bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300"
+                <div th:each="tour : ${tours}"
+                     th:with="promotion=${tour.getDiscount_promotion()},
+                              isPromotionActive=${promotion != null and #dates.createNow().after(promotion.ngayBatDau) and #dates.createNow().before(promotion.ngayKetThuc)},
+                              isPromotionUpcoming=${promotion != null and #dates.createNow().before(promotion.ngayBatDau)}"
+                     class="tour-card bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300"
                      th:attr="data-name=${tour.tour_name.toLowerCase()},
                               data-type=${tour.tour_type},
                               data-region=${tour.tour_region},
-                              data-destination=${tour.tour_end_location},
-                              data-price=${tour.tour_discount != null ? tour.tour_adult_price * (100 - tour.tour_discount) / 100 : tour.tour_adult_price},
-                              data-has-departure=${!tourStartDates.get(tour.tour_id).isEmpty()}">
+                              data-destination=${tour.tour_end_location}"
+                     th:data-price="${isPromotionActive} ? ${tour.tour_adult_price * (100 - promotion.getPhanTramGiamGia()) / 100} : ${tour.tour_adult_price}"
+                     th:data-duration="${tour.tour_duration}"
+                     th:data-tour-type="${tour.tour_type}"
+                     th:data-has-discount="${isPromotionActive}">
                     <a th:href="@{'/admin/tours/detail/' + ${tour.tour_id}}" class="block">
                         <!-- Tour Image -->
                         <div class="relative h-48 overflow-hidden">
@@ -223,10 +262,24 @@
                                  alt="Default tour image"
                                  class="w-full h-full object-cover">
 
-                            <!-- Discount Badge -->
-                            <div th:if="${tour.tour_discount != null}"
-                                 class="absolute top-3 right-3 bg-accent text-white px-3 py-1 rounded-full text-xs font-bold shadow-md badge hover:bg-accent-dark">
-                                <span th:text="'-' + ${tour.tour_discount} + '%'"></span>
+                            <!-- Active Discount Badge -->
+                            <div th:if="${isPromotionActive}"
+                                 class="absolute top-3 right-3">
+                                <span class="bg-red-500 text-white px-3 py-1 text-xs font-bold shadow-md rounded-full" th:text="${promotion.getTenKhuyenMai()}"></span>
+                                <span class="bg-red-500 text-white px-3 py-1 text-xs font-bold shadow-md rounded-full " th:text="'- ' + ${promotion.getPhanTramGiamGia()} + '%'"></span>
+                            </div>
+
+                            <!-- Upcoming Promotion Badge -->
+                            <div th:if="${isPromotionUpcoming}"
+                                 class="absolute top-3 left-3 bg-green-500 text-white px-3 py-1 text-xs font-semibold shadow-md rounded-full">
+                                <i class="fas fa-bell mr-1"></i>
+                                KM sẽ bắt đầu vào: <span th:text="${#dates.format(promotion.ngayBatDau, 'dd/MM/yyyy')}"></span>
+                            </div>
+
+                            <!-- Duration Badge -->
+                            <div class="absolute bottom-3 bg-white left-3 bg-white/90 text-gray-800 px-3 py-1 rounded-full text-xs font-semibold shadow-sm">
+                                <i class="fas fa-clock text-blue-500 mr-1"></i>
+                                <span th:text="${tour.tour_duration} + ' ngày ' + (${tour.tour_duration} - 1) + ' đêm'"></span>
                             </div>
                         </div>
 
@@ -270,15 +323,22 @@
                             <!-- Price & Rating -->
                             <div class="flex justify-between items-center mt-2 pt-3 border-t border-gray-100">
                                 <div>
-                                    <span th:if="${tour.tour_discount != null}"
-                                          class="text-lg font-bold text-primary"
-                                          th:text="${#numbers.formatInteger(tour.tour_adult_price * (100 - tour.tour_discount) / 100, 3, 'POINT') + ' VND'}"></span>
-                                    <span th:unless="${tour.tour_discount != null}"
-                                          class="text-lg font-bold text-primary"
-                                          th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + ' VND'}"></span>
-                                    <span th:if="${tour.tour_discount != null}"
-                                          class="ml-2 text-sm text-gray-500 line-through"
-                                          th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + ' VND'}"></span>
+                                    <!-- If promotion is active -->
+                                    <div th:if="${isPromotionActive}">
+                                        <div class="text-sm text-gray-400 line-through mb-1">
+                                            <span th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + ' VND'}"></span>
+                                        </div>
+                                        <div class="text-primary font-bold text-lg">
+                                            <span th:with="discountedPrice=${tour.tour_adult_price * (100 - promotion.phanTramGiamGia) / 100}"
+                                                  th:text="${#numbers.formatInteger(discountedPrice, 3, 'POINT') + ' VND'}"></span>
+                                        </div>
+                                    </div>
+                                    <!-- If no promotion or promotion is not active -->
+                                    <div th:unless="${isPromotionActive}">
+                                        <div class="text-primary font-bold text-lg">
+                                            <span th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + ' VND'}"></span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="flex items-center bg-yellow-50 text-yellow-700 px-2 py-1 rounded-full text-xs font-semibold"
                                      th:if="${tour.tour_rating != null}">
@@ -327,160 +387,62 @@
 </div>
 
 <script>
-    // Khởi tạo Fuse.js
-    let fuse = null;
     document.addEventListener('DOMContentLoaded', function() {
-        // Get all filter elements
-        const searchInput = document.getElementById('searchTourName');
-        const typeFilter = document.getElementById('filterTourType');
-        const regionFilter = document.getElementById('filterRegion');
-        const priceFilter = document.getElementById('filterPriceRange');
-        const destinationFilter = document.getElementById('filterDestination');
-        const departureFilter = document.getElementById('filterDepartureStatus');
+        const applyBtn = document.getElementById('applyFilters');
         const resetBtn = document.getElementById('resetFilters');
 
-        // Get all tour cards
-        const tourCards = document.querySelectorAll('.tour-card');
-        const noResultsMessage = document.getElementById('noResultsMessage');
+        // Function to set filter values based on URL parameters
+        function setFiltersFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            document.getElementById('searchTourName').value = params.get('keyword') || '';
+            document.getElementById('filterTourType').value = params.get('tourType') || '';
+            document.getElementById('filterRegion').value = params.get('region') || '';
+            document.getElementById('filterPriceRange').value = params.get('priceRange') || '';
+            document.getElementById('filterDestination').value = params.get('destination') || '';
+            document.getElementById('filterDepartureStatus').value = params.get('departureStatus') || '';
+            document.getElementById('filterPromotionStatus').value = params.get('promotionStatus') || '';
+            document.getElementById('sortBy').value = params.get('sortBy') || '';
+        }
 
-        // Add event listeners
-        searchInput.addEventListener('input', filterTours);
-        typeFilter.addEventListener('change', filterTours);
-        regionFilter.addEventListener('change', filterTours);
-        priceFilter.addEventListener('change', filterTours);
-        destinationFilter.addEventListener('change', filterTours);
-        departureFilter.addEventListener('change', filterTours);
-        resetBtn.addEventListener('click', resetFilters);
+        // Apply filters when the button is clicked
+        applyBtn.addEventListener('click', function() {
+            const params = new URLSearchParams();
 
-        // Initial filter
-        filterTours();
+            const keyword = document.getElementById('searchTourName').value;
+            if (keyword) params.append('keyword', keyword);
 
-        // Tooltips for truncated text
-        const truncateElements = document.querySelectorAll('.truncate');
-        truncateElements.forEach(el => {
-            el.addEventListener('mouseenter', function() {
-                if (this.offsetWidth < this.scrollWidth) {
-                    this.setAttribute('title', this.textContent);
-                }
-            });
+            const tourType = document.getElementById('filterTourType').value;
+            if (tourType) params.append('tourType', tourType);
+
+            const region = document.getElementById('filterRegion').value;
+            if (region) params.append('region', region);
+
+            const priceRange = document.getElementById('filterPriceRange').value;
+            if (priceRange) params.append('priceRange', priceRange);
+
+            const destination = document.getElementById('filterDestination').value;
+            if (destination) params.append('destination', destination);
+
+            const departureStatus = document.getElementById('filterDepartureStatus').value;
+            if (departureStatus) params.append('departureStatus', departureStatus);
+
+            const promotionStatus = document.getElementById('filterPromotionStatus').value;
+            if (promotionStatus) params.append('promotionStatus', promotionStatus);
+
+            const sortBy = document.getElementById('sortBy').value;
+            if (sortBy) params.append('sortBy', sortBy);
+
+            window.location.href = window.location.pathname + '?' + params.toString();
         });
-        initializeFuse();
+
+        // Reset filters
+        resetBtn.addEventListener('click', function() {
+            window.location.href = window.location.pathname;
+        });
+
+        // Set initial state on page load
+        setFiltersFromURL();
     });
-
-    function initializeFuse() {
-        const tourCards = document.querySelectorAll('.tour-card');
-        const tourData = Array.from(tourCards).map(card => ({
-            element: card,
-            name: card.getAttribute('data-name'),
-            destination: card.getAttribute('data-destination')
-        }));
-
-        const options = {
-            keys: ['name', 'destination'],
-            threshold: 0.4,
-            includeScore: true,
-            minMatchCharLength: 2
-        };
-
-        fuse = new Fuse(tourData, options);
-    }
-
-    function filterTours() {
-        const searchQuery = document.getElementById('searchTourName').value.toLowerCase();
-        const selectedType = document.getElementById('filterTourType').value;
-        const selectedRegion = document.getElementById('filterRegion').value;
-        const priceRange = document.getElementById('filterPriceRange').value;
-        const selectedDestination = document.getElementById('filterDestination').value;
-        const departureStatus = document.getElementById('filterDepartureStatus').value;
-
-        const tourCards = document.querySelectorAll('.tour-card');
-        let visibleCount = 0;
-
-        // Nếu có từ khóa tìm kiếm, sử dụng Fuse.js
-        if (searchQuery.trim().length >= 2) {
-            const fuseResults = fuse.search(searchQuery);
-            const matchedElements = fuseResults.map(result => result.item.element);
-
-            tourCards.forEach(card => {
-                const type = card.getAttribute('data-type');
-                const region = card.getAttribute('data-region');
-                const destination = card.getAttribute('data-destination');
-                const price = parseFloat(card.getAttribute('data-price'));
-                const hasDeparture = card.getAttribute('data-has-departure') === 'true';
-
-                // Kiểm tra xem card có trong kết quả tìm kiếm không
-                const isMatched = matchedElements.includes(card);
-                const matchesType = !selectedType || type === selectedType;
-                const matchesRegion = !selectedRegion || region === selectedRegion;
-                const matchesPrice = !priceRange || checkPriceRange(price, priceRange);
-                const matchesDestination = !selectedDestination || destination === selectedDestination;
-                const matchesDepartureStatus = !departureStatus ||
-                    (departureStatus === 'HAS_DEPARTURE' && hasDeparture) ||
-                    (departureStatus === 'NO_DEPARTURE' && !hasDeparture);
-
-                if (isMatched && matchesType && matchesRegion && matchesPrice && matchesDestination && matchesDepartureStatus) {
-                    card.classList.remove('hidden-card');
-                    visibleCount++;
-                } else {
-                    card.classList.add('hidden-card');
-                }
-            });
-        } else {
-            // Nếu không có từ khóa tìm kiếm, sử dụng bộ lọc thông thường
-            tourCards.forEach(card => {
-                const name = card.getAttribute('data-name');
-                const type = card.getAttribute('data-type');
-                const region = card.getAttribute('data-region');
-                const destination = card.getAttribute('data-destination');
-                const price = parseFloat(card.getAttribute('data-price'));
-                const hasDeparture = card.getAttribute('data-has-departure') === 'true';
-
-                const matchesSearch = name.includes(searchQuery) || destination.includes(searchQuery);
-                const matchesType = !selectedType || type === selectedType;
-                const matchesRegion = !selectedRegion || region === selectedRegion;
-                const matchesPrice = !priceRange || checkPriceRange(price, priceRange);
-                const matchesDestination = !selectedDestination || destination === selectedDestination;
-                const matchesDepartureStatus = !departureStatus ||
-                    (departureStatus === 'HAS_DEPARTURE' && hasDeparture) ||
-                    (departureStatus === 'NO_DEPARTURE' && !hasDeparture);
-
-                if (matchesSearch && matchesType && matchesRegion && matchesPrice && matchesDestination && matchesDepartureStatus) {
-                    card.classList.remove('hidden-card');
-                    visibleCount++;
-                } else {
-                    card.classList.add('hidden-card');
-                }
-            });
-        }
-
-        // Hiển thị thông báo khi không có kết quả
-        toggleNoResultsMessage(visibleCount);
-    }
-
-    function checkPriceRange(price, range) {
-        if (range === '') return true;
-        const [min, max] = range.split('-').map(Number);
-        return price >= min && price <= max;
-    }
-
-    function toggleNoResultsMessage(visibleCount) {
-        const noResultsMessage = document.getElementById('noResultsMessage');
-        if (visibleCount === 0) {
-            noResultsMessage.classList.remove('hidden');
-        } else {
-            noResultsMessage.classList.add('hidden');
-        }
-    }
-
-    function resetFilters() {
-        document.getElementById('searchTourName').value = '';
-        document.getElementById('filterTourType').value = '';
-        document.getElementById('filterRegion').value = '';
-        document.getElementById('filterPriceRange').value = '';
-        document.getElementById('filterDestination').value = '';
-        document.getElementById('filterDepartureStatus').value = '';
-        filterTours();
-    }
 </script>
 </body>
 </html>

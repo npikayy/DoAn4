@@ -4,6 +4,7 @@ import doan3.tourdulich.khang.entity.users;
 import doan3.tourdulich.khang.repository.userRepo;
 import doan3.tourdulich.khang.repository.tourBookingRepo;
 import doan3.tourdulich.khang.repository.ratingRepo;
+import doan3.tourdulich.khang.service.VoucherService;
 import doan3.tourdulich.khang.service.userService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,8 @@ public class clientInfoController {
     private tourBookingRepo tourBookingRepo;
     @Autowired
     private ratingRepo ratingRepo;
+    @Autowired
+    private VoucherService voucherService;
 
     public void getCurrentUser(ModelAndView modelAndView) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -64,6 +67,10 @@ public class clientInfoController {
     @GetMapping("/Information")
     public ModelAndView clientInfo(ModelAndView modelAndView) {
         getCurrentUser(modelAndView);
+        String userId = (String) modelAndView.getModel().get("user_id");
+        if (userId != null) {
+            modelAndView.addObject("vouchers", voucherService.findByUserId(userId));
+        }
         modelAndView.setViewName("/client_html/client_info");
         return modelAndView;
     }

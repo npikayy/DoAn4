@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thêm Chương trình Khuyến mãi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        .dual-listbox-container {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 1rem;
+            align-items: center;
+        }
+        .dual-listbox-box {
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+        .dual-listbox-box .dual-listbox-header {
+            padding: 0.5rem 0.75rem;
+            font-weight: 600;
+            border-bottom: 1px solid #d1d5db;
+            background-color: #f9fafb;
+        }
+        .dual-listbox-box .dual-listbox-search {
+            padding: 0.5rem;
+            border-bottom: 1px solid #d1d5db;
+        }
+        .dual-listbox-box .dual-listbox-search input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            border: 1px solid #d1d5db;
+        }
+        .dual-listbox-box .dual-listbox-list {
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        .dual-listbox-box .dual-listbox-list .list-item {
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            user-select: none;
+            font-size: 0.875rem;
+        }
+        .dual-listbox-box .dual-listbox-list .list-item:hover {
+            background-color: #eff6ff;
+        }
+        .dual-listbox-box .dual-listbox-list .list-item.selected {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .dual-listbox-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .dual-listbox-controls button {
+            background-color: #e5e7eb;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+        .dual-listbox-controls button:hover {
+            background-color: #d1d5db;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+<div class="min-h-screen flex">
+    <!-- Sidebar -->
+    <aside th:replace="~{admin_html/fragment/sidebar :: sidebar}"></aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">Thêm Chương trình Khuyến mãi</h1>
+            <a th:href="@{/admin/khuyen-mai}" class="text-blue-600 hover:underline flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i> Quay lại danh sách
+            </a>
+        </div>
+
+        <div class="bg-white p-8 rounded-xl shadow-lg max-w-full mx-auto">
+            <form th:action="@{/admin/khuyen-mai/add}" th:object="${khuyenMai}" method="post" id="khuyenMaiForm">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Left Column -->
+                    <div class="space-y-8">
+                        <!-- Section 1: General Info -->
+                        <div>
+                            <h2 class="text-xl font-semibold text-gray-800 border-b pb-3 mb-6">Thông tin chung</h2>
+                            <div class="space-y-6">
+                                <div>
+                                    <label for="tenKhuyenMai" class="block text-sm font-medium text-gray-700 mb-1">Tên chương trình khuyến mãi <span class="text-red-500">*</span></label>
+                                    <input type="text" id="tenKhuyenMai" th:field="*{tenKhuyenMai}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" placeholder="VD: Chào hè rực rỡ" required>
+                                </div>
+                                <div>
+                                    <label for="moTa" class="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
+                                    <textarea id="moTa" th:field="*{moTa}" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Mô tả ngắn về chương trình..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 2: Time & Value -->
+                        <div>
+                            <h2 class="text-xl font-semibold text-gray-800 border-b pb-3 mb-6">Thời gian & Giá trị</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label for="phanTramGiamGia" class="block text-sm font-medium text-gray-700 mb-1">Phần trăm giảm (%) <span class="text-red-500">*</span></label>
+                                    <input type="number" id="phanTramGiamGia" th:field="*{phanTramGiamGia}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" min="1" max="100" placeholder="VD: 15" required>
+                                </div>
+                                <div>
+                                    <label for="ngayBatDau" class="block text-sm font-medium text-gray-700 mb-1">Ngày bắt đầu <span class="text-red-500">*</span></label>
+                                    <input type="date" id="ngayBatDau" th:field="*{ngayBatDau}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" required>
+                                </div>
+                                <div>
+                                    <label for="ngayKetThuc" class="block text-sm font-medium text-gray-700 mb-1">Ngày kết thúc <span class="text-red-500">*</span></label>
+                                    <input type="date" id="ngayKetThuc" th:field="*{ngayKetThuc}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div>
+                        <!-- Section 3: Apply to Tours -->
+                        <div>
+                            <h2 class="text-xl font-semibold text-gray-800 border-b pb-3 mb-6">Áp dụng cho Tour</h2>
+                            <div class="dual-listbox-container">
+                                <!-- Available Tours Box -->
+                                <div class="dual-listbox-box">
+                                    <div class="dual-listbox-header">Tour có sẵn</div>
+                                    <div class="dual-listbox-search">
+                                        <input type="text" id="available-tours-search" placeholder="Tìm tour...">
+                                    </div>
+                                    <div class="dual-listbox-list" id="available-tours-list">
+                                        <!-- Options will be populated by JS -->
+                                    </div>
+                                </div>
+                                <!-- Controls -->
+                                <div class="dual-listbox-controls">
+                                    <button type="button" id="btn-move-to-selected">&gt;&gt;</button>
+                                    <button type="button" id="btn-move-to-available">&lt;&lt;</button>
+                                </div>
+                                <!-- Selected Tours Box -->
+                                <div class="dual-listbox-box">
+                                    <div class="dual-listbox-header">Tour đã áp dụng</div>
+                                     <div class="dual-listbox-search">
+                                        <input type="text" id="selected-tours-search" placeholder="Tìm tour...">
+                                    </div>
+                                    <div class="dual-listbox-list" id="selected-tours-list">
+                                        <!-- Options will be populated by JS -->
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Hidden select for form submission -->
+                            <select id="tourIds" name="tourIds" multiple class="hidden">
+                                 <optgroup th:each="group : ${groupedTours}" th:label="${group.key}">
+                                    <option th:each="tour : ${group.value}" 
+                                            th:value="${tour.tour_id}" 
+                                            th:text="${tour.tour_name}"></option>
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="mt-8 pt-6 border-t flex justify-end">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 flex items-center">
+                        <i class="fas fa-save mr-2"></i> Lưu chương trình
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // --- DATE VALIDATION ---
+        const ngayBatDauInput = document.getElementById('ngayBatDau');
+        const ngayKetThucInput = document.getElementById('ngayKetThuc');
+        const today = new Date().toISOString().split('T')[0];
+        ngayBatDauInput.setAttribute('min', today);
+        ngayBatDauInput.addEventListener('change', function () {
+            if (ngayBatDauInput.value) {
+                ngayKetThucInput.setAttribute('min', ngayBatDauInput.value);
+                if (ngayKetThucInput.value < ngayBatDauInput.value) {
+                    ngayKetThucInput.value = '';
+                }
+            }
+        });
+
+        // --- DUAL LISTBOX LOGIC ---
+        const sourceSelect = document.getElementById('tourIds');
+        const availableList = document.getElementById('available-tours-list');
+        const selectedList = document.getElementById('selected-tours-list');
+        const availableSearch = document.getElementById('available-tours-search');
+        const selectedSearch = document.getElementById('selected-tours-search');
+        const moveToSelectedBtn = document.getElementById('btn-move-to-selected');
+        const moveToAvailableBtn = document.getElementById('btn-move-to-available');
+
+        let allTours = [];
+        Array.from(sourceSelect.options).forEach(option => {
+            allTours.push({ value: option.value, text: option.text, selected: option.selected });
+        });
+
+        function renderLists() {
+            availableList.innerHTML = '';
+            selectedList.innerHTML = '';
+
+            const availableQuery = availableSearch.value.toLowerCase();
+            const selectedQuery = selectedSearch.value.toLowerCase();
+
+            allTours.forEach(tour => {
+                const item = document.createElement('div');
+                item.classList.add('list-item');
+                item.dataset.value = tour.value;
+                item.textContent = tour.text;
+                item.addEventListener('click', () => item.classList.toggle('selected'));
+
+                if (tour.selected) {
+                    if (tour.text.toLowerCase().includes(selectedQuery)) {
+                        selectedList.appendChild(item);
+                    }
+                } else {
+                    if (tour.text.toLowerCase().includes(availableQuery)) {
+                        availableList.appendChild(item);
+                    }
+                }
+            });
+        }
+
+        function moveItems(toSelected) {
+            const listToSearch = toSelected ? availableList : selectedList;
+            const selectedItems = Array.from(listToSearch.querySelectorAll('.list-item.selected'));
+
+            selectedItems.forEach(item => {
+                const tour = allTours.find(t => t.value === item.dataset.value);
+                if (tour) {
+                    tour.selected = toSelected;
+                }
+            });
+            renderLists();
+        }
+
+        moveToSelectedBtn.addEventListener('click', () => moveItems(true));
+        moveToAvailableBtn.addEventListener('click', () => moveItems(false));
+        availableSearch.addEventListener('input', renderLists);
+        selectedSearch.addEventListener('input', renderLists);
+
+        document.getElementById('khuyenMaiForm').addEventListener('submit', function() {
+            allTours.forEach(tour => {
+                const option = Array.from(sourceSelect.options).find(o => o.value === tour.value);
+                if (option) {
+                    option.selected = tour.selected;
+                }
+            });
+        });
+
+        renderLists();
+    });
+</script>
+
+</body>
+</html>

@@ -74,21 +74,6 @@
             <span class="mx-2 text-gray-500">/</span>
             <a href="/Client/ToursList" class="hover:text-blue-600 hover:underline">Du lịch</a>
             <span class="mx-2 text-gray-500">/</span>
-            <a th:text="${tour.tour_type == 'DOMESTIC'} ? 'Trong nước' :
-                        (${tour.tour_type == 'DELUXE'} ? 'Cao cấp' :
-                        (${tour.tour_type == 'FAMILY'} ? 'Gia đình' : 'Tiết kiệm'))"
-               class="hover:text-blue-600 hover:underline"></a>
-            <span class="mx-2 text-gray-500">/</span>
-            <a th:href="'/Client/ToursList/'+ ${tour.tour_region}"
-               th:text="${tour.tour_region == 'NORTH'} ? 'Miền Bắc' :
-                        (${tour.tour_region == 'CENTRAL'} ? 'Miền Trung' :
-                        (${tour.tour_region == 'SOUTHEAST'} ? 'Miền Đông Nam Bộ' : 'Miền Tây Nam Bộ'))"
-               class="hover:text-blue-600 hover:underline"></a>
-            <span class="mx-2 text-gray-500">/</span>
-            <a th:href="'/Client/ToursList/'+ ${tour.tour_region} + '/' + ${tour.tour_end_location}"
-               th:text="${tour.tour_end_location}"
-               class="hover:text-blue-600 hover:underline"></a>
-            <span class="mx-2 text-gray-500">/</span>
             <strong class="text-blue-600" th:text="${tour.tour_name}"></strong>
         </div>
 
@@ -351,23 +336,23 @@
             <!-- Price & Booking Box -->
             <div class="sticky top-4">
                 <div class="bg-white rounded-2xl shadow-xl p-6 mb-6 hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden relative">
-                    <!-- Ribbon khuyến mãi -->
-                    <div th:if="${tour.tour_discount != null && tour.tour_discount > 0}"
-                         class="absolute -right-8 -top-2 bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs font-bold px-8 py-1 transform rotate-45 shadow-md">
-                        <span th:text="'-'+${tour.tour_discount}+'%'"></span>
-                    </div>
+                                        <!-- Ribbon khuyến mãi -->
+                                        <div th:if="${tour.getDiscount_promotion() != null && #dates.createNow().after(tour.getDiscount_promotion().getNgayBatDau()) && #dates.createNow().before(tour.getDiscount_promotion().getNgayKetThuc())}"
+                                             class="absolute -right-8 -top-0 bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs font-bold px-8 py-1 transform rotate-45 shadow-md">
+                                            <span th:text="'- '+${tour.getDiscount_promotion().phanTramGiamGia}+'%'"></span>
+                                        </div>
 
                     <!-- Header với giá và khuyến mãi -->
                     <div class="text-center mb-6 relative">
-                        <div th:if="${tour.tour_discount != null && tour.tour_discount > 0}"
+                        <div th:if="${tour.getDiscount_promotion() != null && #dates.createNow().after(tour.getDiscount_promotion().getNgayBatDau()) && #dates.createNow().before(tour.getDiscount_promotion().getNgayKetThuc())}"
                              class="text-sm text-gray-400 line-through mb-1">
                             <span th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + '₫'}"></span>
                         </div>
                         <div class="text-4xl font-extrabold text-gray-900 mb-1 relative">
             <span class="bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent"
                   th:text="${#numbers.formatInteger(
-                      tour.tour_discount != null ?
-                      (tour.tour_adult_price * (100 - tour.tour_discount) / 100) :
+                      tour.getDiscount_promotion() != null && #dates.createNow().after(tour.getDiscount_promotion().getNgayBatDau()) && #dates.createNow().before(tour.getDiscount_promotion().getNgayKetThuc()) ?
+                      (tour.tour_adult_price * (100 - tour.getDiscount_promotion().phanTramGiamGia) / 100) :
                       tour.tour_adult_price, 3, 'POINT') + '₫'}"></span>
                         </div>
                         <div class="text-gray-500 mb-4 text-sm">/ người lớn</div>
@@ -447,13 +432,13 @@
                                     <span class="font-medium text-gray-800">Người lớn</span>
                                 </div>
                                 <div class="text-right">
-                    <span th:if="${tour.tour_discount != 0}" class="text-sm text-gray-400 line-through mr-2"
+                    <span th:if="${tour.getDiscount_promotion() != null && #dates.createNow().after(tour.getDiscount_promotion().getNgayBatDau()) && #dates.createNow().before(tour.getDiscount_promotion().getNgayKetThuc())}" class="text-sm text-gray-400 line-through mr-2"
                           th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + '₫'}">
                     </span>
                                     <span class="text-base font-bold price-display text-blue-600"
                                           th:text="${#numbers.formatInteger(
-                              tour.tour_discount != 0 ?
-                              (tour.tour_adult_price * (100 - tour.tour_discount) / 100) :
+                              tour.getDiscount_promotion() != null && #dates.createNow().after(tour.getDiscount_promotion().getNgayBatDau()) && #dates.createNow().before(tour.getDiscount_promotion().getNgayKetThuc()) ?
+                              (tour.tour_adult_price * (100 - tour.getDiscount_promotion().phanTramGiamGia) / 100) :
                               tour.tour_adult_price, 3, 'POINT') + '₫'}">
                     </span>
                                 </div>
@@ -468,13 +453,13 @@
                                     <span class="font-medium text-gray-800">Trẻ em</span>
                                 </div>
                                 <div class="text-right">
-                    <span th:if="${tour.tour_discount != 0}" class="text-sm text-gray-400 line-through mr-2"
+                    <span th:if="${tour.getDiscount_promotion() != null && #dates.createNow().after(tour.getDiscount_promotion().getNgayBatDau()) && #dates.createNow().before(tour.getDiscount_promotion().getNgayKetThuc())}" class="text-sm text-gray-400 line-through mr-2"
                           th:text="${#numbers.formatInteger(tour.tour_child_price, 3, 'POINT') + '₫'}">
                     </span>
                                     <span class="text-base font-bold price-display text-blue-600"
                                           th:text="${#numbers.formatInteger(
-                              tour.tour_discount != 0 ?
-                              (tour.tour_child_price * (100 - tour.tour_discount) / 100) :
+                              tour.getDiscount_promotion() != null && #dates.createNow().after(tour.getDiscount_promotion().getNgayBatDau()) && #dates.createNow().before(tour.getDiscount_promotion().getNgayKetThuc()) ?
+                              (tour.tour_child_price * (100 - tour.getDiscount_promotion().phanTramGiamGia) / 100) :
                               tour.tour_child_price, 3, 'POINT') + '₫'}">
                     </span>
                                 </div>
@@ -489,13 +474,13 @@
                                     <span class="font-medium text-gray-800">Trẻ nhỏ</span>
                                 </div>
                                 <div class="text-right">
-                    <span th:if="${tour.tour_discount != 0}" class="text-sm text-gray-400 line-through mr-2"
+                    <span th:if="${tour.getDiscount_promotion() != null && #dates.createNow().after(tour.getDiscount_promotion().getNgayBatDau()) && #dates.createNow().before(tour.getDiscount_promotion().getNgayKetThuc())}" class="text-sm text-gray-400 line-through mr-2"
                           th:text="${#numbers.formatInteger(tour.tour_infant_price, 3, 'POINT') + '₫'}">
                     </span>
                                     <span class="text-base font-bold price-display text-blue-600"
                                           th:text="${#numbers.formatInteger(
-                              tour.tour_discount != 0 ?
-                              (tour.tour_infant_price * (100 - tour.tour_discount) / 100) :
+                              tour.getDiscount_promotion() != null && #dates.createNow().after(tour.getDiscount_promotion().getNgayBatDau()) && #dates.createNow().before(tour.getDiscount_promotion().getNgayKetThuc()) ?
+                              (tour.tour_infant_price * (100 - tour.getDiscount_promotion().phanTramGiamGia) / 100) :
                               tour.tour_infant_price, 3, 'POINT') + '₫'}">
                     </span>
                                 </div>
@@ -565,9 +550,9 @@
                         </div>
 
                         <!-- Discount Badge -->
-                        <div th:if="${relatedTour.tour_discount != null and relatedTour.tour_discount > 0}"
+                        <div th:if="${relatedTour.getDiscount_promotion() != null && #dates.createNow().after(relatedTour.getDiscount_promotion().getNgayBatDau()) && #dates.createNow().before(relatedTour.getDiscount_promotion().getNgayKetThuc())}"
                              class="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
-                            <span th:text="'-' + ${relatedTour.tour_discount} + '%'"></span>
+                            <span th:text="'- '+${relatedTour.getDiscount_promotion().phanTramGiamGia}+'%'"></span>
                         </div>
                     </div>
 
@@ -588,14 +573,15 @@
                         <div class="mt-auto pt-3 border-t border-gray-100">
                             <div class="flex justify-between items-center">
                                 <div>
-                                    <div th:if="${relatedTour.tour_discount != null and relatedTour.tour_discount > 0}"
+                                    <div th:if="${relatedTour.getDiscount_promotion() != null && #dates.createNow().after(relatedTour.getDiscount_promotion().getNgayBatDau()) && #dates.createNow().before(relatedTour.getDiscount_promotion().getNgayKetThuc())}"
                                          class="text-xs text-gray-400 line-through">
                                         <span th:text="${#numbers.formatInteger(relatedTour.tour_adult_price, 3, 'POINT') + '₫'}"></span>
                                     </div>
                                     <div class="text-blue-600 font-bold">
-                                        <span th:text="${#numbers.formatInteger(
-                                            relatedTour.tour_discount != null ?
-                                            (relatedTour.tour_adult_price * (100 - relatedTour.tour_discount) / 100) :
+                                        <span th:with="promo=${relatedTour.getDiscount_promotion()}" 
+                                              th:text="${#numbers.formatInteger(
+                                            promo != null && #dates.createNow().after(promo.getNgayBatDau()) && #dates.createNow().before(promo.getNgayKetThuc()) ?
+                                            (relatedTour.tour_adult_price * (100 - promo.phanTramGiamGia) / 100) :
                                             relatedTour.tour_adult_price, 3, 'POINT') + '₫'}"></span>
                                     </div>
                                 </div>

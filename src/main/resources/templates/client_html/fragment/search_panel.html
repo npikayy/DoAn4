@@ -99,13 +99,11 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">Mức giá</label>
                 <div class="relative">
                     <select id="priceSelect" class="w-full py-3 pl-10 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white appearance-none">
-                        <option value="">Chọn khoảng giá</option>
-                        <option value="0-5000000">Dưới 5 triệu</option>
+                        <option value="">Tất cả</option>
+                        <option value="0-2000000">Dưới 2 triệu</option>
+                        <option value="2000000-5000000">2 - 5 triệu</option>
                         <option value="5000000-10000000">5 - 10 triệu</option>
-                        <option value="10000000-20000000">10 - 20 triệu</option>
-                        <option value="20000000-50000000">20 - 50 triệu</option>
-                        <option value="50000000-100000000">50 - 100 triệu</option>
-                        <option value="100000000-">Trên 100 triệu</option>
+                        <option value="10000000-999999999">Trên 10 triệu</option>
                     </select>
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -322,7 +320,12 @@
                     const formattedDate = formatDateToISO(startDate);
 
                     // Tạo URL với các tham số
-                    const url = `/Client/ToursList/${encodeURIComponent(location)}/${encodeURIComponent(priceRange)}/${formattedDate}`;
+                    const params = new URLSearchParams();
+                    params.append('location', location);
+                    params.append('priceRange', priceRange);
+                    params.append('startDate', formattedDate);
+
+                    const url = `/Client/ToursList?${params.toString()}`;
 
                     // Chuyển hướng đến trang kết quả
                     window.location.href = url;

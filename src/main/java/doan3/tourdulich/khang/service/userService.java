@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 
@@ -34,25 +35,9 @@ public class userService implements UserDetailsService {
         userRepository.save(user);
     }
 
-//    public List<users> getAllUsers() {
-//        return userRepository.findByRole("ROLE_USER");
-//    }
-//    public List<users> getAllUploaders() {
-//        return userRepository.findByRole("ROLE_UPLOADER");
-//    }
-//
-//    public void deleteById(String userId) {
-//        users user = userRepository.findByUserId(userId);
-//        if (user != null) {
-//            if (!user.getUserPicUrl().equals("/UserProfilePics/UserDefaultAvatar.png")) {
-//                String picUrl = user.getUserPicUrl();
-//                String newPicUrl = picUrl.replace("/UserProfilePics/", "src/main/resources/static/UserProfilePics/");
-//                File oldPicFile = new File(newPicUrl);
-//                    oldPicFile.delete();
-//            }
-//            userRepository.deleteByUserId(userId);
-//        }
-//    }
+    public List<users> getAllUsers() {
+        return userRepository.findAll();
+    }
     public void updateUserInfo(String user_id,String full_name,String phone_number,String address,String gender,String date_of_birth) {
         Optional<users> user = userRepository.findById(user_id);
         if (user.isPresent()) {
@@ -67,54 +52,15 @@ public class userService implements UserDetailsService {
             userRepository.save(updatedUser);
         }
     }
-//
-//    public void updatePicFile(MultipartFile coverImage, String userId) throws IOException {
-//        File picDir = new File(PIC_DIR);
-//        if (!picDir.exists()) {
-//            picDir.mkdirs();
-//        }
-//        users user = userRepository.findByUserId(userId);
-//        if (user != null) {
-//            String picUrl = user.getUserPicUrl();
-//            String newPicUrl = picUrl.replace("/UserProfilePics/", "src/main/resources/static/UserProfilePics/");
-//            File oldPicFile = new File(newPicUrl);
-//            if (oldPicFile.exists()&&!user.getUserPicUrl().equals("/UserProfilePics/UserDefaultAvatar.png")) {
-//                oldPicFile.delete();
-//            }
-//            String originalName = coverImage.getOriginalFilename();
-//            String picName = originalName;
-//            String fileExtension = "";
-//
-//            // Extract file extension if present
-//            int lastDotIndex = originalName.lastIndexOf(".");
-//            if (lastDotIndex > 0) {
-//                fileExtension = originalName.substring(lastDotIndex); // Get file extension
-//                picName = originalName.substring(0, lastDotIndex); // File name without extension
-//            }
-//
-//            File picFile = new File(PIC_DIR + originalName);
-//            int counter = 1; // Start with 1 for duplicate files
-//
-//            // Generate a unique name by appending a number if the file exists
-//            while (picFile.exists()) {
-//                picFile = new File(PIC_DIR + picName + "_" + counter + fileExtension);
-//                counter++;
-//            }
-//
-//            // Save the file
-//            try (FileOutputStream fos = new FileOutputStream(picFile)) {
-//                fos.write(coverImage.getBytes());
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//            String newPicUrl2 = "/UserProfilePics/" + picFile.getName();
-//            user.setUserPicUrl(newPicUrl2);
-//            userRepository.save(user);
-//        }
-//    }
-//    public users findByUserId(String userId) {
-//        return userRepository.findByUserId(userId);
-//    }
+
+    public Optional<users> findByUserId(String userId) {
+        return userRepository.findById(userId);
+    }
+
+    public users findByUsername(String username) {
+        return userRepository.findByUsername(username);
+    }
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         users user = userRepository.findByUsername(username);

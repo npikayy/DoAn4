@@ -7,8 +7,11 @@ import doan3.tourdulich.khang.entity.tours;
 import doan3.tourdulich.khang.repository.tourPicRepo;
 import doan3.tourdulich.khang.repository.tourRepo;
 import doan3.tourdulich.khang.repository.scheduleRepo;
+import jakarta.persistence.criteria.Predicate;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,15 +26,65 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+import org.springframework.data.jpa.domain.Specification;
+import doan3.tourdulich.khang.repository.TourSpecifications;
+
 @Service
+@Slf4j
 public class tourService {
-    
+
     @Autowired
     private tourRepo tourRepo;
     @Autowired
     private tourPicRepo tourPicRepo;
     @Autowired
     private scheduleRepo scheduleRepo;
+
+    public List<tours> findTours(
+            String keyword,
+            String sortBy,
+            Boolean isAbroad,
+            String tourType,
+            String duration,
+            String transportation,
+            String priceRange,
+            String location,
+            String region,
+            Boolean hasPromotion,
+            String promotionStatus,
+            String startDate,
+            String departureStatus) {
+
+        Specification<tours> spec = TourSpecifications.withFilters(keyword, isAbroad, tourType, duration, transportation, priceRange, location, region, hasPromotion, promotionStatus, startDate, departureStatus, sortBy);
+
+        Sort sort = Sort.unsorted();
+        if (sortBy != null && !sortBy.isEmpty()) {
+            switch (sortBy) {
+                case "price-asc":
+                    sort = Sort.by("tour_adult_price").ascending();
+                    break;
+                case "price-desc":
+                    sort = Sort.by("tour_adult_price").descending();
+                    break;
+                case "name-asc":
+                    sort = Sort.by("tour_name").ascending();
+                    break;
+                case "rating_desc":
+                    sort = Sort.by("tour_rating").descending();
+                    break;
+            }
+        }
+
+        return tourRepo.findAll(spec, sort);
+    }
+
+    public List<tours> getAllTours() {
+        return tourRepo.findAll();
+    }
+
+    public List<tours> getToursWithoutPromotion() {
+        return tourRepo.findByDiscount_promotionIsNull();
+    }
 
     public void addTour(String tour_id, String tour_name, String tour_description, String tour_start_location,
                         String tour_end_location, String tour_type, String tour_transportation,Integer tour_duration,Integer tour_max_number_of_people) throws IOException {
@@ -53,7 +106,6 @@ public class tourService {
                 .tour_adult_price(0)
                 .tour_region(tourRegion)
                 .tour_duration(tour_duration)
-                .tour_discount(0)
                 .tour_max_number_of_people(tour_max_number_of_people)
                 .is_abroad(false)
                 .build();
@@ -79,7 +131,6 @@ public class tourService {
                 .tour_adult_price(0)
                 .tour_region(tourRegion)
                 .tour_duration(tour_duration)
-                .tour_discount(0)
                 .tour_max_number_of_people(tour_max_number_of_people)
                 .is_abroad(true)
                 .build();

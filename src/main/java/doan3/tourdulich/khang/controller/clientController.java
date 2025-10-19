@@ -12,7 +12,9 @@ import doan3.tourdulich.khang.repository.scheduleRepo;
 import doan3.tourdulich.khang.repository.startDateRepo;
 import doan3.tourdulich.khang.repository.tourBookingRepo;
 import doan3.tourdulich.khang.repository.historyRepo;
+import doan3.tourdulich.khang.service.KhuyenMaiService;
 import doan3.tourdulich.khang.service.bookingService;
+import doan3.tourdulich.khang.service.tourService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +32,30 @@ import java.util.*;
 @RequestMapping("/Client")
 @RestController
 public class clientController {
+
+    @GetMapping("/khuyen-mai")
+    public ModelAndView showAllPromotions(ModelAndView modelAndView) {
+        getCurrentUser(modelAndView);
+        List<KhuyenMai> promotions = khuyenMaiService.getActivePromotionsWithImages();
+        modelAndView.addObject("promotions", promotions);
+        modelAndView.setViewName("client_html/promotions_list");
+        return modelAndView;
+    }
+
+    @GetMapping("/khuyen-mai/{id}")
+    public ModelAndView showPromotionDetail(@PathVariable("id") int id, ModelAndView modelAndView) {
+        getCurrentUser(modelAndView);
+        KhuyenMai promotion = khuyenMaiService.getKhuyenMaiById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid promotion Id:" + id));
+        
+        List<tours> tours = promotion.getTours();
+
+        modelAndView.addObject("promotion", promotion);
+        prepareTourData(modelAndView, tours, "tourThumbnails", "tourStartDates");
+        
+        modelAndView.setViewName("client_html/promotion_detail");
+        return modelAndView;
+    }
     @Autowired
     private bannerRepo bannerRepo;
     @Autowired
@@ -50,6 +76,10 @@ public class clientController {
     private ratingRepo ratingRepo;
     @Autowired
     private bookingService bookingService;
+    @Autowired
+    private KhuyenMaiService khuyenMaiService;
+    @Autowired
+    private tourService tourService;
 
     public void getCurrentUser(ModelAndView modelAndView) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -99,6 +129,7 @@ public class clientController {
         getCurrentUser(modelAndView);
         List<tours> tours = tourRepo.find3Tour_discount();
         modelAndView.addObject("banners", bannerRepo.findAll());
+        modelAndView.addObject("promotionBanners", khuyenMaiService.getActivePromotionsWithImages()); // Add this line
         String RecommendedTourThumbnails = "RecommendedTourThumbnails";
         String RecommendedTourStartDates = "RecommendedTourStartDates";
         // Kiểm tra nếu user đã đăng nhập
@@ -135,96 +166,41 @@ public class clientController {
         return modelAndView;
     }
 
-    @GetMapping("/SpecialOffers")
-    public ModelAndView SpecialOffers(ModelAndView modelAndView) {
-        getCurrentUser(modelAndView);
-        List<tours> tours = tourRepo.findTour_discount();
-
-        String tourThumbnails = "tourThumbnails";
-        String tourStartDates = "tourStartDates";
-        prepareTourData(modelAndView, tours, tourThumbnails, tourStartDates);
-
-        modelAndView.setViewName("client_html/special_offers");
-        return modelAndView;
-    }
 
     @GetMapping("/ToursList")
-    public ModelAndView ToursList(ModelAndView modelAndView) {
+    public ModelAndView ToursList(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) Boolean isAbroad,
+            @RequestParam(required = false) String duration,
+            @RequestParam(required = false) String transportation,
+            @RequestParam(required = false) String priceRange,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) String region,
+            @RequestParam(required = false) Boolean hasPromotion,
+            @RequestParam(required = false) String startDate,
+            ModelAndView modelAndView) {
+        
         getCurrentUser(modelAndView);
+
+        List<tours> tours = tourService.findTours(keyword, sortBy, isAbroad, null, duration, transportation, priceRange, location, region, hasPromotion, null, startDate, null);
+
+        List<String> uniqueLocations = tourRepo.findDistinctEndLocations();
+        modelAndView.addObject("uniqueLocations", uniqueLocations);
+
+        prepareTourData(modelAndView, tours, "tourThumbnails", "tourStartDates");
         modelAndView.setViewName("client_html/tours_list");
-        String tourThumbnails = "tourThumbnails";
-        String tourStartDates = "tourStartDates";
-        List<tours> tours = tourRepo.findAll();
-        prepareTourData(modelAndView, tours, tourThumbnails, tourStartDates);
-        return modelAndView;
-    }
-
-    @GetMapping("/ToursList/{region}")
-    public ModelAndView ToursListByRegion(ModelAndView modelAndView, @PathVariable String region) {
-        getCurrentUser(modelAndView);
-
-        if (modelAndView.getModel().get("user_id") != null) {
-            System.out.println("user_id: " + modelAndView.getModel().get("user_id").toString());
-            saveHistory(region, modelAndView.getModel().get("user_id").toString());
-        }
-        return showToursList(modelAndView, tourRepo.findByRegion(region), region, null);
-    }
-
-    @GetMapping("/ToursList/{region}/{location}")
-    public ModelAndView ToursListByLocation(ModelAndView modelAndView,
-                                            @PathVariable String region,
-                                            @PathVariable String location) {
-        getCurrentUser(modelAndView);
-
-        if (modelAndView.getModel().get("user_id") != null) {
-            System.out.println("user_id: " + modelAndView.getModel().get("user_id").toString());
-            saveHistory(region, modelAndView.getModel().get("user_id").toString());
-        }
-        
-        // Handle international tours
-        if ("INTERNATIONAL".equals(region)) {
-            List<tours> tours = tourRepo.findAll().stream()
-                .filter(tour -> tour.getTour_end_location() != null && 
-                       tour.getTour_end_location().contains(location))
-                .collect(java.util.stream.Collectors.toList());
-            return showToursList(modelAndView, tours, region, location);
-        }
-        
-        return showToursList(modelAndView, tourRepo.findByTour_location(location), region, location);
-    }
-
-    @GetMapping("/ToursList/{location}/{priceRange}/{startDate}")
-    public ModelAndView ToursListByFilter(ModelAndView modelAndView,
-                                          @PathVariable String location,
-                                          @PathVariable String priceRange,
-                                          @PathVariable String startDate) {
-        getCurrentUser(modelAndView);
-
-        int minPrice = Integer.parseInt(priceRange.split("-")[0]);
-        int maxPrice = Integer.parseInt(priceRange.split("-")[1]);
-        LocalDate date = LocalDate.parse(startDate);
-
-        List<tours> tours = tourRepo.findByLocationAndPriceAndStartDate(location, minPrice, maxPrice, date);
-
-        modelAndView.addObject("location", location);
-
-        if (modelAndView.getModel().get("user_id") != null && tours.size() > 0) {
-            System.out.println("user_id: " + modelAndView.getModel().get("user_id").toString());
-            saveHistory(tours.get(0).getTour_region(), modelAndView.getModel().get("user_id").toString());
-        }
-
-        String tourThumbnails = "tourThumbnails";
-        String tourStartDates = "tourStartDates";
-        prepareTourData(modelAndView, tours, tourThumbnails, tourStartDates);
-
-        modelAndView.setViewName("client_html/filtered_tours_list");
         return modelAndView;
     }
 
     @GetMapping("/TourDetail/{tour_id}")
     public ModelAndView TourDetail(@PathVariable String tour_id, ModelAndView modelAndView) {
         getCurrentUser(modelAndView);
-        tours tour = tourRepo.findById(tour_id).get();
+        tours tour = tourRepo.findByIdWithPromotions(tour_id).get();
+
+        // Get active promotion for this tour
+        KhuyenMai activePromotion = tour.getDiscount_promotion();
+        modelAndView.addObject("activePromotion", activePromotion);
 
         modelAndView.addObject("tourRatings", ratingRepo.findRatingByTourId(tour_id));
         modelAndView.addObject("tour_id", tour_id);
@@ -245,26 +221,7 @@ public class clientController {
         return modelAndView;
     }
 
-    // Các phương thức hỗ trợ
-    private ModelAndView showToursList(ModelAndView modelAndView,
-                                       List<tours> tours,
-                                       String region,
-                                       String location) {
 
-        String tourThumbnails = "tourThumbnails";
-        String tourStartDates = "tourStartDates";
-        prepareTourData(modelAndView, tours, tourThumbnails, tourStartDates);
-
-        if (region != null) {
-            modelAndView.addObject("region", region);
-        }
-        if (location != null) {
-            modelAndView.addObject("location", location);
-        }
-
-        modelAndView.setViewName("client_html/filtered_tours_list");
-        return modelAndView;
-    }
 
     private void prepareTourData(ModelAndView modelAndView,
                                     List<tours> tours,
@@ -273,23 +230,24 @@ public class clientController {
         if (tours != null) {
             modelAndView.addObject("tours", tours);
 
-            // Tạo map chứa ảnh đại diện và ngày khởi hành cho tour
+            // Create maps for thumbnails, start dates, and active promotions
             Map<String, String> tourThumbnails = new HashMap<>();
             Map<String, Object> tourStartDatesMap = new HashMap<>();
 
             for (tours tour : tours) {
                 String tourId = tour.getTour_id();
 
-                // Lấy ảnh đại diện
+                // Get thumbnail
                 String thumbnail = tourPicRepo.findOnePicByTour(tourId);
                 tourThumbnails.put(tourId, thumbnail != null ? thumbnail : "");
 
-                // Lấy danh sách ngày khởi hành
+                // Get start dates
                 List<tour_start_date> startDates = startDateRepo.findByTourId(tourId);
                 tourStartDatesMap.put(tourId, startDates);
+
             }
 
-            // Thêm vào model với tên được chỉ định
+            // Add maps to the model
             modelAndView.addObject(thumbnailsModelName, tourThumbnails);
             modelAndView.addObject(startDatesModelName, tourStartDatesMap);
         }

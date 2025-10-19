@@ -1,16 +1,15 @@
 package doan3.tourdulich.khang.controller;
 
 import doan3.tourdulich.khang.dto.TourBookingRequest;
-import doan3.tourdulich.khang.entity.tour_bookings;
-import doan3.tourdulich.khang.entity.tour_start_date;
-import doan3.tourdulich.khang.entity.tours;
-import doan3.tourdulich.khang.entity.users;
+import doan3.tourdulich.khang.entity.*;
 import doan3.tourdulich.khang.repository.tourPicRepo;
 import doan3.tourdulich.khang.repository.tourRepo;
 import doan3.tourdulich.khang.repository.userRepo;
 import doan3.tourdulich.khang.repository.voucherRepo;
 import doan3.tourdulich.khang.repository.tourBookingRepo;
 import doan3.tourdulich.khang.repository.startDateRepo;
+import doan3.tourdulich.khang.service.KhuyenMaiService;
+import doan3.tourdulich.khang.service.VoucherService;
 import doan3.tourdulich.khang.service.bookingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,11 +42,15 @@ public class clientBookingController {
     @Autowired
     private voucherRepo voucherRepo;
     @Autowired
+    private VoucherService voucherService;
+    @Autowired
     private bookingService bookingService;
     @Autowired
     private tourBookingRepo tourBookingRepo;
     @Autowired
     private startDateRepo startDateRepo;
+    @Autowired
+    private KhuyenMaiService khuyenMaiService;
 
     public void getCurrentUser(ModelAndView modelAndView) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -90,7 +93,7 @@ public class clientBookingController {
                                       @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate start_date,
                                       ModelAndView modelAndView) {
         getCurrentUser(modelAndView);
-        Optional<tours> tourOptional = tourRepo.findById(tour_id);
+        Optional<tours> tourOptional = tourRepo.findByIdWithPromotions(tour_id);
 
         if (!tourOptional.isPresent()) {
             modelAndView.setViewName("redirect:/error");
@@ -114,6 +117,10 @@ public class clientBookingController {
             tours tour = tourOptional.get();
             LocalDate endDate = start_date.plusDays(tour.getTour_duration() - 1);
 
+            // Find and add active promotion
+            KhuyenMai activePromotion = tour.getDiscount_promotion();
+            modelAndView.addObject("activePromotion", activePromotion);
+
             modelAndView.addObject("tourPics", tourPicRepo.findByTourId(tour_id));
             modelAndView.addObject("start_date", start_date);
             modelAndView.addObject("end_date", endDate);
@@ -129,8 +136,29 @@ public class clientBookingController {
         Map<String, Object> response = new HashMap<>();
 
         try {
+            // Re-validate voucher on server-side before booking
+            int finalDiscount = 0;
+            if (request.getVoucherCode() != null && !request.getVoucherCode().isEmpty()) {
+                Map<String, Object> validationResult = voucherService.validateVoucher(request.getVoucherCode(), request.getUser_id(), request.getTour_id());
+                if ((boolean) validationResult.get("success")) {
+                    finalDiscount = (int) validationResult.get("discountPercentage");
+                } else {
+                    // If voucher is invalid, stop the booking process
+                    response.put("success", false);
+                    response.put("message", "Voucher không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.");
+                    return ResponseEntity.badRequest().body(response);
+                }
+            }
+
+            // Calculate final price
+            tours tour = tourRepo.findById(request.getTour_id()).orElseThrow(() -> new RuntimeException("Tour not found"));
+            long basePrice = (long) request.getNumber_of_adults() * tour.getTour_adult_price() +
+                             (long) request.getNumber_of_children() * (tour.getTour_child_price() != null ? tour.getTour_child_price() : 0) +
+                             (long) request.getNumber_of_infants() * (tour.getTour_infant_price() != null ? tour.getTour_infant_price() : 0);
+            long finalPrice = basePrice - (basePrice * finalDiscount / 100);
+
+
             tour_bookings tourBooking = tourBookingRepo.findByIdAndUserIdAndStartDate(request.getTour_id(), request.getUser_id(), request.getStart_date());
-            // Kiểm tra booking tồn tại
             if (tourBooking != null && !tourBooking.getStatus().equals("Cancelled")) {
                 response.put("success", false);
                 response.put("booking_id",tourBookingRepo.findByIdAndUserIdAndStartDate(request.getTour_id(),request.getUser_id(),request.getStart_date()).getBooking_id());
@@ -138,7 +166,6 @@ public class clientBookingController {
                 return ResponseEntity.badRequest().body(response);
             }
 
-            //Thêm booking vào database
             tour_bookings booking = bookingService.addBooking(
                     request.getTour_id(),
                     request.getUser_id(),
@@ -148,17 +175,21 @@ public class clientBookingController {
                     request.getUser_address(),
                     request.getTour_name(),
                     request.getStart_date(),
-                    request.getTotal_price(),
+                    (int) finalPrice, // Use the server-calculated final price
                     request.getNumber_of_adults(),
                     request.getNumber_of_children(),
                     request.getNumber_of_infants(),
-                    request.getVoucher_discount(),
+                    finalDiscount, // Save the applied discount percentage
                     request.getNote()
             );
 
+            // Mark voucher as used if applied
+            if (finalDiscount > 0) {
+                voucherService.markVoucherAsUsed(request.getVoucherCode());
+            }
+
             updateNumGuest(request.getTour_id(), request.getStart_date(), request.getNumber_of_adults() + request.getNumber_of_children() + request.getNumber_of_infants());
 
-            // Trả về response thành công
             response.put("success", true);
             response.put("booking_id", booking.getBooking_id());
             response.put("message", "Đặt tour thành công");

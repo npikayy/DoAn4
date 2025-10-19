@@ -40,6 +40,18 @@
 </head>
 <body class="min-h-screen">
 <header th:replace="client_html/fragment/headerANDfooter :: header"></header>
+
+<div class="container mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <div class="text-sm text-gray-600 mb-6">
+        <a href="/Client/Home" class="hover:text-blue-800 hover:underline">Trang chủ</a>
+        <span class="mx-2">/</span>
+        <a href="/Client/Tra_cuu" class="hover:text-blue-800 hover:underline">Tra cứu đơn hàng</a>
+        <span class="mx-2">/</span>
+        <a class="text-blue-600 hover:underline">Đã hủy</a>
+    </div>
+</div>
+
 <div class="container mx-auto px-4 py-8 max-w-6xl">
     <!-- Progress Steps -->
     <div class="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">

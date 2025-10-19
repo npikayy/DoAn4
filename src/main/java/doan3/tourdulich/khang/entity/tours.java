@@ -1,9 +1,8 @@
 package doan3.tourdulich.khang.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,7 +10,9 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Builder
@@ -29,7 +30,7 @@ public class tours {
     @OneToMany(mappedBy = "tour")
     private List<tour_pictures> tourPictures;
     private String tour_region;
-    private Boolean is_abroad;
+private Boolean is_abroad;
     private String tour_start_location;
     private String tour_end_location;
     private String tour_transportation;
@@ -38,9 +39,12 @@ public class tours {
     private List<tour_start_date> tour_start_date;
     @OneToMany(mappedBy = "tour")
     private List<tour_bookings> tour_bookings;
+
+    @ManyToOne()
+    private KhuyenMai discount_promotion;
+
     private String special_offer;
     private Integer tour_duration;
-    private Integer tour_discount;
     private Integer tour_adult_price;
     private Integer tour_child_price;
     private Integer tour_infant_price;

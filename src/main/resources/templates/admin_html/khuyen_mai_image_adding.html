@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thay đổi Hình Ảnh Khuyến Mãi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        .drop-zone {
+            transition: all 0.3s ease;
+        }
+        .drop-zone--over {
+            border-color: #3b82f6;
+            background-color: #f0f9ff;
+        }
+        .preview-image {
+            transition: all 0.2s ease;
+        }
+        .preview-image:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .remove-btn {
+            transition: opacity 0.2s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+<div class="min-h-screen flex">
+    <!-- Sidebar -->
+    <aside th:replace="~{admin_html/fragment/sidebar :: sidebar}"></aside>
+    <!-- Main Content -->
+    <div class="flex-1 p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">Thay đổi Hình Ảnh Khuyến Mãi</h1>
+            <a th:href="@{/admin/khuyen-mai}"
+               class="my-4 inline-block px-4 py-2 font-bold rounded-md text-gray-700 bg-white hover:bg-gray-300">
+                <i class="fas fa-arrow-left mr-2"></i> Quay lại danh sách
+            </a>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-sm">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Current Image -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Ảnh hiện tại</h3>
+                    <div class="current-image-wrapper">
+                        <img th:if="${khuyenMai.hinhAnh}" th:src="${khuyenMai.hinhAnh}" alt="Ảnh khuyến mãi hiện tại" class="rounded-lg shadow-md max-w-sm w-full">
+                        <p th:unless="${khuyenMai.hinhAnh}" class="text-gray-500">Chưa có ảnh nào.</p>
+                    </div>
+                </div>
+
+                <!-- Dropzone Area -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Tải ảnh mới</h3>
+                    <div class="drop-zone border-2 border-dashed border-gray-300 rounded-lg p-10 text-center mb-6" id="dropZone">
+                        <input type="file" id="fileInput" accept="image/*" class="hidden">
+                        <label for="fileInput" class="cursor-pointer">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-blue-500 mb-3"></i>
+                            <h3 class="mt-2 text-lg font-medium text-gray-900">Kéo thả ảnh vào đây hoặc click để chọn</h3>
+                            <p class="mt-1 text-sm text-gray-500">Hỗ trợ upload 1 ảnh (JPG, PNG, tối đa 5MB)</p>
+                        </label>
+                        <input type="hidden" id="khuyenMaiId" th:value="${khuyenMaiId}">
+                    </div>
+
+                    <!-- Preview Area -->
+                    <div class="preview-area" id="previewArea"></div>
+
+                    <div class="mt-6 text-right">
+                        <button id="uploadButton" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg shadow-sm transition flex items-center justify-center ml-auto">
+                            <i class="fas fa-upload mr-2"></i> Cập nhật ảnh
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const previewArea = document.getElementById('previewArea');
+        const uploadButton = document.getElementById('uploadButton');
+        const khuyenMaiId = document.getElementById('khuyenMaiId').value;
+        let fileToUpload = null;
+
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('drop-zone--over'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('drop-zone--over'), false);
+        });
+
+        dropZone.addEventListener('drop', function(e) {
+            const dt = e.dataTransfer;
+            if (dt.files.length > 0) {
+                handleFile(dt.files[0]);
+            }
+        });
+
+        function handleFile(selectedFile) {
+            if (!selectedFile.type.match('image.*')) {
+                alert(`File ${selectedFile.name} không phải là hình ảnh.`);
+                return;
+            }
+            if (selectedFile.size > 5 * 1024 * 1024) {
+                alert(`File ${selectedFile.name} vượt quá 5MB.`);
+                return;
+            }
+            fileToUpload = selectedFile;
+            previewFile(fileToUpload);
+        }
+
+        function previewFile(file) {
+            previewArea.innerHTML = '';
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewItem = document.createElement('div');
+                previewItem.className = 'preview-image relative group border border-gray-200 rounded-lg overflow-hidden w-full max-w-sm';
+
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'w-full h-auto object-cover';
+
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-btn absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center';
+                removeBtn.innerHTML = '<i class="fas fa-times text-xs"></i>';
+                removeBtn.onclick = function() {
+                    fileToUpload = null;
+                    previewArea.innerHTML = '';
+                    fileInput.value = ''; // Reset file input
+                };
+
+                previewItem.appendChild(img);
+                previewItem.appendChild(removeBtn);
+                previewArea.appendChild(previewItem);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        uploadButton.addEventListener('click', function() {
+            if (!fileToUpload) {
+                alert('Vui lòng chọn một ảnh để upload');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('khuyenMaiId', khuyenMaiId);
+            formData.append('file', fileToUpload);
+
+            uploadButton.disabled = true;
+            uploadButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Đang cập nhật...';
+
+            fetch('/admin/khuyen-mai/upload-image', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Cập nhật ảnh thành công!');
+                    window.location.href = '/admin/khuyen-mai';
+                } else {
+                    alert('Lỗi: ' + (data.message || 'Upload thất bại'));
+                }
+            })
+            .catch(error => {
+                alert('Lỗi: ' + error.message);
+            })
+            .finally(() => {
+                uploadButton.disabled = false;
+                uploadButton.innerHTML = '<i class="fas fa-upload mr-2"></i> Cập nhật ảnh';
+            });
+        });
+    });
+</script>
+</body>
+</html>

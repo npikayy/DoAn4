@@ -152,12 +152,21 @@
                     <!-- Right Column - Profile Details -->
                     <div class="w-full lg:w-2/3">
                         <div class="bg-white rounded-xl profile-card p-8 h-full">
-                            <div class="mb-8">
-                                <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-                                    <i class="fas fa-id-card text-indigo-600 mr-2"></i>
-                                    Thông tin cá nhân
-                                </h2>
+                            <!-- Tab Navigation -->
+                            <div class="border-b border-gray-200 mb-6">
+                                <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                                    <a href="#" id="tab-info" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-indigo-500 text-indigo-600">
+                                        Thông tin cá nhân
+                                    </a>
+                                    <a href="#" id="tab-vouchers" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                        Ví Voucher
+                                        <span th:if="${vouchers != null && !vouchers.isEmpty()}" th:text="${vouchers.size()}" class="ml-2 bg-indigo-100 text-indigo-600 rounded-full px-2.5 py-1 text-xs font-medium"></span>
+                                    </a>
+                                </nav>
+                            </div>
 
+                            <!-- Personal Info Content -->
+                            <div id="content-info">
                                 <div class="space-y-4">
                                     <!-- Full Name Modal -->
                                     <div class="flex flex-col md:flex-row md:items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -225,16 +234,52 @@
                                         </button>
                                     </div>
                                 </div>
+                                <!-- Action Buttons -->
+                                <div class="mt-6 flex flex-wrap gap-3">
+                                    <button onclick="saveChanges()" class="px-5 py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors">
+                                        <i class="fas fa-save mr-2"></i> Lưu thay đổi
+                                    </button>
+                                    <button class="px-5 py-2.5 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-gray-300 transition-colors">
+                                        <i class="fas fa-lock mr-2"></i> Đổi mật khẩu
+                                    </button>
+                                </div>
                             </div>
 
-                            <!-- Action Buttons -->
-                            <div class="flex flex-wrap gap-3">
-                                <button onclick="saveChanges()" class="px-5 py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors">
-                                    <i class="fas fa-save mr-2"></i> Lưu thay đổi
-                                </button>
-                                <button class="px-5 py-2.5 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-gray-300 transition-colors">
-                                    <i class="fas fa-lock mr-2"></i> Đổi mật khẩu
-                                </button>
+                            <!-- Vouchers Content (hidden by default) -->
+                            <div id="content-vouchers" class="hidden">
+                                <div th:if="${vouchers == null || vouchers.isEmpty()}" class="text-center py-12">
+                                    <div class="flex flex-col items-center justify-center text-gray-400">
+                                        <i class="fas fa-ticket-alt text-5xl mb-4"></i>
+                                        <p class="text-lg font-medium">Bạn chưa có voucher nào</p>
+                                        <p class="text-sm mt-1">Hãy theo dõi các chương trình khuyến mãi để nhận voucher nhé!</p>
+                                    </div>
+                                </div>
+
+                                <div th:unless="${vouchers == null || vouchers.isEmpty()}" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div th:each="voucher : ${vouchers}" class="relative bg-gradient-to-br from-blue-50 to-indigo-100 p-5 rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <div class="text-xs font-bold uppercase text-indigo-600" th:text="${voucher.khuyenMai?.tenKhuyenMai} ?: 'Voucher giảm giá'"></div>
+                                                <div class="text-2xl font-bold text-gray-800 mt-1">
+                                                    Giảm <span th:text="${voucher.khuyenMai?.phanTramGiamGia} ?: 0"></span>%
+                                                </div>
+                                            </div>
+                                            <div class="text-sm font-semibold px-3 py-1 rounded-full"
+                                                 th:text="${voucher.trangThai}"
+                                                 th:classappend="${voucher.trangThai == 'ACTIVE'} ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-600'">
+                                            </div>
+                                        </div>
+                                        <div class="mt-4 pt-4 border-t border-dashed border-gray-300">
+                                            <div class="text-sm text-gray-600">Mã voucher: 
+                                                <span class="font-mono bg-gray-200 text-gray-800 px-2 py-1 rounded" th:text="${voucher.maVoucher}"></span>
+                                            </div>
+                                            <div class="text-sm text-gray-600 mt-2">Hạn sử dụng: 
+                                                <span class="font-semibold" th:text="${#dates.format(voucher.ngayHetHan, 'dd-MM-yyyy')}"></span>
+                                            </div>
+                                        </div>
+                                        <div class="absolute -bottom-4 -right-4 w-16 h-16 bg-indigo-200 rounded-full opacity-30"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -592,6 +637,42 @@
         }
         return '';
     }
+
+    // Tab switching logic
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabInfo = document.getElementById('tab-info');
+        const tabVouchers = document.getElementById('tab-vouchers');
+        const contentInfo = document.getElementById('content-info');
+        const contentVouchers = document.getElementById('content-vouchers');
+
+        tabInfo.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Activate Info tab
+            tabInfo.classList.add('border-indigo-500', 'text-indigo-600');
+            tabInfo.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+            // Deactivate Vouchers tab
+            tabVouchers.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+            tabVouchers.classList.remove('border-indigo-500', 'text-indigo-600');
+            // Show Info content
+            contentInfo.classList.remove('hidden');
+            contentVouchers.classList.add('hidden');
+        });
+
+        tabVouchers.addEventListener('click', function(e) {
+            e.preventDefault();
+            // Activate Vouchers tab
+            tabVouchers.classList.add('border-indigo-500', 'text-indigo-600');
+            tabVouchers.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+            // Deactivate Info tab
+            tabInfo.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+            tabInfo.classList.remove('border-indigo-500', 'text-indigo-600');
+            // Show Vouchers content
+            contentVouchers.classList.remove('hidden');
+            contentInfo.classList.add('hidden');
+        });
+
+        // Other initializations...
+    });
 </script>
 </body>
 </html>

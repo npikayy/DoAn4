@@ -79,10 +79,6 @@ public class VectorStoreService {
         content.append("Thời gian: ").append(tour.getTour_duration()).append(". ");
         content.append("Giá: ").append(tour.getTour_adult_price()).append(" VNĐ. ");
 
-        if (tour.getTour_discount() > 0) {
-            content.append("Giảm giá: ").append(tour.getTour_discount()).append("%. ");
-        }
-
         if (tour.getSpecial_offer() != null && !tour.getSpecial_offer().isEmpty()) {
             content.append("Ưu đãi đặc biệt: ").append(tour.getSpecial_offer()).append(". ");
         }

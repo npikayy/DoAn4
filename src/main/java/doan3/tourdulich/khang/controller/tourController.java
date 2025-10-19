@@ -1,5 +1,6 @@
 package doan3.tourdulich.khang.controller;
 
+import doan3.tourdulich.khang.entity.KhuyenMai;
 import doan3.tourdulich.khang.entity.tour_start_date;
 import doan3.tourdulich.khang.entity.tours;
 import doan3.tourdulich.khang.repository.tourPicRepo;
@@ -8,6 +9,7 @@ import doan3.tourdulich.khang.repository.tourRepo;
 import doan3.tourdulich.khang.repository.scheduleRepo;
 import doan3.tourdulich.khang.repository.ratingRepo;
 import doan3.tourdulich.khang.repository.startDateRepo;
+import doan3.tourdulich.khang.service.KhuyenMaiService;
 import jakarta.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -38,6 +40,8 @@ public class tourController {
     private ratingRepo ratingRepo;
     @Autowired
     private startDateRepo startDateRepo;
+    @Autowired
+    private KhuyenMaiService khuyenMaiService;
 
     public String priceChange(Integer number) {
         String formatted = String.format("%,d", number).replace(',', '.');
@@ -49,41 +53,54 @@ public class tourController {
     }
 
     @GetMapping()
-    public ModelAndView tourPage(ModelAndView modelAndView) {
-        // Lấy danh sách tất cả tour
-        List<tours> tours = tourRepo.findAll();
+    public ModelAndView tourPage(ModelAndView modelAndView,
+                                 @RequestParam(required = false) String keyword,
+                                 @RequestParam(required = false) String tourType,
+                                 @RequestParam(required = false) String region,
+                                 @RequestParam(required = false) String priceRange,
+                                 @RequestParam(required = false) String location,
+                                 @RequestParam(required = false) String departureStatus,
+                                 @RequestParam(required = false) String promotionStatus,
+                                 @RequestParam(required = false) String sortBy) {
 
-        // Map chứa ảnh đại diện cho từng tour
+        List<tours> tours = tourService.findTours(keyword, sortBy, null, tourType, null, null, priceRange, location, region, null, promotionStatus, null, departureStatus);
+
         Map<String, String> tourThumbnails = new HashMap<>();
-
-        // Map chứa danh sách ngày khởi hành cho từng tour
         Map<String, List<tour_start_date>> tourStartDates = new HashMap<>();
 
         for (tours tour : tours) {
             String tourId = tour.getTour_id();
-
-            // Lấy ảnh đại diện
             String thumbnail = tourPicRepo.findOnePicByTour(tourId);
             tourThumbnails.put(tourId, thumbnail != null ? thumbnail : "");
-
-            // Lấy danh sách ngày khởi hành
             List<tour_start_date> startDates = startDateRepo.findByTourId(tourId);
             tourStartDates.put(tourId, startDates);
         }
-        // Lấy danh sách điểm đến duy nhất
+
         List<String> uniqueLocations = tourRepo.findDistinctEndLocations();
 
-        // Thêm các đối tượng vào model
         modelAndView.addObject("tours", tours);
         modelAndView.addObject("tourThumbnails", tourThumbnails);
         modelAndView.addObject("tourStartDates", tourStartDates);
         modelAndView.addObject("uniqueLocations", uniqueLocations);
+
+        // Add filter params to model to set the state of the inputs on the frontend
+        modelAndView.addObject("keyword", keyword);
+        modelAndView.addObject("tourType", tourType);
+        modelAndView.addObject("region", region);
+        modelAndView.addObject("priceRange", priceRange);
+        modelAndView.addObject("location", location);
+        modelAndView.addObject("departureStatus", departureStatus);
+        modelAndView.addObject("promotionStatus", promotionStatus);
+        modelAndView.addObject("sortBy", sortBy);
+
         modelAndView.setViewName("admin_html/tour/tour_management");
         return modelAndView;
     }
     @GetMapping("/detail/{tour_id}")
     public ModelAndView tourPage(@PathVariable String tour_id, ModelAndView modelAndView) {
-        modelAndView.addObject("tour", tourRepo.findById(tour_id).get());
+        tours tour = tourRepo.findByIdWithPromotions(tour_id).orElseThrow(() -> new IllegalArgumentException("Invalid tour Id:" + tour_id));
+
+        modelAndView.addObject("tour", tour);
         modelAndView.addObject("tourPics",tourPicRepo.findByTourId(tour_id) );
         modelAndView.addObject("schedules", scheduleRepo.findByTourId(tour_id));
         modelAndView.addObject("startDates", startDateRepo.findByTourId(tour_id));
@@ -273,21 +290,21 @@ public class tourController {
             throw new RuntimeException(e);
         }
     }
-    @PostMapping("/updateDiscount/{tourId}")
-    public ModelAndView updateDiscount(@PathVariable String tourId,
-                                       @RequestParam(required = false) Integer discount,
-                                       RedirectAttributes redirectAttributes) {
-        try {
-            tours tour = tourRepo.findById(tourId).get();
-            tour.setTour_discount(discount);
-            tourRepo.save(tour);
-
-            redirectAttributes.addFlashAttribute("success", "Cập nhật giảm giá thành công");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Lỗi khi cập nhật giảm giá");
-        }
-        return new ModelAndView("redirect:/admin/tours/detail/" + tourId);
-    }
+//    @PostMapping("/updateDiscount/{tourId}")
+//    public ModelAndView updateDiscount(@PathVariable String tourId,
+//                                       @RequestParam(required = false) Integer discount,
+//                                       RedirectAttributes redirectAttributes) {
+//        try {
+//            tours tour = tourRepo.findById(tourId).get();
+//            tour.setTour_discount(discount);
+//            tourRepo.save(tour);
+//
+//            redirectAttributes.addFlashAttribute("success", "Cập nhật giảm giá thành công");
+//        } catch (Exception e) {
+//            redirectAttributes.addFlashAttribute("error", "Lỗi khi cập nhật giảm giá");
+//        }
+//        return new ModelAndView("redirect:/admin/tours/detail/" + tourId);
+//    }
     @PostMapping("/updatePrices/{tourId}")
     public ModelAndView updatePrice(@PathVariable String tourId,
                                     @RequestParam(required = false) String adultPrice,

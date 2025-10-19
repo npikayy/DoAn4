@@ -63,81 +63,123 @@
 
     <div class="flex flex-col lg:flex-row gap-8">
         <!-- Filter Section -->
-        <div id="filterContainer" class="bg-white p-6 rounded-xl shadow-lg top-4 border border-gray-100">
-            <!-- Header với icon -->
-            <div class="flex items-center mb-6 pb-4 border-b border-gray-200">
-                <i class="fas fa-sliders-h text-blue-600 mr-3 text-lg"></i>
-                <h2 class="text-xl font-bold text-gray-800">Bộ Lọc Tour</h2>
-            </div>
-
-            <!-- Search Box với hiệu ứng focus đẹp -->
-            <div class="mb-6">
-                <div class="relative">
-                    <input type="text" id="searchTourName" placeholder="Tìm kiếm theo tên tour..."
-                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 transition-all duration-200 placeholder-gray-400">
-                    <i class="fas fa-search absolute right-4 top-3.5 text-gray-400"></i>
+        <div id="filterContainer" class="bg-white p-6 rounded-xl shadow-lg top-4 border border-gray-100 lg:w-1/4">
+            <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+                <div class="flex items-center">
+                    <i class="fas fa-sliders-h text-blue-600 mr-3 text-lg"></i>
+                    <h2 class="text-xl font-bold text-gray-800">Bộ Lọc Tour</h2>
                 </div>
             </div>
 
-            <!-- Các bộ lọc được thiết kế card -->
             <div class="space-y-5">
-                <!-- Region Filter -->
-                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <h3 class="font-semibold text-gray-700 mb-3 flex items-center">
-                        <i class="fas fa-map-marked-alt text-blue-500 mr-2"></i>
-                        Khu vực
-                    </h3>
-                    <select id="filterRegion" class="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition">
-                        <option value="">Tất cả khu vực</option>
-                        <option value="NORTH" class="py-1">Miền Bắc</option>
-                        <option value="CENTRAL">Miền Trung</option>
-                        <option value="SOUTHEAST">Miền Đông Nam Bộ</option>
-                        <option value="SOUTHWEST">Miền Tây Nam Bộ</option>
+                <!-- Search Box -->
+                <div>
+                    <label for="searchTourName" class="font-semibold text-gray-700 mb-2 block">Tên tour</label>
+                    <div class="relative">
+                        <input type="text" id="searchTourName" placeholder="Nhập tên tour..."
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition">
+                        <i class="fas fa-search absolute right-3 top-3 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <!-- Sort By -->
+                <div>
+                    <label for="filterSort" class="font-semibold text-gray-700 mb-2 block">Sắp xếp theo</label>
+                    <select id="filterSort" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition">
+                        <option value="default">Mặc định</option>
+                        <option value="price_asc">Giá: Thấp đến Cao</option>
+                        <option value="price_desc">Giá: Cao đến Thấp</option>
+                        <option value="rating_desc">Đánh giá cao nhất</option>
                     </select>
                 </div>
 
+                <!-- Tour Type (Trong nước/Nước ngoài) -->
+                <div>
+                    <label for="filterIsAbroad" class="font-semibold text-gray-700 mb-2 block">Phân loại</label>
+                    <select id="filterIsAbroad" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition">
+                        <option value="">Tất cả</option>
+                        <option value="false">Tour trong nước</option>
+                        <option value="true">Tour nước ngoài</option>
+                    </select>
+                </div>
+
+                <!-- Region -->
+                <div>
+                    <label for="filterRegion" class="font-semibold text-gray-700 mb-2 block">Khu vực</label>
+                    <select id="filterRegion" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition">
+                        <option value="">Tất cả khu vực</option>
+                        <option value="NORTH">Miền Bắc</option>
+                        <option value="CENTRAL">Miền Trung</option>
+                        <option value="SOUTHEAST">Miền Đông Nam Bộ</option>
+                        <option value="SOUTHWEST">Miền Tây Nam Bộ</option>
+                        <option value="INTERNATIONAL">Quốc tế</option>
+                    </select>
+                </div>
+
+                <!-- Duration -->
+                <div>
+                    <label for="filterDuration" class="font-semibold text-gray-700 mb-2 block">Thời lượng</label>
+                    <select id="filterDuration" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition">
+                        <option value="">Tất cả</option>
+                        <option value="1-3">1-3 ngày</option>
+                        <option value="4-7">4-7 ngày</option>
+                        <option value="8-14">8-14 ngày</option>
+                        <option value="15-999">Trên 14 ngày</option>
+                    </select>
+                </div>
+
+                <!-- Transportation -->
+                <div>
+                    <label for="filterTransportation" class="font-semibold text-gray-700 mb-2 block">Phương tiện</label>
+                    <select id="filterTransportation" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition">
+                        <option value="">Tất cả</option>
+                        <option value="PLANE">Máy bay</option>
+                        <option value="CAR">Xe ô tô</option>
+                        <option value="TRAIN">Tàu hỏa</option>
+                        <option value="BUS">Xe khách</option>
+                    </select>
+                </div>
+                
+                <!-- Location -->
+                <div>
+                    <label for="filterLocation" class="font-semibold text-gray-700 mb-2 block">Địa điểm</label>
+                    <select id="filterLocation" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition">
+                        <option value="">Tất cả</option>
+                        <option th:each="location : ${uniqueLocations}" th:value="${location}" th:text="${location}"></option>
+                    </select>
+                </div>
+
+                <!-- Promotion -->
+                <div>
+                    <label class="flex items-center">
+                        <input type="checkbox" id="filterHasPromotion" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                        <span class="ml-2 text-gray-700">Đang có khuyến mãi hoặc khuyến mãi sắp bắt đầu</span>
+                    </label>
+                </div>
+
+                <!-- Start Date -->
+                <div>
+                    <label for="filterStartDate" class="font-semibold text-gray-700 mb-2 block">Ngày khởi hành</label>
+                    <input type="date" id="filterStartDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition">
+                </div>
+
                 <!-- Price Filter -->
-                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <h3 class="font-semibold text-gray-700 mb-3 flex items-center">
-                        <i class="fas fa-tag text-blue-500 mr-2"></i>
-                        Mức giá
-                    </h3>
-                    <select id="filterPriceRange" class="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition">
-                        <option value="">Tất cả mức giá</option>
+                <div>
+                    <label for="filterPriceRange" class="font-semibold text-gray-700 mb-2 block">Mức giá</label>
+                    <select id="filterPriceRange" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition">
+                        <option value="">Tất cả</option>
                         <option value="0-2000000">Dưới 2 triệu</option>
                         <option value="2000000-5000000">2 - 5 triệu</option>
                         <option value="5000000-10000000">5 - 10 triệu</option>
                         <option value="10000000-999999999">Trên 10 triệu</option>
                     </select>
                 </div>
+            </div>
 
-                <!-- Tour Type Filter -->
-                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <h3 class="font-semibold text-gray-700 mb-3 flex items-center">
-                        <i class="fas fa-globe-asia text-blue-500 mr-2"></i>
-                        Loại tour
-                    </h3>
-                    <select id="filterTourType" class="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition">
-                        <option value="">Tất cả loại tour</option>
-                        <option value="DOMESTIC">Tour trong nước</option>
-                        <option value="INTERNATIONAL">Tour nước ngoài</option>
-                        <option value="BUDGET">Tour tiết kiệm</option>
-                        <option value="PREMIUM">Tour cao cấp</option>
-                    </select>
-                </div>
-
-                <!-- Departure Status Filter -->
-                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <h3 class="font-semibold text-gray-700 mb-3 flex items-center">
-                        <i class="fas fa-calendar-alt text-blue-500 mr-2"></i>
-                        Lịch khởi hành
-                    </h3>
-                    <select id="filterDepartureStatus" class="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition">
-                        <option value="">Tất cả</option>
-                        <option value="HAS_DEPARTURE">Có lịch khởi hành</option>
-                        <option value="NO_DEPARTURE">Chưa có lịch</option>
-                    </select>
-                </div>
+            <!-- Action Buttons -->
+            <div class="mt-6 pt-6 border-t border-gray-200 space-y-3">
+                <button id="applyFilters" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all">Áp dụng bộ lọc</button>
+                <button id="resetFilters" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 rounded-lg transition-all">Xóa bộ lọc</button>
             </div>
         </div>
 
@@ -157,13 +199,16 @@
             <div class="space-y-6">
                 <!-- Tour Card - Full Width -->
                 <div th:each="tour : ${tours}"
+                     th:with="promotion=${tour.getDiscount_promotion()},
+                              isPromotionActive=${promotion != null and #dates.createNow().after(promotion.ngayBatDau) and #dates.createNow().before(promotion.ngayKetThuc)},
+                              isPromotionUpcoming=${promotion != null and #dates.createNow().before(promotion.ngayBatDau)}"
                      class="tour-card bg-white rounded-xl shadow-sm overflow-hidden transition duration-300 hover:shadow-md border border-gray-100"
                      th:data-tour-id="${tour.tour_id}"
                      th:data-region="${tour.tour_region}"
-                     th:data-price="${tour.tour_discount != null} ? ${tour.tour_adult_price * (100 - tour.tour_discount) / 100} : ${tour.tour_adult_price}"
+                     th:data-price="${isPromotionActive} ? ${tour.tour_adult_price * (100 - promotion.phanTramGiamGia) / 100} : ${tour.tour_adult_price}"
                      th:data-duration="${tour.tour_duration}"
                      th:data-tour-type="${tour.tour_type}"
-                     th:data-has-discount="${tour.tour_discount != null && tour.tour_discount > 0}">
+                     th:data-has-discount="${isPromotionActive}">
 
                     <div class="flex flex-col md:flex-row">
                         <!-- Tour Image -->
@@ -177,10 +222,18 @@
                                  alt="Default tour image"
                                  class="w-full h-full object-cover">
 
-                            <!-- Discount Badge -->
-                            <div th:if="${tour.tour_discount != null and tour.tour_discount > 0}"
-                                 class="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-md">
-                                <span th:text="'-' + ${tour.tour_discount} + '%'"></span>
+                            <!-- Active Discount Badge -->
+                            <div th:if="${isPromotionActive}"
+                                 class="absolute top-4 right-4">
+                                <span class="bg-red-500 text-white px-3 py-1 text-sm font-bold shadow-md rounded-full" th:text="${promotion.getTenKhuyenMai()}"></span>
+                                <span class="bg-red-500 text-white px-3 py-1 text-sm font-bold shadow-md rounded-full " th:text="'- ' + ${promotion.getPhanTramGiamGia()} + '%'"></span>
+                            </div>
+
+                            <!-- Upcoming Promotion Badge -->
+                            <div th:if="${isPromotionUpcoming}"
+                                 class="absolute top-4 left-4 bg-green-500 text-white px-3 py-1 text-sm font-semibold shadow-md rounded-full">
+                                <i class="fas fa-bell mr-1"></i>
+                                Khuyến mãi sẽ bắt đầu vào: <span th:text="${#dates.format(promotion.ngayBatDau, 'dd/MM/yyyy')}"></span>
                             </div>
 
                             <!-- Duration Badge -->
@@ -266,14 +319,21 @@
                             <!-- Price & Button -->
                             <div class="flex justify-between items-center pt-4 border-t border-gray-100">
                                 <div>
-                                    <div th:if="${tour.tour_discount != null && tour.tour_discount > 0}"
-                                         class="text-sm text-gray-400 line-through mb-1">
-                                        <span th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + '₫'}"></span>
+                                    <!-- If promotion is active -->
+                                    <div th:if="${isPromotionActive}">
+                                        <div class="text-sm text-gray-400 line-through mb-1">
+                                            <span th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + '₫'}"></span>
+                                        </div>
+                                        <div class="text-blue-600 font-bold text-xl">
+                                            <span th:with="discountedPrice=${tour.tour_adult_price * (100 - promotion.phanTramGiamGia) / 100}"
+                                                  th:text="${#numbers.formatInteger(discountedPrice, 3, 'POINT') + '₫'}"></span>
+                                        </div>
                                     </div>
-                                    <div class="text-blue-600 font-bold text-xl">
-                <span th:text="${tour.tour_discount != null} ?
-                          ${#numbers.formatInteger(tour.tour_adult_price * (100 - tour.tour_discount) / 100, 3, 'POINT') + '₫'} :
-                          ${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + '₫'}"></span>
+                                    <!-- If no promotion or promotion is not active -->
+                                    <div th:unless="${isPromotionActive}">
+                                        <div class="text-blue-600 font-bold text-xl">
+                                            <span th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + '₫'}"></span>
+                                        </div>
                                     </div>
                                 </div>
                                 <a th:href="@{'/Client/TourDetail/' + ${tour.tour_id}}"
@@ -293,164 +353,74 @@
 
 <footer th:replace="client_html/fragment/headerANDfooter :: footer"></footer>
 
-<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize Fuse.js for fuzzy search
-        let fuse = null;
-        initializeFuse();
-
-        // Get all filter elements
-        const searchInput = document.getElementById('searchTourName');
-        const typeFilter = document.getElementById('filterTourType');
-        const regionFilter = document.getElementById('filterRegion');
-        const priceFilter = document.getElementById('filterPriceRange');
-        const departureFilter = document.getElementById('filterDepartureStatus');
-        const resetBtn = document.getElementById('resetFilters');
         const applyBtn = document.getElementById('applyFilters');
+        const resetBtn = document.getElementById('resetFilters');
 
-        // Get all tour cards
-        const tourCards = document.querySelectorAll('.tour-card');
-        const noResultsMessage = document.createElement('div');
-        noResultsMessage.id = 'noResultsMessage';
-        noResultsMessage.className = 'hidden bg-gray-100 p-6 rounded-lg text-center text-gray-600';
-        noResultsMessage.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i> Không tìm thấy tour nào phù hợp với tiêu chí của bạn';
-        document.querySelector('.space-y-6').prepend(noResultsMessage);
+        // Function to set filter values based on URL parameters
+        function setFiltersFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            document.getElementById('searchTourName').value = params.get('keyword') || '';
+            document.getElementById('filterSort').value = params.get('sortBy') || 'default';
+            document.getElementById('filterIsAbroad').value = params.get('isAbroad') || '';
+            document.getElementById('filterRegion').value = params.get('region') || ''; // Add this line
+            document.getElementById('filterDuration').value = params.get('duration') || '';
+            document.getElementById('filterTransportation').value = params.get('transportation') || '';
+            document.getElementById('filterPriceRange').value = params.get('priceRange') || '';
+            document.getElementById('filterLocation').value = params.get('location') || '';
+            document.getElementById('filterHasPromotion').checked = params.get('hasPromotion') === 'true';
+            document.getElementById('filterStartDate').value = params.get('startDate') || '';
+        }
 
-        // Add event listeners
-        searchInput.addEventListener('input', filterTours);
-        typeFilter.addEventListener('change', filterTours);
-        regionFilter.addEventListener('change', filterTours);
-        priceFilter.addEventListener('change', filterTours);
-        departureFilter.addEventListener('change', filterTours);
+        // Apply filters when the button is clicked
+        applyBtn.addEventListener('click', function() {
+            const params = new URLSearchParams();
+            
+            const keyword = document.getElementById('searchTourName').value;
+            if (keyword) params.append('keyword', keyword);
 
-        // Initial filter
-        filterTours();
+            const sortBy = document.getElementById('filterSort').value;
+            if (sortBy !== 'default') params.append('sortBy', sortBy);
+
+            const isAbroad = document.getElementById('filterIsAbroad').value;
+            if (isAbroad) params.append('isAbroad', isAbroad);
+
+            const region = document.getElementById('filterRegion').value; // Add this line
+            if (region) params.append('region', region); // Add this line
+
+            const duration = document.getElementById('filterDuration').value;
+            if (duration) params.append('duration', duration);
+
+            const transportation = document.getElementById('filterTransportation').value;
+            if (transportation) params.append('transportation', transportation);
+
+            const priceRange = document.getElementById('filterPriceRange').value;
+            if (priceRange) params.append('priceRange', priceRange);
+
+            const location = document.getElementById('filterLocation').value;
+            if (location) params.append('location', location);
+
+            const hasPromotion = document.getElementById('filterHasPromotion').checked;
+            if (hasPromotion) params.append('hasPromotion', hasPromotion);
+
+            const startDate = document.getElementById('filterStartDate').value;
+            if (startDate) params.append('startDate', startDate);
+
+            window.location.href = window.location.pathname + '?' + params.toString();
+        });
+
+        // Reset filters
+        resetBtn.addEventListener('click', function() {
+            window.location.href = window.location.pathname;
+        });
+
+        // Set initial state on page load
+        setFiltersFromURL();
+
+        // Set min date for start date filter
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('filterStartDate').setAttribute('min', today);
     });
-
-    function initializeFuse() {
-        const tourCards = document.querySelectorAll('.tour-card');
-        const tourData = Array.from(tourCards).map(card => ({
-            element: card,
-            name: card.querySelector('h3 a').textContent.toLowerCase(),
-            destination: card.getAttribute('data-destination'),
-            region: card.getAttribute('data-region'),
-            type: card.getAttribute('data-tour-type')
-        }));
-
-        const options = {
-            keys: ['name', 'destination', 'region'],
-            threshold: 0.4,
-            includeScore: true,
-            minMatchCharLength: 2
-        };
-
-        fuse = new Fuse(tourData, options);
-    }
-
-    function filterTours() {
-        const searchQuery = document.getElementById('searchTourName').value.toLowerCase();
-        const selectedType = document.getElementById('filterTourType').value;
-        const selectedRegion = document.getElementById('filterRegion').value;
-        const priceRange = document.getElementById('filterPriceRange').value;
-        const departureStatus = document.getElementById('filterDepartureStatus').value;
-
-        const tourCards = document.querySelectorAll('.tour-card');
-        let visibleCount = 0;
-
-        tourCards.forEach(card => {
-            const name = card.querySelector('h3 a').textContent.toLowerCase();
-            const type = card.getAttribute('data-tour-type');
-            const region = card.getAttribute('data-region');
-            const price = parseFloat(card.getAttribute('data-price'));
-            const hasDepartureDates = card.querySelector('.bg-blue-100') !== null; // Kiểm tra có ngày khởi hành không
-
-            // Kiểm tra các điều kiện lọc
-            const matchesSearch = searchQuery === '' || name.includes(searchQuery);
-            const matchesType = selectedType === '' || type === selectedType;
-            const matchesRegion = selectedRegion === '' || region === selectedRegion;
-            const matchesPrice = priceRange === '' || checkPriceRange(price, priceRange);
-            const matchesDepartureStatus = departureStatus === '' ||
-                (departureStatus === 'HAS_DEPARTURE' && hasDepartureDates) ||
-                (departureStatus === 'NO_DEPARTURE' && !hasDepartureDates);
-
-            if (matchesSearch && matchesType && matchesRegion && matchesPrice && matchesDepartureStatus) {
-                card.classList.remove('hidden');
-                visibleCount++;
-            } else {
-                card.classList.add('hidden');
-            }
-        });
-
-        // Cập nhật số lượng tour phù hợp
-        document.querySelector('h2.text-2xl').innerHTML =
-            `<span>${visibleCount}</span> tour phù hợp với yêu cầu của bạn`;
-
-        // Hiển thị thông báo khi không có kết quả
-        toggleNoResultsMessage(visibleCount);
-    }
-
-    function checkPriceRange(price, range) {
-        const [min, max] = range.split('-').map(Number);
-        return price >= min && price <= max;
-    }
-
-    function toggleNoResultsMessage(visibleCount) {
-        const noResultsMessage = document.getElementById('noResultsMessage');
-        if (visibleCount === 0) {
-            noResultsMessage.classList.remove('hidden');
-        } else {
-            noResultsMessage.classList.add('hidden');
-        }
-    }
-
-    function resetFilters() {
-        // Reset các giá trị filter
-        document.getElementById('searchTourName').value = '';
-        document.getElementById('filterTourType').selectedIndex = 0;
-        document.getElementById('filterRegion').selectedIndex = 0;
-        document.getElementById('filterPriceRange').selectedIndex = 0;
-        document.getElementById('filterDepartureStatus').selectedIndex = 0;
-
-        // Áp dụng lại filter (sẽ hiển thị tất cả tour)
-        filterTours();
-    }
-
-    function checkPriceRange(price, range) {
-        if (!range) return true;
-        const [min, max] = range.split('-').map(Number);
-        return price >= min && price <= max;
-    }
-
-    function toggleNoResultsMessage(visibleCount) {
-        const noResultsMessage = document.getElementById('noResultsMessage');
-        if (visibleCount === 0) {
-            noResultsMessage.classList.remove('hidden');
-        } else {
-            noResultsMessage.classList.add('hidden');
-        }
-    }
-
-    function resetFilters() {
-        document.getElementById('searchTourName').value = '';
-        document.getElementById('filterTourType').value = '';
-        document.getElementById('filterRegion').value = '';
-        document.getElementById('filterPriceRange').value = '';
-        document.getElementById('filterDepartureStatus').value = '';
-
-        // Reset all filter sections to open
-        document.querySelectorAll('.filter-options').forEach(options => {
-            options.classList.add('active');
-        });
-
-        // Reset all chevrons to down
-        document.querySelectorAll('.flex.justify-between i').forEach(icon => {
-            icon.classList.remove('fa-chevron-up');
-            icon.classList.add('fa-chevron-down');
-        });
-
-        filterTours();
-    }
-</script>
-</body>
+</script></body>
 </html>

@@ -80,9 +80,10 @@
                          alt="Default tour image"
                          class="w-full h-full object-cover">
 
-                    <div th:if="${tour.tour_discount != null}"
-                         class="discount-badge text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
-                        <span th:text="'-' + ${tour.tour_discount} + '%'"></span>
+                    <!-- Discount Badge -->
+                    <div th:if="${activePromotions.containsKey(tour.tour_id)}"
+                         class="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-md">
+                        <span th:text="'- ' + ${activePromotions.get(tour.tour_id).phanTramGiamGia} + ' %'"></span>
                     </div>
 
                     <!-- Duration -->
@@ -146,17 +147,18 @@
 
                     <!-- Price -->
                     <div class="flex justify-between items-center pt-3 border-t border-gray-100">
-                        <div>
-                            <span th:if="${tour.tour_discount != null}"
-                                  class="text-gray-400 text-sm line-through mr-2"
-                                  th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + '₫'}"></span>
-                            <span class="text-red-600 font-bold text-xl"
-                                  th:text="${#numbers.formatInteger(
-                                    tour.tour_discount != null ?
-                                    tour.tour_adult_price * (100 - tour.tour_discount) / 100 :
-                                    tour.tour_adult_price, 3, 'POINT') + '₫'}"></span>
-                        </div>
-                        <div class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+                                                <div>
+                                                    <div th:if="${activePromotions.containsKey(tour.tour_id)}"
+                                                         class="text-sm text-gray-400 line-through mb-1">
+                                                        <span th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + '₫'}"></span>
+                                                    </div>
+                                                    <div class="text-blue-600 font-bold text-xl">
+                                                        <span th:with="promo=${activePromotions.get(tour.tour_id)}"
+                                                              th:text="${#numbers.formatInteger(
+                                                            promo != null ?
+                                                            tour.tour_adult_price * (100 - promo.phanTramGiamGia) / 100 :
+                                                            tour.tour_adult_price, 3, 'POINT') + '₫'}"></span>
+                                                    </div>                        <div class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
                             Đặt ngay
                         </div>
                     </div>

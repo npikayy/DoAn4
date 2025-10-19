@@ -12,8 +12,8 @@ spring:
     mail:
         host: smtp.gmail.com
         port: 587
-        username: ""
-        password: ""
+        username: "khangnguyen41888@gmail.com"
+        password: "kato nmzx vfft mhcu"
         properties:
             mail:
                 smtp:
@@ -25,8 +25,8 @@ spring:
             client:
                 registration:
                             google:
-                                client-id: ""
-                                client-secret: ""
+                                client-id: "547597069622-g63m24j838unu54rlmblubc89ba2bq9u.apps.googleusercontent.com"
+                                client-secret: "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"
                                 scope: email,profile
                                 redirect-uri: "http://localhost:8080/login/oauth2/code/google"
                 provider:
@@ -42,7 +42,7 @@ spring:
             enabled: true
 
 gemini:
-    api-key: ""  # Lấy từ https://aistudio.google.com/api-keys
+    api-key: "AIzaSyDC1pwreghMsxkMjUVuTs8iUwkm_Fs7Ei8"  # Lấy từ https://aistudio.google.com/api-keys
     model: "gemini-1.5-pro"
     base-url: "https://generativelanguage.googleapis.com/v1beta/models"
 

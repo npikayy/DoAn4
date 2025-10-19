@@ -108,6 +108,19 @@
 <body class="font-sans">
 <header th:replace="client_html/fragment/headerANDfooter :: header"></header>
 
+<div class="container mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <div class="text-sm text-gray-600 mb-6">
+        <a href="/Client/Home" class="hover:text-blue-800 hover:underline">Trang chủ</a>
+        <span class="mx-2">/</span>
+        <a href="/Client/ToursList" class="hover:text-blue-800 hover:underline">Du lịch</a>
+        <span class="mx-2">/</span>
+        <a th:href="@{'/Client/TourDetail/' + ${tour.tour_id}}" class="hover:text-blue-800 hover:underline" th:text="${tour.tour_name}"></a>
+        <span class="mx-2">/</span>
+        <a class="text-blue-600 hover:underline">Đặt tour</a>
+    </div>
+</div>
+
 <div class="w-full mx-auto max-w-7xl py-6 px-4 sm:px-6">
     <!-- Progress Steps -->
     <div class="bg-white rounded-xl shadow-lg p-6 mb-6 tour-card">
@@ -244,6 +257,7 @@
                                     <div class="text-xs text-gray-500">Từ 12 trở lên</div>
                                 </div>
                                 <div class="text-vietravel-blue font-medium text-sm price-tag px-2 py-1 rounded-full">
+                                    <span th:if="${tour.discount_promotion != null}" class="text-red-500 font-bold">(-<span th:text="${tour.discount_promotion.phanTramGiamGia}"></span>%)</span>
                                     <span th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + '₫/người'}"></span>
                                 </div>
                             </div>
@@ -267,6 +281,7 @@
                                     <div class="text-xs text-gray-500">Từ 5 - 11 tuổi</div>
                                 </div>
                                 <div class="text-vietravel-blue font-medium text-sm price-tag px-2 py-1 rounded-full">
+                                    <span th:if="${tour.discount_promotion != null}" class="text-red-500 font-bold">(-<span th:text="${tour.discount_promotion.phanTramGiamGia}"></span>%)</span>
                                     <span th:text="${#numbers.formatInteger(tour.tour_child_price, 3, 'POINT') + '₫/người'}"></span>
                                 </div>
                             </div>
@@ -290,6 +305,7 @@
                                     <div class="text-xs text-gray-500">Từ 2 - 4 tuổi</div>
                                 </div>
                                 <div class="text-vietravel-blue font-medium text-sm price-tag px-2 py-1 rounded-full">
+                                    <span th:if="${tour.discount_promotion != null}" class="text-red-500 font-bold">(-<span th:text="${tour.discount_promotion.phanTramGiamGia}"></span>%)</span>
                                     <span th:text="${#numbers.formatInteger(tour.tour_infant_price, 3, 'POINT') + '₫/người'}"></span>
                                 </div>
                             </div>
@@ -452,43 +468,41 @@
                 <!-- Chi tiết giá -->
                 <div class="p-6">
                     <div class="flex justify-between font-semibold text-gray-700 text-sm mb-3">
-                        <span>KHÁCH HÀNG + PHỤ THU</span>
-                        <span id="total-price" class="font-bold text-vietravel-orange"
-                              th:text="${#numbers.formatInteger((tour.tour_adult_price + (tour.tour_child_price != null ? tour.tour_child_price : 0) + (tour.tour_infant_price != null ? tour.tour_infant_price : 0)) * (1 - (tour.tour_discount != null ? tour.tour_discount/100 : 0)), 3, 'POINT') + '₫'}"></span>
+                        <span>KHÁCH HÀNG</span>
+                        <span id="total-price" class="font-bold hidden text-vietravel-orange"
+                              th:text="${#numbers.formatInteger((tour.tour_adult_price + (tour.tour_child_price != null ? tour.tour_child_price : 0) + (tour.tour_infant_price != null ? tour.tour_infant_price : 0)) * (1 - (tour.discount_promotion != null ? tour.discount_promotion.phanTramGiamGia/100 : 0)), 3, 'POINT') + '₫'}"></span>
                     </div>
 
                     <div class="space-y-2 mb-4 text-sm">
                         <div class="flex justify-between">
                             <span class="text-gray-600">Người lớn ×<span id="adult-count">1</span></span>
-                            <span class="font-medium text-vietravel-blue" id="adult-total"
-                                  th:text="${#numbers.formatInteger(tour.tour_adult_price * (1 - (tour.tour_discount != null ? tour.tour_discount/100 : 0)), 3, 'POINT') + '₫'}">
-                            </span>
+                            <span class="text-gray-400 line-through text-xs" id="adult-original-total"></span>
+                            <span class="font-medium text-vietravel-blue" id="adult-total"></span>
                         </div>
                         <div class="flex justify-between" th:if="${tour.tour_child_price != null}">
                             <span class="text-gray-600">Trẻ em ×<span id="child-count">0</span></span>
-                            <span class="font-medium text-vietravel-blue" id="child-total"
-                                  th:text="${#numbers.formatInteger(tour.tour_child_price * (1 - (tour.tour_discount != null ? tour.tour_discount/100 : 0)), 3, 'POINT') + '₫'}"></span>
+                            <span class="text-gray-400 line-through text-xs" id="child-original-total"></span>
+                            <span class="font-medium text-vietravel-blue" id="child-total"></span>
                         </div>
                         <div class="flex justify-between" th:if="${tour.tour_infant_price != null}">
                             <span class="text-gray-600">Trẻ nhỏ ×<span id="infant-count">0</span></span>
-                            <span class="font-medium text-vietravel-blue" id="infant-total"
-                                  th:text="${#numbers.formatInteger(tour.tour_infant_price * (1 - (tour.tour_discount != null ? tour.tour_discount/100 : 0)), 3, 'POINT') + '₫'}"></span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Phụ thu phòng đơn</span>
-                            <span class="font-medium text-vietravel-blue">0₫</span>
+                            <span class="text-gray-400 line-through text-xs" id="infant-original-total"></span>
+                            <span class="font-medium text-vietravel-blue" id="infant-total"></span>
                         </div>
                     </div>
 
                     <!-- Mã giảm giá -->
-                    <div class="mb-4" onclick="openDiscountModal()">
-                        <div class="flex items-center justify-between bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-3 cursor-pointer hover:from-yellow-100 hover:to-orange-100 transition-colors group border border-yellow-100">
-                            <div class="flex items-center">
-                                <i class="fas fa-tag text-vietravel-orange mr-2 group-hover:text-vietravel-yellow transition-colors"></i>
-                                <span  class="text-vietravel-orange font-medium text-sm group-hover:text-vietravel-yellow transition-colors">Thêm mã giảm giá</span>
-                            </div>
-                            <i class="fas fa-chevron-right text-vietravel-orange text-xs group-hover:translate-x-1 transition-transform"></i>
+                    <div class="mb-4">
+                        <label for="voucherCodeInput" class="block text-sm font-medium text-gray-700 mb-2">Mã giảm giá</label>
+                        <div class="relative flex shadow-sm rounded-lg">
+                            <input type="text" id="voucherCodeInput" placeholder="Nhập mã voucher của bạn"
+                                   class="flex-1 border border-gray-300 rounded-l-lg py-2 px-3 focus:ring-2 focus:ring-vietravel-blue focus:border-vietravel-blue text-sm">
+                            <button id="applyVoucherBtn" type="button"
+                                    class="bg-gray-600 text-white font-semibold py-2 px-4 rounded-r-lg hover:bg-gray-700 transition-opacity text-sm">
+                                Áp dụng
+                            </button>
                         </div>
+                        <p id="voucherMessage" class="text-sm mt-2 px-1"></p>
                     </div>
 
                     <!-- Điều khoản -->
@@ -506,11 +520,11 @@
                     <div class="flex justify-between items-center mb-4">
                         <span class="font-bold text-gray-800">Tổng tiền</span>
                         <div class="text-right">
-                            <div th:if="${tour.tour_discount != null and tour.tour_discount > 0}" class="text-sm line-through text-gray-400">
-                                <span th:text="${#numbers.formatInteger(tour.tour_adult_price + (tour.tour_child_price != null ? tour.tour_child_price : 0) + (tour.tour_infant_price != null ? tour.tour_infant_price : 0), 3, 'POINT') + '₫'}"></span>
-                            </div>
+                                <div id="original-final-total-container" class="text-sm line-through text-gray-400" style="display: none;">
+                                    <span id="original-final-total"></span>
+                                </div>
                             <span class="text-2xl font-bold text-vietravel-orange" id="final-total"
-                                  th:text="${#numbers.formatInteger((tour.tour_adult_price + (tour.tour_child_price != null ? tour.tour_child_price : 0) + (tour.tour_infant_price != null ? tour.tour_infant_price : 0)) * (1 - (tour.tour_discount != null ? tour.tour_discount/100 : 0)), 3, 'POINT') + '₫'}">
+                                  th:text="${#numbers.formatInteger((tour.tour_adult_price + (tour.tour_child_price != null ? tour.tour_child_price : 0) + (tour.tour_infant_price != null ? tour.tour_infant_price : 0)) * (1 - (tour.discount_promotion != null ? tour.discount_promotion.phanTramGiamGia/100 : 0)), 3, 'POINT') + '₫'}">
                             </span>
                         </div>
                     </div>
@@ -763,22 +777,39 @@
             const childCount = parseInt(document.getElementById('childCount')?.value || 0);
             const infantCount = parseInt(document.getElementById('infantCount')?.value || 0);
 
-            // Lấy giá gốc và discount từ Thymeleaf
             const adultOriginalPrice = [[${tour.tour_adult_price}]];
             const childOriginalPrice = [[${tour.tour_child_price}]];
             const infantOriginalPrice = [[${tour.tour_infant_price}]];
-            const discount = [[${tour.tour_discount != null ? tour.tour_discount : 0}]];
 
-            // Tính giá sau khi giảm
-            const adultPrice = adultOriginalPrice * (1 - discount/100);
-            const childPrice = childOriginalPrice * (1 - discount/100);
-            const infantPrice = infantOriginalPrice * (1 - discount/100);
+            const promotionDiscount = [[${tour.discount_promotion != null ? tour.discount_promotion.phanTramGiamGia : 0}]];
+            const promotionStartDateStr = "[[${tour.discount_promotion != null ? #dates.format(tour.discount_promotion.ngayBatDau, 'yyyy-MM-dd') : ''}]]";
+            const promotionEndDateStr = "[[${tour.discount_promotion != null ? #dates.format(tour.discount_promotion.ngayKetThuc, 'yyyy-MM-dd') : ''}]]";
 
-            const adultTotal = adultCount * adultPrice;
-            const childTotal = childCount * childPrice;
-            const infantTotal = infantCount * infantPrice;
+            let initialDiscount = 0;
+            if (promotionDiscount > 0 && promotionStartDateStr && promotionEndDateStr) {
+                const now = new Date();
+                const startDate = new Date(promotionStartDateStr);
+                const endDate = new Date(promotionEndDateStr);
+                now.setHours(0, 0, 0, 0);
+                if (now >= startDate && now <= endDate) {
+                    initialDiscount = promotionDiscount;
+                }
+            }
+
+            const adultTotal = adultCount * adultOriginalPrice;
+            const childTotal = childCount * (childOriginalPrice || 0);
+            const infantTotal = infantCount * (infantOriginalPrice || 0);
 
             const subtotal = adultTotal + childTotal + infantTotal;
+
+            // Apply validated voucher discount
+            const voucherDiscountPercentage = appliedVoucher.discountPercentage || 0;
+            const finalDiscountPercentage = voucherDiscountPercentage > 0 ? voucherDiscountPercentage : initialDiscount;
+            const finalTotal = subtotal * (1 - (finalDiscountPercentage / 100.0));
+
+            const adultDiscountedTotal = adultTotal * (1 - (finalDiscountPercentage / 100.0));
+            const childDiscountedTotal = childTotal * (1 - (finalDiscountPercentage / 100.0));
+            const infantDiscountedTotal = infantTotal * (1 - (finalDiscountPercentage / 100.0));
 
             // Update counts
             document.getElementById('adult-count').textContent = adultCount;
@@ -790,32 +821,27 @@
             }
 
             // Update prices
-            document.getElementById('adult-total').textContent = formatCurrency(adultTotal);
+            document.getElementById('adult-original-total').textContent = formatCurrency(adultTotal);
+            document.getElementById('adult-total').textContent = formatCurrency(adultDiscountedTotal);
             if (document.getElementById('child-total')) {
-                document.getElementById('child-total').textContent = childCount > 0 ? formatCurrency(childTotal) : '0₫';
+                document.getElementById('child-original-total').textContent = formatCurrency(childTotal);
+                document.getElementById('child-total').textContent = formatCurrency(childDiscountedTotal);
             }
             if (document.getElementById('infant-total')) {
-                document.getElementById('infant-total').textContent = infantCount > 0 ? formatCurrency(infantTotal) : '0₫';
+                document.getElementById('infant-original-total').textContent = formatCurrency(infantTotal);
+                document.getElementById('infant-total').textContent = formatCurrency(infantDiscountedTotal);
             }
 
             document.getElementById('total-price').textContent = formatCurrency(subtotal);
-            document.getElementById('final-total').textContent = formatCurrency(subtotal);
+            document.getElementById('final-total').textContent = formatCurrency(finalTotal);
 
-            // Hiển thị thông tin giảm giá nếu có
-            if(discount > 0) {
-                const discountElement = document.getElementById('discount-info');
-                if(!discountElement) {
-                    const priceDetails = document.querySelector('.space-y-2.mb-4.text-sm');
-                    const discountHtml = `
-            <div class="flex justify-between items-center pt-2 border-t border-gray-100" id="discount-info">
-                <span class="text-gray-600">Giảm giá <span class="text-green-500">${discount}%</span></span>
-                <span class="font-medium text-green-600">-${formatCurrency((adultOriginalPrice * adultCount + childOriginalPrice * childCount + infantOriginalPrice * infantCount) * discount/100)}</span>
-            </div>
-        `;
-                    priceDetails.insertAdjacentHTML('beforeend', discountHtml);
+            const originalFinalTotalContainer = document.getElementById('original-final-total-container');
+            if (originalFinalTotalContainer) {
+                if (finalTotal < subtotal) {
+                    document.getElementById('original-final-total').textContent = formatCurrency(subtotal);
+                    originalFinalTotalContainer.style.display = 'block';
                 } else {
-                    discountElement.querySelector('span.text-green-500').textContent = `${discount}%`;
-                    discountElement.querySelector('span.text-green-600').textContent = `-${formatCurrency((adultOriginalPrice * adultCount + childOriginalPrice * childCount + infantOriginalPrice * infantCount) * discount/100)}`;
+                    originalFinalTotalContainer.style.display = 'none';
                 }
             }
         }
@@ -954,6 +980,7 @@
             number_of_adults: parseInt(document.getElementById('adultCount').value),
             number_of_children: parseInt(document.getElementById('childCount')?.value || 0),
             number_of_infants: parseInt(document.getElementById('infantCount')?.value || 0),
+            voucherCode: appliedVoucher.code,
             voucher_discount: currentDiscountValue,
             note: document.getElementById('note').value
         };
@@ -1019,6 +1046,54 @@
         if (e.key === 'Enter') {
             applyDiscount();
         }
+    });
+
+    // --- NEW VOUCHER LOGIC ---
+    let appliedVoucher = {
+        code: null,
+        discountPercentage: 0
+    };
+
+    document.getElementById('applyVoucherBtn').addEventListener('click', function() {
+        const voucherCode = document.getElementById('voucherCodeInput').value.trim();
+        const tourId = document.getElementById('tour_id').textContent.replace('Mã tour: ', '');
+        const messageEl = document.getElementById('voucherMessage');
+
+        if (!voucherCode) {
+            messageEl.textContent = 'Vui lòng nhập mã voucher.';
+            messageEl.className = 'text-sm mt-2 px-1 text-red-600';
+            return;
+        }
+
+        // API call to validate voucher
+        fetch('/admin/vouchers/api/validate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ maVoucher: voucherCode, tourId: tourId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                appliedVoucher.code = data.maVoucher;
+                appliedVoucher.discountPercentage = data.discountPercentage;
+                messageEl.textContent = data.message;
+                messageEl.className = 'text-sm mt-2 px-1 text-green-600';
+                updatePrice(); // Recalculate price with new discount
+            } else {
+                appliedVoucher.code = null;
+                appliedVoucher.discountPercentage = 0;
+                messageEl.textContent = data.message || 'Có lỗi xảy ra.';
+                messageEl.className = 'text-sm mt-2 px-1 text-red-600';
+                updatePrice(); // Recalculate price without discount
+            }
+        })
+        .catch(err => {
+            console.error('Voucher validation error:', err);
+            messageEl.textContent = 'Không thể kết nối đến máy chủ để kiểm tra voucher.';
+            messageEl.className = 'text-sm mt-2 px-1 text-red-600';
+        });
     });
 
     document.addEventListener('DOMContentLoaded', function() {

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ưu Đãi Hấp Dẫn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body>
+<header th:replace="client_html/fragment/headerANDfooter :: header"></header>
+
+<div class="container mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <div class="text-sm text-gray-600 mb-6">
+        <a href="/Client/Home" class="hover:text-blue-800 hover:underline">Trang chủ</a>
+        <span class="mx-2">/</span>
+        <a class="text-blue-600 hover:underline">Khuyến mãi</a>
+    </div>
+</div>
+
+<main class="container mx-auto px-4 py-12">
+    <div class="text-center mb-12">
+        <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-3">Ưu Đãi Hấp Dẫn</h1>
+        <p class="text-gray-600 max-w-2xl mx-auto text-lg">Đừng bỏ lỡ những chương trình khuyến mãi đặc biệt chỉ có tại Tôi Đi Du Lịch!</p>
+    </div>
+
+    <!-- Promotions Grid -->
+    <div th:if="${promotions != null and !promotions.isEmpty()}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- Promotion Card -->
+        <div th:each="promo : ${promotions}" class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 flex flex-col h-full group">
+            <!-- Image and Discount Badge -->
+            <div class="relative">
+                <a th:href="@{/Client/khuyen-mai/{id}(id=${promo.id})}" class="block overflow-hidden rounded-t-xl">
+                    <img th:src="${promo.hinhAnh != null && !promo.hinhAnh.isEmpty() ? promo.hinhAnh : '/img/default-tour.jpg'}" alt="Promotion Image" class="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-105"/>
+                </a>
+                <div class="absolute top-0 right-0 bg-red-600 text-white font-bold text-base px-4 py-2 m-4 rounded-lg shadow-md">
+                    <i class="fas fa-gift mr-1"></i>
+                    <span th:text="'GIẢM ' + ${promo.phanTramGiamGia} + '%'"></span>
+                </div>
+                 <!-- Status Badge -->
+                <div class="absolute top-4 left-4 px-3 py-1 rounded-full text-sm font-semibold text-white"
+                     th:classappend="${#dates.createNow().after(promo.ngayKetThuc)} ? 'bg-red-500' : (${#dates.createNow().before(promo.ngayBatDau)} ? 'bg-yellow-500' : 'bg-green-500')"
+                     th:text="${#dates.createNow().after(promo.ngayKetThuc)} ? 'Đã kết thúc' : (${#dates.createNow().before(promo.ngayBatDau)} ? 'Sắp diễn ra' : 'Đang hoạt động')">
+                </div>
+            </div>
+            <!-- Card Content -->
+            <div class="p-5 flex flex-col flex-grow">
+                <h3 class="text-xl font-semibold text-gray-800 mb-2" th:text="${promo.tenKhuyenMai}"></h3>
+                <p class="text-gray-600 text-sm mb-4 flex-grow" th:text="${promo.moTa}"></p>
+                <div class="text-xs text-gray-500 border-t pt-3 mt-auto">
+                    <i class="fas fa-calendar-alt mr-1"></i>
+                    <span>Áp dụng từ </span>
+                    <span th:text="${#dates.format(promo.ngayBatDau, 'dd/MM')}"></span>
+                    <span> đến </span>
+                    <span th:text="${#dates.format(promo.ngayKetThuc, 'dd/MM/yyyy')}"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- No Promotions Message -->
+    <div th:if="${promotions == null or promotions.isEmpty()}" class="text-center py-20">
+        <div class="flex flex-col items-center justify-center text-gray-400">
+            <i class="fas fa-tags text-5xl mb-4"></i>
+            <p class="text-xl">Hiện chưa có chương trình khuyến mãi nào.</p>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="client_html/fragment/headerANDfooter :: footer"></footer>
+</body>
+</html>

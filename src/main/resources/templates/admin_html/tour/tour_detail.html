@@ -217,24 +217,26 @@
                               th:text="|${tour.tour_duration}N${tour.tour_duration - 1}Đ|"></span>
                     </div>
 
-                    <!-- Rating and Discount -->
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center space-x-1 bg-yellow-50 px-3 py-1 rounded-full">
-                            <span class="text-yellow-600 font-bold"
-                                  th:text="${tour.tour_rating != null ? tour.tour_rating : '0'}"></span>
-                            <i class="fas fa-star text-yellow-400"></i>
-                            <span th:if="${tour.tour_discount != null}"
-                                  class="ml-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold"
-                                  th:text="'-' + ${tour.tour_discount} + '%'"></span>
+                        <!-- Discount Section -->
+                        <div class="p-4 rounded-lg bg-gray-50">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-500">Khuyến mãi</label>
+                                    <div th:if="${tour.getDiscount_promotion() != null}" class="mt-1">
+                                        <span class="text-lg font-semibold text-green-600" th:text="${tour.getDiscount_promotion().tenKhuyenMai} + ' (-' + ${tour.getDiscount_promotion().phanTramGiamGia} + ' %)'"></span>
+                                    </div>
+                                    <div th:unless="${tour.getDiscount_promotion() != null}" class="mt-1">
+                                        <span class="text-gray-600">Không có khuyến mãi</span>
+                                    </div>
+                                </div>
+                                <div th:if="${tour.getDiscount_promotion() != null}">
+                                    <a th:href="@{/admin/khuyen-mai/edit/{id}(id=${tour.getDiscount_promotion().id})}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Sửa khuyến mãi</a>
+                                </div>
+                                <div th:unless="${tour.getDiscount_promotion() != null}">
+                                    <a th:href="@{/admin/khuyen-mai}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Quản lý khuyến mãi</a>
+                                </div>
+                            </div>
                         </div>
-
-                        <!-- Discount edit button -->
-                        <button onclick="openDiscountModal()"
-                                class="flex items-center text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full transition">
-                            <i class="fas fa-percentage mr-1 text-blue-500"></i>
-                            <span th:text="${tour.tour_discount != null} ? 'Sửa giảm giá' : 'Thêm giảm giá'"></span>
-                        </button>
-                    </div>
 
                     <!-- Price Section -->
                     <div class="bg-blue-50 rounded-lg p-4 mb-4">
@@ -251,23 +253,17 @@
                             <div class="flex flex-col">
                                 <div class="flex justify-between">
                                     <span class="text-gray-700">Người lớn:</span>
-                                    <div class="flex flex-col items-end">
-                                        <span class="text-gray-500 line-through text-sm"
-                                              th:if="${tour.tour_discount != null && tour.tour_discount > 0}"
-                                              th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + ' VND'}">
-                                        </span>
-                                        <span class="font-bold text-blue-600"
-                                              th:text="${#numbers.formatInteger(
-                                              tour.tour_discount != null ?
-                                              (tour.tour_adult_price * (100 - tour.tour_discount) / 100) :
-                                              tour.tour_adult_price,
-                                              3, 'POINT') + ' VND'}">
-                                        </span>
-                                    </div>
+                                        <div class="text-right">
+                                            <span th:if="${tour.getDiscount_promotion() != null}"
+                                                  class="text-sm text-gray-400 line-through"
+                                                  th:text="${#numbers.formatInteger(tour.tour_adult_price, 0, 'POINT') + ' VNĐ'}"></span>
+                                            <p class="font-semibold text-gray-900"
+                                               th:text="${#numbers.formatInteger(tour.getDiscount_promotion() != null ? (tour.tour_adult_price * (100 - tour.getDiscount_promotion().phanTramGiamGia) / 100) : tour.tour_adult_price, 0, 'POINT') + ' VNĐ'}"></p>
+                                        </div>
                                 </div>
                                 <span class="text-xs text-red-500 self-end"
-                                      th:if="${tour.tour_discount != null && tour.tour_discount > 0}"
-                                      th:text="'-' + ${tour.tour_discount} + '%'">
+                                      th:if="${tour.getDiscount_promotion() != null && tour.getDiscount_promotion().getPhanTramGiamGia() > 0}"
+                                      th:text="'-' + ${tour.getDiscount_promotion().getPhanTramGiamGia()} + '%'">
                                 </span>
                             </div>
 
@@ -277,21 +273,21 @@
                                     <span class="text-gray-700">Trẻ em:</span>
                                     <div class="flex flex-col items-end">
                                         <span class="text-gray-500 line-through text-sm"
-                                              th:if="${tour.tour_discount != null && tour.tour_discount > 0}"
+                                              th:if="${tour.getDiscount_promotion() != null && tour.getDiscount_promotion().getPhanTramGiamGia() > 0}"
                                               th:text="${#numbers.formatInteger(tour.tour_child_price, 3, 'POINT') + ' VND'}">
                                         </span>
                                         <span class="font-bold text-blue-600"
                                               th:text="${#numbers.formatInteger(
-                                              tour.tour_discount != null ?
-                                              (tour.tour_child_price * (100 - tour.tour_discount) / 100) :
+                                              tour.getDiscount_promotion() != null ?
+                                              (tour.tour_child_price * (100 - tour.getDiscount_promotion().getPhanTramGiamGia()) / 100) :
                                               tour.tour_child_price,
                                               3, 'POINT') + ' VND'}">
                                         </span>
                                     </div>
                                 </div>
                                 <span class="text-xs text-red-500 self-end"
-                                      th:if="${tour.tour_discount != null && tour.tour_discount > 0}"
-                                      th:text="'-' + ${tour.tour_discount} + '%'">
+                                      th:if="${tour.getDiscount_promotion() != null && tour.getDiscount_promotion().getPhanTramGiamGia() > 0}"
+                                      th:text="'-' + ${tour.getDiscount_promotion().getPhanTramGiamGia()} + '%'">
                                 </span>
                             </div>
 
@@ -301,21 +297,21 @@
                                     <span class="text-gray-700">Em bé:</span>
                                     <div class="flex flex-col items-end">
                                         <span class="text-gray-500 line-through text-sm"
-                                              th:if="${tour.tour_discount != null && tour.tour_discount > 0}"
+                                              th:if="${tour.getDiscount_promotion() != null && tour.getDiscount_promotion().getPhanTramGiamGia() > 0}"
                                               th:text="${#numbers.formatInteger(tour.tour_infant_price, 3, 'POINT') + ' VND'}">
                                         </span>
                                         <span class="font-bold text-blue-600"
                                               th:text="${#numbers.formatInteger(
-                                              tour.tour_discount != null ?
-                                              (tour.tour_infant_price * (100 - tour.tour_discount) / 100) :
+                                              tour.getDiscount_promotion() != null ?
+                                              (tour.tour_infant_price * (100 - tour.getDiscount_promotion().getPhanTramGiamGia()) / 100) :
                                               tour.tour_infant_price,
                                               3, 'POINT') + ' VND'}">
                                         </span>
                                     </div>
                                 </div>
                                 <span class="text-xs text-red-500 self-end"
-                                      th:if="${tour.tour_discount != null && tour.tour_discount > 0}"
-                                      th:text="'-' + ${tour.tour_discount} + '%'">
+                                      th:if="${tour.getDiscount_promotion() != null && tour.getDiscount_promotion().getPhanTramGiamGia() > 0}"
+                                      th:text="'-' + ${tour.getDiscount_promotion().getPhanTramGiamGia()} + '%'">
                                 </span>
                             </div>
                         </div>
@@ -529,7 +525,7 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Phần trăm giảm giá (%)</label>
                     <input type="number" name="discount"
-                           th:value="${tour.tour_discount != null} ? ${tour.tour_discount} : ''"
+                           th:value="${tour.getDiscount_promotion() != null} ? ${tour.getDiscount_promotion().getPhanTramGiamGia()} : ''"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                            min="0" max="100" placeholder="Nhập % giảm giá (0-100)">
                 </div>

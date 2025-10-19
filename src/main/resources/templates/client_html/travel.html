@@ -123,136 +123,6 @@
     </div>
 </section>
 
-<section class="py-12 bg-gray-50">
-    <div class="container overflow-hidden mx-auto px-4">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-3">TOUR GỢI Ý CHO BẠN</h2>
-            <div class="w-20 h-1 bg-blue-600 mx-auto mb-4"></div>
-            <p class="text-gray-600 max-w-2xl mx-auto text-lg">Những hành trình phù hợp với sở thích của bạn</p>
-        </div>
-
-        <!-- Carousel Container -->
-        <div class="relative">
-            <!-- Carousel Slides -->
-            <div class="swiper-container recommended-tours-carousel">
-                <div class="swiper-wrapper">
-                    <!-- Tour Card - Mỗi slide chứa 1 tour -->
-                    <div th:each="tour : ${recommendedTours}" class="swiper-slide">
-                        <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group h-full"
-                             th:attr="data-name=${tour.tour_name.toLowerCase()},
-                                      data-type=${tour.tour_type},
-                                      data-price=${tour.tour_discount != null ? tour.tour_adult_price * (100 - tour.tour_discount) / 100 : tour.tour_adult_price}">
-                            <a th:href="@{'/Client/TourDetail/' + ${tour.tour_id}}" class="block h-full flex flex-col">
-                                <!-- Tour Image -->
-                                <div class="relative h-56 overflow-hidden">
-                                    <img th:if="${RecommendedTourThumbnails.get(tour.tour_id) != null and !RecommendedTourThumbnails.get(tour.tour_id).isEmpty()}"
-                                         th:src="${RecommendedTourThumbnails.get(tour.tour_id)}"
-                                         alt="Tour image"
-                                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
-                                    <img th:unless="${RecommendedTourThumbnails.get(tour.tour_id) != null and !RecommendedTourThumbnails.get(tour.tour_id).isEmpty()}"
-                                         src="/img/default-tour.jpg"
-                                         alt="Default tour image"
-                                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
-
-                                    <!-- Duration Badge -->
-                                    <div class="absolute top-4 left-4 bg-white/90 text-gray-800 px-3 py-1 rounded-full text-sm font-semibold shadow-sm">
-                                        <i class="fas fa-clock mr-1 text-blue-600"></i>
-                                        <span th:text="${tour.tour_duration} + ' ngày'"></span>
-                                    </div>
-
-                                    <!-- Discount Ribbon -->
-                                    <div th:if="${tour.tour_discount != null}"
-                                         class="absolute top-0 right-0 bg-red-600 text-white px-3 py-2 font-bold transform rotate-45 translate-x-8 -translate-y-2 w-32 text-center">
-                                        <span th:text="'Giảm ' + ${tour.tour_discount} + '%'"></span>
-                                    </div>
-                                </div>
-
-                                <!-- Tour Info -->
-                                <div class="p-5 flex-grow flex flex-col">
-                                    <!-- Tour Name -->
-                                    <h3 class="text-xl font-bold text-gray-800 mb-3 group-hover:text-blue-600 transition-colors" th:text="${tour.tour_name}"></h3>
-                                    <!-- Rating -->
-                                    <div class="flex items-center mb-3">
-                                        <div class="flex text-yellow-400 mr-2">
-                                            <th:block th:each="i : ${#numbers.sequence(1, 5)}">
-                                                <i th:class="${i <= tour.tour_rating} ? 'fas fa-star text-yellow-400' :
-                                ((${(i > tour.tour_rating) and (i-1 < tour.tour_rating)}) ? 'fas fa-star-half-alt text-yellow-400' :
-                                'far fa-star text-yellow-400')"></i>
-                                            </th:block>
-                                        </div>
-                                        <span class="text-sm text-gray-600 font-medium"
-                                              th:text="${#numbers.formatDecimal(tour.tour_rating, 1, 1)}"></span>
-                                    </div>
-                                    <!-- Location -->
-                                    <div class="flex items-center text-gray-600 mb-2">
-                                        <i class="fas fa-map-marker-alt text-blue-500 mr-2"></i>
-                                        <span th:text="${tour.tour_region == 'NORTH'} ? 'Miền Bắc' :
-                                                  (${tour.tour_region == 'CENTRAL'} ? 'Miền Trung' :
-                                                  (${tour.tour_region == 'SOUTHEAST'} ? 'Miền Đông Nam Bộ' : 'Miền Tây Nam Bộ'))"></span>
-                                    </div>
-
-                                    <!-- Departure Dates -->
-                                    <div class="mb-4">
-                                        <div class="flex items-center text-gray-600 mb-1">
-                                            <i class="fas fa-calendar-day text-blue-500 mr-2"></i>
-                                            <span class="font-medium">Ngày khởi hành: </span>
-                                            <div class="flex flex-wrap gap-1.5">
-                                                <!-- Hiển thị tối đa 3 ngày -->
-                                                <span th:each="date,iter : ${RecommendedTourStartDates?.get(tour.tour_id)}"
-                                                      th:if="${iter.index < 3 and date?.start_date != null}"
-                                                      class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                <span th:text="${#temporals.format(date.start_date, 'dd/MM')}"></span>
-            </span>
-
-                                                <!-- Hiển thị số lượng ngày còn lại nếu có -->
-                                                <span th:if="${RecommendedTourStartDates?.get(tour.tour_id)?.size() > 3}"
-                                                      class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
-                +<span th:text="${RecommendedTourStartDates.get(tour.tour_id).size() - 3}"></span> ngày khác
-            </span>
-
-                                                <!-- Trường hợp không có ngày khởi hành -->
-                                                <span th:if="${RecommendedTourStartDates?.get(tour.tour_id) == null or RecommendedTourStartDates?.get(tour.tour_id)?.isEmpty()}"
-                                                      class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
-                Chưa có lịch khởi hành
-            </span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Price & Details -->
-                                    <div class="flex justify-between items-center pt-3 border-t border-gray-100 mt-auto">
-                                        <div>
-                                            <!-- Original price (crossed out) when discounted -->
-                                            <div th:if="${tour.tour_discount != null}" class="text-sm text-gray-400 line-through mb-1">
-                                                <span th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + '₫'}"></span>
-                                            </div>
-                                            <!-- Current price -->
-                                            <div class="text-blue-700 font-bold text-lg">
-                                                <span th:text="${#numbers.formatInteger(tour.tour_discount != null ? tour.tour_adult_price * (100 - tour.tour_discount) / 100 : tour.tour_adult_price, 3, 'POINT') + '₫'}"></span>
-                                                <span th:if="${tour.tour_discount != null}" class="text-sm text-red-600 ml-2">(Tiết kiệm <span th:text="${#numbers.formatInteger(tour.tour_adult_price * tour.tour_discount / 100, 3, 'POINT') + '₫'}"></span>)</span>
-                                            </div>
-                                        </div>
-                                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-                                            <i class="fas fa-eye mr-1"></i> Xem ngay
-                                        </button>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Navigation Buttons -->
-            <div class="swiper-button-next hidden md:flex"></div>
-            <div class="swiper-button-prev hidden md:flex"></div>
-
-            <!-- Pagination -->
-            <div class="swiper-pagination mt-6"></div>
-        </div>
-    </div>
-</section>
-
 <!-- Interactive Carousel Banner -->
 <section class="py-10 relative">
     <!-- Background wave effect -->
@@ -316,6 +186,179 @@
     </div>
 </section>
 
+<!-- Promotion Banners Section -->
+<section class="py-12 bg-white" th:if="${promotionBanners != null and !promotionBanners.isEmpty()}">
+    <div class="container-fluid mx-auto px-4">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-3">ƯU ĐÃI HẤP DẪN</h2>
+            <div class="w-20 h-1 bg-red-600 mx-auto mb-4"></div>
+            <p class="text-gray-600 max-w-2xl mx-auto text-lg">Đừng bỏ lỡ những chương trình khuyến mãi đặc biệt chỉ có tại Tôi Đi Du Lịch!</p>
+        </div>
+
+        <div class="swiper-container promotion-banners-carousel">
+            <div class="swiper-wrapper">
+                <!-- Promotion Banner Slide -->
+                <div th:each="promo : ${promotionBanners}" class="swiper-slide h-full pb-4">
+                    <a th:href="@{'/Client/khuyen-mai/' + ${promo.id}}" class="block relative w-full h-80 rounded-xl overflow-hidden group">
+                        <img th:src="${promo.hinhAnh != null && !promo.hinhAnh.isEmpty() ? promo.hinhAnh : '/img/default-tour.jpg'}" alt="Promotion Image" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"/>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+                        
+                        <div class="relative h-full flex flex-col justify-end p-6 text-white">
+                            <div class="absolute top-4 left-4 px-3 py-1 rounded-full text-sm font-semibold text-white"
+                                 th:classappend="${#dates.createNow().after(promo.ngayKetThuc)} ? 'bg-red-500' : (${#dates.createNow().before(promo.ngayBatDau)} ? 'bg-yellow-500' : 'bg-green-500')"
+                                 th:text="${#dates.createNow().after(promo.ngayKetThuc)} ? 'Đã kết thúc' : (${#dates.createNow().before(promo.ngayBatDau)} ? 'Sắp diễn ra' : 'Đang hoạt động')">
+                            </div>
+                            <div class="absolute top-4 right-4 bg-gradient-to-r from-red-500 to-orange-500 text-white font-bold text-sm px-3 py-1 rounded-full shadow-lg">
+                                <i class="fas fa-tags mr-1"></i>
+                                <span th:text="'GIẢM ' + ${promo.phanTramGiamGia} + '%'"></span>
+                            </div>
+                            <h3 class="text-2xl font-bold mb-2" th:text="${promo.tenKhuyenMai}"></h3>
+<!--                            <p class="text-base mb-4" th:text="${promo.moTa}"></p>-->
+                            
+                            <div class="text-xs opacity-80">
+                                <i class="fas fa-calendar-check mr-1"></i>
+                                <span>Áp dụng từ <strong th:text="${#dates.format(promo.ngayBatDau, 'dd/MM')}"></strong> đến <strong th:text="${#dates.format(promo.ngayKetThuc, 'dd/MM/yyyy')}"></strong></span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            <!-- Add Pagination -->
+            <div class="swiper-pagination"></div>
+        </div>
+    </div>
+</section>
+
+<section class="py-12 bg-gray-50">
+    <div class="container overflow-hidden mx-auto px-4">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-3">TOUR GỢI Ý CHO BẠN</h2>
+            <div class="w-20 h-1 bg-blue-600 mx-auto mb-4"></div>
+            <p class="text-gray-600 max-w-2xl mx-auto text-lg">Những hành trình phù hợp với sở thích của bạn</p>
+        </div>
+
+        <!-- Carousel Container -->
+        <div class="relative">
+            <!-- Carousel Slides -->
+            <div class="swiper-container recommended-tours-carousel">
+                <div class="swiper-wrapper">
+                    <!-- Tour Card - Mỗi slide chứa 1 tour -->
+                    <div th:each="tour : ${recommendedTours}" class="swiper-slide">
+                        <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group h-full"
+                             th:attr="data-name=${tour.tour_name.toLowerCase()},
+                                      data-type=${tour.tour_type},
+                                      data-price=${tour.discount_promotion != null ? tour.tour_adult_price * (100 - tour.discount_promotion.phanTramGiamGia) / 100 : tour.tour_adult_price}">
+                            <a th:href="@{'/Client/TourDetail/' + ${tour.tour_id}}" class="block h-full flex flex-col">
+                                <!-- Tour Image -->
+                                <div class="relative h-56 overflow-hidden">
+                                    <img th:if="${RecommendedTourThumbnails.get(tour.tour_id) != null and !RecommendedTourThumbnails.get(tour.tour_id).isEmpty()}"
+                                         th:src="${RecommendedTourThumbnails.get(tour.tour_id)}"
+                                         alt="Tour image"
+                                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                                    <img th:unless="${RecommendedTourThumbnails.get(tour.tour_id) != null and !RecommendedTourThumbnails.get(tour.tour_id).isEmpty()}"
+                                         src="/img/default-tour.jpg"
+                                         alt="Default tour image"
+                                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+
+                                    <!-- Duration Badge -->
+                                    <div class="absolute top-4 left-4 bg-white/90 text-gray-800 px-3 py-1 rounded-full text-sm font-semibold shadow-sm">
+                                        <i class="fas fa-clock mr-1 text-blue-600"></i>
+                                        <span th:text="${tour.tour_duration} + ' ngày'"></span>
+                                    </div>
+
+                                    <!-- Discount Ribbon -->
+                                    <div th:if="${tour.discount_promotion != null && #dates.createNow().after(tour.discount_promotion.ngayBatDau) && #dates.createNow().before(tour.discount_promotion.ngayKetThuc)}"
+                                         class="absolute top-0 right-0 bg-red-600 text-white px-3 py-2 font-bold transform rotate-45 translate-x-8 -translate-y-2 w-32 text-center">
+                                        <span th:text="'Giảm ' + ${tour.discount_promotion.phanTramGiamGia} + '%'"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Tour Info -->
+                                <div class="p-5 flex-grow flex flex-col">
+                                    <!-- Tour Name -->
+                                    <h3 class="text-xl font-bold text-gray-800 mb-3 group-hover:text-blue-600 transition-colors" th:text="${tour.tour_name}"></h3>
+                                    <!-- Rating -->
+                                    <div class="flex items-center mb-3">
+                                        <div class="flex text-yellow-400 mr-2">
+                                            <th:block th:each="i : ${#numbers.sequence(1, 5)}">
+                                                <i th:class="${i <= tour.tour_rating} ? 'fas fa-star text-yellow-400' :
+                                ((${(i > tour.tour_rating) and (i-1 < tour.tour_rating)}) ? 'fas fa-star-half-alt text-yellow-400' :
+                                'far fa-star text-yellow-400')"></i>
+                                            </th:block>
+                                        </div>
+                                        <span class="text-sm text-gray-600 font-medium"
+                                              th:text="${#numbers.formatDecimal(tour.tour_rating, 1, 1)}"></span>
+                                    </div>
+                                    <!-- Location -->
+                                    <div class="flex items-center text-gray-600 mb-2">
+                                        <i class="fas fa-map-marker-alt text-blue-500 mr-2"></i>
+                                        <span th:text="${tour.tour_region == 'NORTH'} ? 'Miền Bắc' :
+                                                  (${tour.tour_region == 'CENTRAL'} ? 'Miền Trung' :
+                                                  (${tour.tour_region == 'SOUTHEAST'} ? 'Miền Đông Nam Bộ' : 'Miền Tây Nam Bộ'))"></span>
+                                    </div>
+
+                                    <!-- Departure Dates -->
+                                    <div class="mb-4">
+                                        <div class="flex items-center text-gray-600 mb-1">
+                                            <i class="fas fa-calendar-day text-blue-500 mr-2"></i>
+                                            <span class="font-medium">Ngày khởi hành: </span>
+                                            <div class="flex flex-wrap gap-1.5">
+                                                <!-- Hiển thị tối đa 3 ngày -->
+                                                <span th:each="date,iter : ${RecommendedTourStartDates?.get(tour.tour_id)}"
+                                                      th:if="${iter.index < 3 and date?.start_date != null}"
+                                                      class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                <span th:text="${#temporals.format(date.start_date, 'dd/MM')}"></span>
+            </span>
+
+                                                <!-- Hiển thị số lượng ngày còn lại nếu có -->
+                                                <span th:if="${RecommendedTourStartDates?.get(tour.tour_id)?.size() > 3}"
+                                                      class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
+                +<span th:text="${RecommendedTourStartDates.get(tour.tour_id).size() - 3}"></span> ngày khác
+            </span>
+
+                                                <!-- Trường hợp không có ngày khởi hành -->
+                                                <span th:if="${RecommendedTourStartDates?.get(tour.tour_id) == null or RecommendedTourStartDates?.get(tour.tour_id)?.isEmpty()}"
+                                                      class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">
+                Chưa có lịch khởi hành
+            </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Price & Details -->
+                                    <div class="flex justify-between items-center pt-3 border-t border-gray-100 mt-auto">
+                                        <div>
+                                            <!-- Original price (crossed out) when discounted -->
+                                            <div th:if="${tour.discount_promotion != null && #dates.createNow().after(tour.discount_promotion.ngayBatDau) && #dates.createNow().before(tour.discount_promotion.ngayKetThuc)}" class="text-sm text-gray-400 line-through mb-1">
+                                                <span th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + '₫'}"></span>
+                                            </div>
+                                            <!-- Current price -->
+                                            <div class="text-blue-700 font-bold text-lg">
+                                                <span th:text="${#numbers.formatInteger(tour.discount_promotion != null && #dates.createNow().after(tour.discount_promotion.ngayBatDau) && #dates.createNow().before(tour.discount_promotion.ngayKetThuc) ? tour.tour_adult_price * (100 - tour.discount_promotion.phanTramGiamGia) / 100 : tour.tour_adult_price, 3, 'POINT') + '₫'}"></span>
+                                                <span th:if="${tour.discount_promotion != null && #dates.createNow().after(tour.discount_promotion.ngayBatDau) && #dates.createNow().before(tour.discount_promotion.ngayKetThuc)}" class="text-sm text-red-600 ml-2">(Tiết kiệm <span th:text="${#numbers.formatInteger(tour.tour_adult_price * tour.discount_promotion.phanTramGiamGia / 100, 3, 'POINT') + '₫'}"></span>)</span>
+                                            </div>
+                                        </div>
+                                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                                            <i class="fas fa-eye mr-1"></i> Xem ngay
+                                        </button>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="swiper-button-next hidden md:flex"></div>
+            <div class="swiper-button-prev hidden md:flex"></div>
+
+            <!-- Pagination -->
+            <div class="swiper-pagination mt-6"></div>
+        </div>
+    </div>
+</section>
+
 <!-- Featured Tours -->
 <section class="py-12 bg-white">
     <div class="container mx-auto px-4">
@@ -330,7 +373,7 @@
             <div th:each="tour : ${tours}" class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group"
                  th:attr="data-name=${tour.tour_name.toLowerCase()},
                           data-type=${tour.tour_type},
-                          data-price=${tour.tour_discount != null ? tour.tour_adult_price * (100 - tour.tour_discount) / 100 : tour.tour_adult_price}">
+                          data-price=${tour.discount_promotion != null ? tour.tour_adult_price * (100 - tour.discount_promotion.phanTramGiamGia) / 100 : tour.tour_adult_price}">
                 <a th:href="@{'/Client/TourDetail/' + ${tour.tour_id}}" class="block h-full flex flex-col">
                     <!-- Tour Image -->
                     <div class="relative h-56 overflow-hidden">
@@ -350,9 +393,9 @@
                         </div>
 
                         <!-- Discount Ribbon -->
-                        <div th:if="${tour.tour_discount != null}"
+                        <div th:if="${tour.discount_promotion != null && #dates.createNow().after(tour.discount_promotion.ngayBatDau) && #dates.createNow().before(tour.discount_promotion.ngayKetThuc)}"
                              class="absolute top-0 right-0 bg-red-600 text-white px-3 py-2 font-bold transform rotate-45 translate-x-8 -translate-y-2 w-32 text-center">
-                            <span th:text="'Giảm ' + ${tour.tour_discount} + '%'"></span>
+                            <span th:text="'Giảm ' + ${tour.discount_promotion.phanTramGiamGia} + '%'"></span>
                         </div>
                     </div>
 
@@ -415,13 +458,13 @@
                         <div class="flex justify-between items-center pt-3 border-t border-gray-100">
                             <div>
                                 <!-- Original price (crossed out) when discounted -->
-                                <div th:if="${tour.tour_discount != null}" class="text-sm text-gray-400 line-through mb-1">
+                                <div th:if="${tour.discount_promotion != null && #dates.createNow().after(tour.discount_promotion.ngayBatDau) && #dates.createNow().before(tour.discount_promotion.ngayKetThuc)}" class="text-sm text-gray-400 line-through mb-1">
                                     <span th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + '₫'}"></span>
                                 </div>
                                 <!-- Current price -->
                                 <div class="text-blue-700 font-bold text-lg">
-                                    <span th:text="${#numbers.formatInteger(tour.tour_discount != null ? tour.tour_adult_price * (100 - tour.tour_discount) / 100 : tour.tour_adult_price, 3, 'POINT') + '₫'}"></span>
-                                    <span th:if="${tour.tour_discount != null}" class="text-sm text-red-600 ml-2">(Tiết kiệm <span th:text="${#numbers.formatInteger(tour.tour_adult_price * tour.tour_discount / 100, 3, 'POINT') + '₫'}"></span>)</span>
+                                    <span th:text="${#numbers.formatInteger(tour.discount_promotion != null && #dates.createNow().after(tour.discount_promotion.ngayBatDau) && #dates.createNow().before(tour.discount_promotion.ngayKetThuc) ? tour.tour_adult_price * (100 - tour.discount_promotion.phanTramGiamGia) / 100 : tour.tour_adult_price, 3, 'POINT') + '₫'}"></span>
+                                    <span th:if="${tour.discount_promotion != null && #dates.createNow().after(tour.discount_promotion.ngayBatDau) && #dates.createNow().before(tour.discount_promotion.ngayKetThuc)}" class="text-sm text-red-600 ml-2">(Tiết kiệm <span th:text="${#numbers.formatInteger(tour.tour_adult_price * tour.discount_promotion.phanTramGiamGia / 100, 3, 'POINT') + '₫'}"></span>)</span>
                                 </div>
                             </div>
                             <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
@@ -587,6 +630,29 @@
             },
             breakpoints: {
                 640: {
+                    slidesPerView: 2,
+                },
+                1024: {
+                    slidesPerView: 3,
+                }
+            }
+        });
+
+        new Swiper('.promotion-banners-carousel', {
+            slidesPerView: 1,
+            spaceBetween: 30,
+            loop: true,
+            centeredSlides: true,
+            autoplay: {
+                delay: 4000,
+                disableOnInteraction: false,
+            },
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+            },
+            breakpoints: {
+                768: {
                     slidesPerView: 2,
                 },
                 1024: {
