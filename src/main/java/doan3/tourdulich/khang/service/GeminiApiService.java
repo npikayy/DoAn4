@@ -1,6 +1,8 @@
 package doan3.tourdulich.khang.service;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.NoArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,7 +39,7 @@ public class GeminiApiService {
 
             GenerationConfig config = new GenerationConfig();
             config.setTemperature(0.7);
-            config.setMaxOutputTokens(512);
+            config.setMaxOutputTokens(2048);
             request.setGenerationConfig(config);
 
             String fullUrl = String.format(
@@ -64,6 +66,7 @@ public class GeminiApiService {
     }
 
     private String extractContent(String response) {
+        log.info("Raw Gemini API response: {}", response); // Add this line for debugging
         try {
             com.fasterxml.jackson.databind.ObjectMapper mapper =
                     new com.fasterxml.jackson.databind.ObjectMapper();
@@ -73,9 +76,15 @@ public class GeminiApiService {
                     !geminiResponse.getCandidates().isEmpty()) {
 
                 Candidate candidate = geminiResponse.getCandidates().get(0);
+
+                if (candidate.getFinishReason() != null && candidate.getFinishReason().equals("MAX_TOKENS")) {
+                    return "Model đã đạt giới hạn token và không thể hoàn thành câu trả lời. Vui lòng thử lại với câu hỏi ngắn hơn hoặc tăng giới hạn token.";
+                }
+
                 if (candidate.getContent() != null &&
                         candidate.getContent().getParts() != null &&
-                        !candidate.getContent().getParts().isEmpty()) {
+                        !candidate.getContent().getParts().isEmpty() &&
+                        candidate.getContent().getParts().get(0).getText() != null) {
 
                     return candidate.getContent().getParts().get(0).getText();
                 }
@@ -93,15 +102,20 @@ public class GeminiApiService {
         private GenerationConfig generationConfig;
     }
 
-    @Data
+
+@Data
+@JsonIgnoreProperties(ignoreUnknown = true)
     public static class Content {
         private List<Part> parts;
+        public Content() {}
         public Content(List<Part> parts) { this.parts = parts; }
     }
 
     @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
     public static class Part {
         private String text;
+        public Part() {}
         public Part(String text) { this.text = text; }
     }
 
@@ -112,11 +126,15 @@ public class GeminiApiService {
     }
 
     @Data
+    @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class GeminiResponse {
         private List<Candidate> candidates;
     }
 
     @Data
+    @NoArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Candidate {
         private Content content;
         @JsonProperty("finishReason")

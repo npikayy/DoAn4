@@ -42,18 +42,22 @@ spring:
             enabled: true
 
 gemini:
-    api-key: "AIzaSyDC1pwreghMsxkMjUVuTs8iUwkm_Fs7Ei8"  # Lấy từ https://aistudio.google.com/api-keys
-    model: "gemini-1.5-pro"
+    api-key: "AIzaSyBPIe6kQjz5JsKz3qh_p57b9_ulRTjtjHU"
+    model: "gemini-2.5-pro"
     base-url: "https://generativelanguage.googleapis.com/v1beta/models"
-
-    curl \ -H 'Content-Type: application/json' \ -d '{"contents":[{"parts":[{"text":"Explain how AI works"}]}]}' \ -X POST 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyDC1pwreghMsxkMjUVuTs8iUwkm_Fs7Ei8'
 
 ai:
     chatbot:
         enabled: true
         max-tokens: 250
         rag:
-            top-k: 3
-            similarity-threshold: 0.7
-        embedding:
-            dimension: 384
+            top-k: 5
+            similarity-threshold: 0.6
+
+tour:
+    detail:
+        base-url: "http://localhost:8080/Client/TourDetail/"
+
+promotion:
+    detail:
+        base-url: "http://localhost:8080/Client/khuyen-mai/"
