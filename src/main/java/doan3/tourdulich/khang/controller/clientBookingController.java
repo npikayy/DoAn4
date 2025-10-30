@@ -10,6 +10,7 @@ import doan3.tourdulich.khang.repository.tourBookingRepo;
 import doan3.tourdulich.khang.repository.startDateRepo;
 import doan3.tourdulich.khang.service.KhuyenMaiService;
 import doan3.tourdulich.khang.service.VoucherService;
+import doan3.tourdulich.khang.service.userService;
 import doan3.tourdulich.khang.service.bookingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,7 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -37,6 +39,8 @@ public class clientBookingController {
     private userRepo userRepo;
     @Autowired
     private tourRepo tourRepo;
+    @Autowired
+    private userService userService;
     @Autowired
     private tourPicRepo tourPicRepo;
     @Autowired
@@ -81,6 +85,37 @@ public class clientBookingController {
             }
         }
     }
+    @PostMapping("/api/validate")
+    public ResponseEntity<Map<String, Object>> validateVoucher(@RequestBody Map<String, String> payload) {
+        String maVoucher = payload.get("maVoucher");
+        String tourId = payload.get("tourId");
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Object principal = authentication.getPrincipal();
+
+        // Handle regular user authentication
+        String username = null;
+        if (principal instanceof UserDetails userDetails) {
+            username = userDetails.getUsername();
+        }
+        // Handle Google OAuth2 authentication
+        else if (principal instanceof org.springframework.security.oauth2.core.user.OAuth2User oauth2User) {
+            username = oauth2User.getAttribute("email"); // Get email from Google account
+        }
+        if (username == null) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Bạn cần đăng nhập để sử dụng voucher.");
+            System.out.println("Validation Result: " + response.get("message"));
+            return ResponseEntity.status(401).body(response);
+        }
+
+        users currentUser = userService.findByUsername(username);
+
+        Map<String, Object> validationResult = voucherService.validateVoucher(maVoucher, currentUser.getUser_id(), tourId);
+        System.out.println("Validation Result: " + validationResult.get("message"));
+        return ResponseEntity.ok(validationResult);
+    }
     public void updateNumGuest(String tour_id, LocalDate start_date, int num_guest) {
         tour_start_date startDate = startDateRepo.findByStartDateAndTourId(start_date, tour_id);
         if (startDate != null) {
@@ -93,7 +128,8 @@ public class clientBookingController {
                                       @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate start_date,
                                       ModelAndView modelAndView) {
         getCurrentUser(modelAndView);
-        Optional<tours> tourOptional = tourRepo.findByIdWithPromotions(tour_id);
+        Optional<tours> tourOptional = tourRepo.findById(tour_id);
+        System.out.println(tourOptional.isPresent());
 
         if (!tourOptional.isPresent()) {
             modelAndView.setViewName("redirect:/error");
@@ -119,13 +155,15 @@ public class clientBookingController {
 
             // Find and add active promotion
             KhuyenMai activePromotion = tour.getDiscount_promotion();
-            modelAndView.addObject("activePromotion", activePromotion);
+            modelAndView.addObject("discount_promotion", activePromotion);
 
             modelAndView.addObject("tourPics", tourPicRepo.findByTourId(tour_id));
             modelAndView.addObject("start_date", start_date);
             modelAndView.addObject("end_date", endDate);
             modelAndView.addObject("tour", tour);
-            modelAndView.addObject("vouchers", voucherRepo.findAll());
+            if (modelAndView.getModel().get("user_id") != null) {
+                modelAndView.addObject("vouchers", voucherService.findByUserId(modelAndView.getModel().get("user_id").toString()));
+            }
             modelAndView.setViewName("client_html/order_booking");
             return modelAndView;
         }
@@ -137,11 +175,13 @@ public class clientBookingController {
 
         try {
             // Re-validate voucher on server-side before booking
-            int finalDiscount = 0;
+            int discountValue = 0;
+            String voucherType = "";
             if (request.getVoucherCode() != null && !request.getVoucherCode().isEmpty()) {
                 Map<String, Object> validationResult = voucherService.validateVoucher(request.getVoucherCode(), request.getUser_id(), request.getTour_id());
                 if ((boolean) validationResult.get("success")) {
-                    finalDiscount = (int) validationResult.get("discountPercentage");
+                    discountValue = (int) validationResult.get("discountValue");
+                    voucherType = (String) validationResult.get("voucherType");
                 } else {
                     // If voucher is invalid, stop the booking process
                     response.put("success", false);
@@ -155,7 +195,24 @@ public class clientBookingController {
             long basePrice = (long) request.getNumber_of_adults() * tour.getTour_adult_price() +
                              (long) request.getNumber_of_children() * (tour.getTour_child_price() != null ? tour.getTour_child_price() : 0) +
                              (long) request.getNumber_of_infants() * (tour.getTour_infant_price() != null ? tour.getTour_infant_price() : 0);
-            long finalPrice = basePrice - (basePrice * finalDiscount / 100);
+
+            // Step 1: Apply tour-specific promotion
+            double priceAfterTourDiscount = basePrice;
+            KhuyenMai promotion = tour.getDiscount_promotion();
+            if (promotion != null && promotion.getNgayBatDau() != null && promotion.getNgayKetThuc() != null) {
+                Date now = new Date();
+                if (!now.before(promotion.getNgayBatDau()) && !now.after(promotion.getNgayKetThuc())) {
+                    priceAfterTourDiscount = basePrice * (1 - (promotion.getPhanTramGiamGia() / 100.0));
+                }
+            }
+
+            // Step 2: Apply voucher
+            double finalPrice = priceAfterTourDiscount;
+            if ("PERCENTAGE".equals(voucherType)) {
+                finalPrice = priceAfterTourDiscount * (1 - (discountValue / 100.0));
+            } else if ("AMOUNT".equals(voucherType)) {
+                finalPrice = priceAfterTourDiscount - discountValue;
+            }
 
 
             tour_bookings tourBooking = tourBookingRepo.findByIdAndUserIdAndStartDate(request.getTour_id(), request.getUser_id(), request.getStart_date());
@@ -179,12 +236,12 @@ public class clientBookingController {
                     request.getNumber_of_adults(),
                     request.getNumber_of_children(),
                     request.getNumber_of_infants(),
-                    finalDiscount, // Save the applied discount percentage
+                    discountValue, // Save the applied discount value
                     request.getNote()
             );
 
             // Mark voucher as used if applied
-            if (finalDiscount > 0) {
+            if (discountValue > 0) {
                 voucherService.markVoucherAsUsed(request.getVoucherCode());
             }
 

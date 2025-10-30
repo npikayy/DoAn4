@@ -52,6 +52,12 @@ public interface tourRepo extends JpaRepository<tours, String>, JpaSpecification
     @Query("SELECT t FROM tours t WHERE t.discount_promotion.id = :khuyenMaiId")
     List<tours> findToursByDiscount_promotionId(Integer khuyenMaiId);
 
+    @Query("SELECT DISTINCT t FROM tours t LEFT JOIN FETCH t.tourPictures WHERE LOWER(t.tour_name) LIKE %:keyword% OR LOWER(t.tour_region) LIKE %:keyword% OR LOWER(t.tour_end_location) LIKE %:keyword% OR LOWER(t.tour_description) LIKE %:keyword%")
+    List<tours> findByKeywordInNameRegionLocationDescription(@Param("keyword") String keyword);
+
+    @Query("SELECT DISTINCT t FROM tours t LEFT JOIN FETCH t.tourPictures WHERE (LOWER(t.tour_name) LIKE %:keyword% OR LOWER(t.tour_region) LIKE %:keyword% OR LOWER(t.tour_end_location) LIKE %:keyword% OR LOWER(t.tour_description) LIKE %:keyword%) AND t.special_offer IS NOT NULL AND t.special_offer != ''")
+    List<tours> findByKeywordAndSpecialOffer(@Param("keyword") String keyword);
+
     @Query("SELECT t FROM tours t WHERE t.discount_promotion IS NULL")
     List<tours> findByDiscount_promotionIsNull();
 }

@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import lombok.ToString;
+
 import java.time.LocalDate;
 
 @Entity
@@ -20,6 +22,7 @@ public class tour_start_date {
     private Integer start_date_id;
     private LocalDate start_date;
     @ManyToOne
+    @ToString.Exclude
     private tours tour;
     private Integer guest_number;
 

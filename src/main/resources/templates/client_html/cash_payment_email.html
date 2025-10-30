@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác nhận đặt tour - Thanh toán tiền mặt</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            color: #007bff;
+            margin: 0;
+        }
+        .content {
+            padding: 20px 0;
+        }
+        .content p {
+            margin: 0 0 10px;
+        }
+        .booking-details {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .booking-details th, .booking-details td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .booking-details th {
+            background-color: #f2f2f2;
+        }
+        .footer {
+            text-align: center;
+            padding-top: 20px;
+            font-size: 0.9em;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Tôi Đi Du Lịch</h1>
+            <h2>Xác nhận đặt tour - Thanh toán tiền mặt</h2>
+        </div>
+        <div class="content">
+            <p>Kính chào <strong th:text="${customerName}"></strong>,</p>
+            <p>Cảm ơn bạn đã đặt tour tại Tôi Đi Du Lịch và lựa chọn hình thức thanh toán tiền mặt!</p>
+
+            <h3>Thông tin đơn hàng</h3>
+            <table class="booking-details">
+                <tr>
+                    <th>Mã đơn hàng</th>
+                    <td th:text="${bookingId}"></td>
+                </tr>
+                <tr>
+                    <th>Tên tour</th>
+                    <td th:text="${tourName}"></td>
+                </tr>
+                <tr>
+                    <th>Ngày khởi hành</th>
+                    <td th:text="${startDate}"></td>
+                </tr>
+                <tr>
+                    <th>Số lượng khách</th>
+                    <td th:text="${guestCount}"></td>
+                </tr>
+                <tr>
+                    <th>Tổng số tiền</th>
+                    <td><strong th:text="${totalPrice}"></strong></td>
+                </tr>
+                 <tr>
+                    <th>Hình thức thanh toán</th>
+                    <td>Tiền mặt khi làm thủ tục</td>
+                </tr>
+            </table>
+
+            <h3>Hướng dẫn thanh toán</h3>
+            <ul>
+                <li>Vui lòng thanh toán toàn bộ số tiền khi làm thủ tục trước ngày khởi hành.</li>
+                <li>Chúng tôi sẽ liên hệ trước ngày khởi hành để xác nhận.</li>
+            </ul>
+
+            <h3>Thông tin hướng dẫn</h3>
+            <ul>
+                <li>Vui lòng có mặt tại điểm tập trung trước giờ khởi hành ít nhất 30 phút.</li>
+                <li>Mang theo CMND/CCCD bản gốc hoặc hộ chiếu khi đi tour.</li>
+                <li>In email này hoặc trình mã đơn <strong th:text="${bookingId}"></strong> khi làm thủ tục.</li>
+            </ul>
+
+            <h3>Liên hệ hỗ trợ</h3>
+            <p>Hotline: 1900 1234 (24/7)</p>
+
+            <p>Chúc bạn có một chuyến đi thú vị!</p>
+        </div>
+        <div class="footer">
+            <p>Trân trọng,<br>Đội ngũ Tôi Đi Du Lịch</p>
+        </div>
+    </div>
+</body>
+</html>

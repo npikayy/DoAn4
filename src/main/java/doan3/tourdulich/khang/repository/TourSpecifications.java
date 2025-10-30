@@ -1,6 +1,8 @@
 package doan3.tourdulich.khang.repository;
 
+import doan3.tourdulich.khang.entity.KhuyenMai;
 import doan3.tourdulich.khang.entity.tours;
+import jakarta.persistence.criteria.Join;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
@@ -87,9 +89,12 @@ public class TourSpecifications {
                 predicates.add(criteriaBuilder.equal(root.get("tour_end_location"), location));
             }
 
+
             // Promotion filter (from client)
             if (hasPromotion != null && hasPromotion) {
-                predicates.add(criteriaBuilder.isNotNull(root.get("discount_promotion")));
+                Join<tours, KhuyenMai> promotionJoin = root.join("discount_promotion");
+                predicates.add(criteriaBuilder.isNotNull(promotionJoin));
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(promotionJoin.get("ngayKetThuc"), new java.util.Date()));
             }
 
             // Promotion status filter (from admin)

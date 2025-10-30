@@ -6,6 +6,7 @@ import doan3.tourdulich.khang.entity.chatMessage;
 import doan3.tourdulich.khang.entity.tours;
 import doan3.tourdulich.khang.entity.KhuyenMai; // Import KhuyenMai entity
 import doan3.tourdulich.khang.repository.chatMessageRepo;
+import doan3.tourdulich.khang.repository.tourPicRepo;
 import doan3.tourdulich.khang.repository.tourRepo;
 import doan3.tourdulich.khang.repository.KhuyenMaiRepository; // Import KhuyenMaiRepository
 import doan3.tourdulich.khang.service.GeminiApiService;
@@ -18,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -33,6 +36,9 @@ public class ChatbotService {
     private KhuyenMaiRepository khuyenMaiRepository; // New dependency for promotions
 
     @Autowired
+    private tourPicRepo tourPicRepo;
+
+    @Autowired
     private chatMessageRepo chatMessageRepo;
 
     @Value("${ai.chatbot.enabled}")
@@ -44,6 +50,7 @@ public class ChatbotService {
     @Value("${promotion.detail.base-url}")
     private String promotionDetailBaseUrl; // New property for promotion links
 
+    @Transactional
     public ChatResponse chat(ChatRequest request) {
         if (!enabled) {
             return ChatResponse.builder()
@@ -89,79 +96,64 @@ public class ChatbotService {
         }
     }
 
-    private List<tours> searchToursDirectly(String query) {
+    private List<String> extractKeywords(String query) {
         String lowerCaseQuery = query.toLowerCase();
         List<String> keywords = new ArrayList<>();
 
-        // Basic tokenization and stop word removal for Vietnamese
-        List<String> stopWords = List.of("tìm", "tour", "cho", "tôi", "muốn", "có", "không", "gì", "ở", "đâu", "về", "các", "những", "nào", "hấp dẫn", "đẹp", "tốt", "giá", "rẻ", "đắt", "bao nhiêu", "thông tin", "chi tiết", "giúp", "tư vấn", "xin", "chào", "bạn", "nhé", "hiện", "rất", "điểm đến", "tham khảo", "tại đây", "hành trình", "khám phá", "trọn vẹn", "miền", "sông nước", "đi qua", "nhiều", "tỉnh thành", "khác", "theo", "ngày", "khởi hành", "có", "khuyến mãi", "dưới", "trên", "triệu", "vnd");
+        // Comprehensive stop words list for Vietnamese
+        List<String> stopWords = List.of(
+            "tìm", "tour", "cho", "tôi", "muốn", "có", "không", "gì", "ở", "đâu", "về", "các", "những", "nào", 
+            "hấp dẫn", "đẹp", "tốt", "giá", "rẻ", "đắt", "bao nhiêu", "thông tin", "chi tiết", "giúp", "tư vấn", 
+            "xin", "chào", "bạn", "nhé", "hiện", "rất", "điểm đến", "tham khảo", "tại đây", "hành trình", 
+            "khám phá", "trọn vẹn", "miền", "sông nước", "đi qua", "nhiều", "tỉnh thành", "khác", "theo", 
+            "ngày", "khởi hành", "có", "khuyến mãi", "ưu đãi", "giảm giá", "dưới", "trên", "triệu", "vnd",
+            "du lịch", "chuyến đi", "ngắn ngày", "thủ phủ", "và", "đi"
+        );
 
-        String[] words = lowerCaseQuery.split("\s+");
+        String[] words = lowerCaseQuery.split("\\s+");
         for (String word : words) {
-            if (!stopWords.contains(word)) { // Removed word.length() > 2 condition
-                keywords.add(word);
+            if (!stopWords.contains(word.trim())) {
+                keywords.add(word.trim());
             }
         }
 
         if (keywords.isEmpty()) {
-            // If no significant keywords, try to use the original query as a single keyword
             keywords.add(lowerCaseQuery);
         }
+        System.out.println("Keywords: " + keywords);
+        return keywords;
+    }
 
-        List<tours> filteredTours = tourRepo.findAll();
+    private List<tours> searchToursDirectly(String query) {
+        String lowerCaseQuery = query.toLowerCase();
+        List<String> keywords = extractKeywords(query);
 
-        // Filter by keywords (name, region, location, description)
-        if (!keywords.isEmpty()) {
-            filteredTours = filteredTours.stream()
-                    .filter(tour -> keywords.stream().anyMatch(keyword ->
-                        tour.getTour_name() != null && tour.getTour_name().toLowerCase().contains(keyword) ||
-                        tour.getTour_region() != null && tour.getTour_region().toLowerCase().contains(keyword) ||
-                        tour.getTour_end_location() != null && tour.getTour_end_location().toLowerCase().contains(keyword) ||
-                        tour.getTour_description() != null && tour.getTour_description().toLowerCase().contains(keyword)
-                    ))
-                    .collect(Collectors.toList());
-        }
+        List<tours> resultTours = new ArrayList<>();
 
-        // Filter by promotion
         if (lowerCaseQuery.contains("khuyến mãi") || lowerCaseQuery.contains("ưu đãi") || lowerCaseQuery.contains("giảm giá")) {
-            filteredTours = filteredTours.stream()
-                    .filter(tour -> tour.getSpecial_offer() != null && !tour.getSpecial_offer().isEmpty())
-                    .collect(Collectors.toList());
+            // If promotion is explicitly mentioned, search for tours with special offers
+            for (String keyword : keywords) {
+                resultTours.addAll(tourRepo.findByKeywordAndSpecialOffer("%" + keyword + "%"));
+            }
+        } else {
+            // Otherwise, search for tours by general keywords
+            for (String keyword : keywords) {
+                resultTours.addAll(tourRepo.findByKeywordInNameRegionLocationDescription("%" + keyword + "%"));
+            }
         }
 
-        return filteredTours.stream().limit(5).collect(Collectors.toList());
+        return resultTours.stream().distinct().limit(5).collect(Collectors.toList());
     }
 
     private List<KhuyenMai> searchPromotionsDirectly(String query) {
-        String lowerCaseQuery = query.toLowerCase();
-        List<String> keywords = new ArrayList<>();
+        List<String> keywords = extractKeywords(query);
+        List<KhuyenMai> resultPromotions = new ArrayList<>();
 
-        // Use the same stop words as for tours, or a refined list for promotions
-        List<String> stopWords = List.of("tìm", "khuyến mãi", "ưu đãi", "giảm giá", "cho", "tôi", "muốn", "có", "không", "gì", "ở", "đâu", "về", "các", "những", "nào", "hấp dẫn", "đẹp", "tốt", "giá", "rẻ", "đắt", "bao nhiêu", "thông tin", "chi tiết", "giúp", "tư vấn", "xin", "chào", "bạn", "nhé", "hiện", "rất", "điểm đến", "tham khảo", "tại đây", "hành trình", "khám phá", "trọn vẹn", "miền", "sông nước", "đi qua", "nhiều", "tỉnh thành", "khác", "du lịch", "chuyến đi", "ngắn ngày", "khám phá", "thủ phủ", "và", "nhiều", "tỉnh thành", "khác", "theo", "ngày", "khởi hành", "dưới", "trên", "triệu", "vnd");
-
-        String[] words = lowerCaseQuery.split("\s+");
-        for (String word : words) {
-            if (!stopWords.contains(word)) {
-                keywords.add(word);
-            }
+        for (String keyword : keywords) {
+            resultPromotions.addAll(khuyenMaiRepository.findByKeywordInNameOrDescription("%" + keyword + "%"));
         }
 
-        if (keywords.isEmpty()) {
-            keywords.add(lowerCaseQuery);
-        }
-
-        List<KhuyenMai> filteredPromotions = khuyenMaiRepository.findAll();
-
-        if (!keywords.isEmpty()) {
-            filteredPromotions = filteredPromotions.stream()
-                    .filter(promo -> keywords.stream().anyMatch(keyword ->
-                        promo.getTenKhuyenMai() != null && promo.getTenKhuyenMai().toLowerCase().contains(keyword) ||
-                        promo.getMoTa() != null && promo.getMoTa().toLowerCase().contains(keyword)
-                    ))
-                    .collect(Collectors.toList());
-        }
-
-        return filteredPromotions.stream().limit(3).collect(Collectors.toList()); // Limit promotions
+        return resultPromotions.stream().distinct().limit(3).collect(Collectors.toList()); // Limit promotions
     }
 
     private String buildContext(List<tours> tours, List<KhuyenMai> promotions) {
@@ -176,7 +168,27 @@ public class ChatbotService {
                 context.append("Khu vực: ").append(tour.getTour_region() != null ? tour.getTour_region() : "Không rõ").append(". ");
                 context.append("Địa điểm: ").append(tour.getTour_end_location() != null ? tour.getTour_end_location() : "Không rõ").append(". ");
                 context.append("Thời gian: ").append(tour.getTour_duration() != null ? tour.getTour_duration() : "Không rõ").append(". ");
-//                context.append("Ngày khởi hành: ").append(tour.getTour_start_date() != null ? tour.getTour_start_date() : "Không rõ").append(". ");
+
+                if (tour.getTour_start_date() != null && !tour.getTour_start_date().isEmpty()) {
+                    context.append("Ngày khởi hành: ");
+                    tour.getTour_start_date().forEach(date -> context.append(date.getStart_date()).append(" (").append(tour.getTour_max_number_of_people()-date.getGuest_number()).append(" chỗ trống), "));
+                    context.setLength(context.length() - 2); // Remove trailing comma and space
+                    context.append(". ");
+                }
+
+                if (tour.getTourSchedules() != null && !tour.getTourSchedules().isEmpty()) {
+                    context.append("Lịch trình: ");
+                    tour.getTourSchedules().forEach(schedule -> {
+                        context.append("Ngày ").append(schedule.getDay()).append(": ").append(schedule.getTitle()).append(" - ").append(schedule.getBody()).append(". ");
+
+                    });
+                    context.append("\n");
+                }
+
+
+                if (tourPicRepo.findOnePicByTour(tour.getTour_id()) != null) {
+                    context.append("<img src=\"").append(tourPicRepo.findOnePicByTour(tour.getTour_id())).append("\" alt=\"Hình ảnh tour\"\">\n");
+                }
                 context.append("Giá người lớn: ").append(tour.getTour_adult_price()).append(" VNĐ. "); // Assuming price is never null or defaults to 0
                 context.append("Giá trẻ em: ").append(tour.getTour_child_price()).append(" VNĐ. "); // Assuming price is never null or defaults to 0
                 context.append("Giá em bé: ").append(tour.getTour_infant_price()).append(" VNĐ. "); // Assuming price is never null or defaults to 0
@@ -184,21 +196,37 @@ public class ChatbotService {
                     context.append("Khuyến mãi: ").append(tour.getSpecial_offer()).append(". ");
                 }
                 context.append("Mô tả: ").append(tour.getTour_description() != null ? tour.getTour_description() : "Không có mô tả").append(". ");
-                context.append("Link chi tiết: ").append(tourDetailBaseUrl).append(tour.getTour_id() != null ? tour.getTour_id() : "").append("\n\n");
+                context.append("<a href=\"").append(tourDetailBaseUrl).append(tour.getTour_id() != null ? tour.getTour_id() : "").append("\" target=\"_blank\" class=\"detail-button\">Xem chi tiết Tour</a>\n\n");
             }
         }
 
         if (!promotions.isEmpty()) {
             context.append("Thông tin về các chương trình khuyến mãi liên quan:\n\n");
+            java.util.Date now = new java.util.Date();
             for (int i = 0; i < promotions.size(); i++) {
                 KhuyenMai promo = promotions.get(i);
                 context.append("Khuyến mãi ").append(i + 1).append(":\n");
                 context.append("Tên: ").append(promo.getTenKhuyenMai() != null ? promo.getTenKhuyenMai() : "Không rõ").append(". ");
+
+                // Add promotion status
+                if (promo.getNgayBatDau() != null && promo.getNgayKetThuc() != null) {
+                    if (now.after(promo.getNgayBatDau()) && now.before(promo.getNgayKetThuc())) {
+                        context.append("Trạng thái: Đang diễn ra. ");
+                    } else if (now.before(promo.getNgayBatDau())) {
+                        context.append("Trạng thái: Sắp diễn ra. ");
+                    } else {
+                        context.append("Trạng thái: Đã kết thúc. ");
+                    }
+                }
+
                 context.append("Mô tả: ").append(promo.getMoTa() != null ? promo.getMoTa() : "Không có mô tả").append(". ");
                 context.append("Phần trăm giảm giá: ").append(promo.getPhanTramGiamGia()).append("%. ");
                 context.append("Ngày bắt đầu: ").append(promo.getNgayBatDau() != null ? promo.getNgayBatDau().toString() : "Không rõ").append(". ");
                 context.append("Ngày kết thúc: ").append(promo.getNgayKetThuc() != null ? promo.getNgayKetThuc().toString() : "Không rõ").append(". ");
-                context.append("Link chi tiết: ").append(promotionDetailBaseUrl).append(promo.getId()).append("\n\n");
+                if (promo.getHinhAnh() != null && !promo.getHinhAnh().isEmpty()) {
+                    context.append("<img src=\"").append(promo.getHinhAnh()).append("\" alt=\"Hình ảnh khuyến mãi\">\n");
+                }
+                context.append("<a href=\"").append(promotionDetailBaseUrl).append(promo.getId()).append("\" target=\"_blank\" class=\"detail-button\">Xem chi tiết Khuyến mãi</a>\n\n");
             }
         }
 
@@ -215,6 +243,9 @@ public class ChatbotService {
 
             // Build prompt
             String prompt = buildPrompt(userMessage, context, history);
+            if (userMessage.toLowerCase().contains("hình") || userMessage.toLowerCase().contains("ảnh")) {
+                prompt += "\n\n**Quan trọng: Người dùng muốn xem hình ảnh. Hãy trả về thẻ `<img>` từ السياق.**";
+            }
             log.info("Prompt: {}", prompt);
             // Call Gemini API
             return geminiApiService.generateResponse(prompt);
@@ -229,7 +260,7 @@ public class ChatbotService {
         StringBuilder prompt = new StringBuilder();
 
         prompt.append("Bạn là trợ lý tư vấn du lịch thông minh của website tour du lịch Việt Nam.\n");
-        prompt.append("Nhiệm vụ: tư vấn và giới thiệu các tour và chương trình khuyến mãi phù hợp. **Hãy sử dụng thông tin và các link chi tiết được cung cấp dưới đây để trả lời một cách chính xác và hữu ích. Tuyệt đối không tạo ra các link ví dụ hoặc link không có trong thông tin được cung cấp.** Trả lời ngắn gọn, thân thiện.\n\n");
+        prompt.append("Nhiệm vụ: tư vấn và giới thiệu các tour và chương trình khuyến mãi phù hợp. **Hãy sử dụng thông tin và các link chi tiết, bao gồm cả các thẻ `<img>` được cung cấp dưới đây để trả lời một cách chính xác và hữu ích. Nếu người dùng hỏi về hình ảnh, hãy trả về thẻ `<img>` từ السياق.** Trả lời ngắn gọn, thân thiện.\n\n");
 
         if (!context.isEmpty()) {
             prompt.append("THÔNG TIN LIÊN QUAN:\n").append(context).append("\n");

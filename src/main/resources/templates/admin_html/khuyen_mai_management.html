@@ -21,6 +21,42 @@
             </a>
         </div>
 
+        <!-- Filter Section -->
+        <div class="bg-white p-6 rounded-lg shadow-sm mb-8">
+            <h2 class="text-xl font-semibold mb-4">Bộ lọc</h2>
+            <form th:action="@{/admin/khuyen-mai}" method="get" class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700">Tên khuyến mãi</label>
+                    <input type="text" name="name" id="name" th:value="${name}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                </div>
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700">Trạng thái</label>
+                    <select name="status" id="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <option value="">Tất cả</option>
+                        <option value="ongoing" th:selected="${status == 'ongoing'}">Đang diễn ra</option>
+                        <option value="upcoming" th:selected="${status == 'upcoming'}">Sắp diễn ra</option>
+                        <option value="finished" th:selected="${status == 'finished'}">Đã kết thúc</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="startDate" class="block text-sm font-medium text-gray-700">Từ ngày</label>
+                    <input type="date" name="startDate" id="startDate" th:value="${startDate != null ? #dates.format(startDate, 'yyyy-MM-dd') : ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                </div>
+                <div>
+                    <label for="endDate" class="block text-sm font-medium text-gray-700">Đến ngày</label>
+                    <input type="date" name="endDate" id="endDate" th:value="${endDate != null ? #dates.format(endDate, 'yyyy-MM-dd') : ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm transition">
+                        <i class="fas fa-filter mr-2"></i> Lọc
+                    </button>
+                    <a th:href="@{/admin/khuyen-mai}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg shadow-sm transition ml-2">
+                        <i class="fas fa-sync-alt mr-2"></i> Đặt lại
+                    </a>
+                </div>
+            </form>
+        </div>
+
         <!-- Promotion List Section -->
         <div class="bg-white p-6 rounded-lg shadow-sm">
             <div class="flex justify-between items-center mb-4">

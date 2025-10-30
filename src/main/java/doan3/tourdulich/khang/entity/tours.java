@@ -28,7 +28,7 @@ public class tours {
     @OneToMany(mappedBy = "tour")
     private List<tour_schedules> tourSchedules;
     @OneToMany(mappedBy = "tour")
-    private List<tour_pictures> tourPictures;
+    private Set<tour_pictures> tourPictures;
     private String tour_region;
 private Boolean is_abroad;
     private String tour_start_location;

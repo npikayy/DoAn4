@@ -177,11 +177,8 @@ class Chatbot {
     }
 
     formatMessage(text) {
-        // Convert URLs to clickable links
-        text = text.replace(
-            /(https?:\/\/[^\s]+)/g, 
-            '<a href="$1" target="_blank" rel="noopener">$1</a>'
-        );
+        // Convert markdown bold (**) to <strong>
+        text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         
         // Convert line breaks to <br>
         text = text.replace(/\n/g, '<br>');

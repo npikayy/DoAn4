@@ -5,6 +5,7 @@ import doan3.tourdulich.khang.entity.tours;
 import doan3.tourdulich.khang.service.KhuyenMaiService;
 import doan3.tourdulich.khang.service.tourService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,10 +32,20 @@ public class KhuyenMaiAdminController {
     private final KhuyenMaiService khuyenMaiService;
     private final tourService tourService;
 
+
+
     @GetMapping
-    public String showKhuyenMaiManagement(Model model) {
-        List<KhuyenMai> khuyenMaiList = khuyenMaiService.getAllKhuyenMai();
+    public String showKhuyenMaiManagement(Model model,
+                                          @RequestParam(required = false) String name,
+                                          @RequestParam(required = false) String status,
+                                          @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
+                                          @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate) {
+        List<KhuyenMai> khuyenMaiList = khuyenMaiService.searchKhuyenMai(name, status, startDate, endDate);
         model.addAttribute("khuyenMaiList", khuyenMaiList);
+        model.addAttribute("name", name);
+        model.addAttribute("status", status);
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
         return "admin_html/khuyen_mai_management";
     }
 

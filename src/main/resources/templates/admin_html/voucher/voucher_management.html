@@ -17,45 +17,125 @@
     <div class="flex-1 p-8">
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl font-bold">Quản lý Voucher</h1>
+            <a id="update-status-btn" th:href="@{/admin/vouchers/update-expired}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-sm transition flex items-center">
+                <i class="fas fa-sync-alt mr-2"></i> Cập nhật trạng thái
+            </a>
         </div>
 
+        <!-- Success Message -->
+        <div th:if="${successMessage}" class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-lg shadow-sm" role="alert">
+            <p th:text="${successMessage}"></p>
+        </div>
         <!-- Add Voucher Form Section -->
         <div class="bg-white p-6 rounded-lg shadow-sm mb-8">
-            <h2 class="text-xl font-semibold mb-4">Tạo Voucher Mới</h2>
-            <form th:action="@{/admin/vouchers/addVoucher}" method="post">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- Promotion Select -->
-                    <div>
-                        <label for="khuyenMaiId" class="block text-sm font-medium text-gray-700 mb-2">Chương trình khuyến mãi</label>
-                        <select id="khuyenMaiId" name="khuyenMaiId" class="w-full" required>
-                            <option value="">Chọn chương trình</option>
-                            <option th:each="km : ${khuyenMaiList}" th:value="${km.id}" th:text="${km.tenKhuyenMai}"></option>
-                        </select>
-                    </div>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Tạo Voucher Mới</h2>
+                <button type="button" id="toggle-add-voucher-btn" class="text-blue-600 hover:text-blue-800">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div id="add-voucher-section" class="hidden">
+                <form th:action="@{/admin/vouchers/addVoucher}" method="post">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <!-- Voucher Type -->
+                        <div>
+                            <label for="voucherType" class="block text-sm font-medium text-gray-700 mb-2">Loại Voucher</label>
+                            <select id="voucherType" name="voucherType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
+                                <option value="PERCENTAGE">Giảm theo %</option>
+                                <option value="AMOUNT">Giảm số tiền</option>
+                            </select>
+                        </div>
 
-                    <!-- User Select -->
-                    <div>
-                        <label for="userId" class="block text-sm font-medium text-gray-700 mb-2">Gán cho người dùng</label>
-                        <select id="userId" name="userId" class="w-full" required>
-                            <option value="">Chọn người dùng</option>
-                            <option th:each="user : ${userList}" th:value="${user.user_id}" th:text="${user.email}"></option>
-                        </select>
-                    </div>
+                        <!-- Discount Value -->
+                        <div>
+                            <label for="giaTriGiam" class="block text-sm font-medium text-gray-700 mb-2">Giá trị giảm</label>
+                            <div class="relative">
+                                <input type="text" id="giaTriGiam" name="giaTriGiam" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
+                                <span id="discount-unit" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500"></span>
+                            </div>
+                        </div>
 
-                    <!-- Expiry Date -->
-                    <div>
-                        <label for="ngayHetHan" class="block text-sm font-medium text-gray-700 mb-2">Ngày hết hạn</label>
-                        <input type="date" id="ngayHetHan" name="ngayHetHan" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
+                        <!-- User Select -->
+                        <div>
+                            <label for="userId" class="block text-sm font-medium text-gray-700 mb-2">Gán cho người dùng</label>
+                            <select id="userId" name="userId" class="w-full" required>
+                                <option value="">Chọn người dùng</option>
+                                <option value="ALL_USERS">Tất cả người dùng</option>
+                                <option th:each="user : ${userList}" th:value="${user.user_id}" th:text="${user.email}"></option>
+                            </select>
+                        </div>
+
+                        <!-- Expiry Date -->
+                        <div>
+                            <label for="ngayHetHan" class="block text-sm font-medium text-gray-700 mb-2">Ngày hết hạn</label>
+                            <input type="date" id="ngayHetHan" name="ngayHetHan" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
+                        </div>
                     </div>
-                </div>
-                <div class="mt-6 text-right">
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition">
-                        <i class="fas fa-plus-circle mr-2"></i>Tạo Voucher
-                    </button>
-                </div>
-            </form>
+                    <div class="mt-6 text-right">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition">
+                            <i class="fas fa-plus-circle mr-2"></i>Tạo Voucher
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
-
+        <!-- Filter Section -->
+        <div class="bg-white p-6 rounded-lg shadow-sm mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Bộ lọc Voucher</h2>
+                <button type="button" id="toggle-filter-btn" class="text-blue-600 hover:text-blue-800">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div id="filter-section" class="hidden">
+                <form th:action="@{/admin/vouchers}" method="get" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label for="voucherTypeFilter" class="block text-sm font-medium text-gray-700">Loại Voucher</label>
+                            <select id="voucherTypeFilter" name="voucherType" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                <option value="">Tất cả</option>
+                                <option value="PERCENTAGE" th:selected="${voucherType == 'PERCENTAGE'}">Giảm theo %</option>
+                                <option value="AMOUNT" th:selected="${voucherType == 'AMOUNT'}">Giảm số tiền</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="statusFilter" class="block text-sm font-medium text-gray-700">Trạng thái</label>
+                            <select id="statusFilter" name="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                <option value="">Tất cả</option>
+                                <option value="ACTIVE" th:selected="${status == 'ACTIVE'}">Active</option>
+                                <option value="USED" th:selected="${status == 'USED'}">Used</option>
+                                <option value="EXPIRED" th:selected="${status == 'EXPIRED'}">Expired</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="userFilter" class="block text-sm font-medium text-gray-700">Người dùng</label>
+                            <select id="userFilter" name="userId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                <option value="">Tất cả</option>
+                                <option th:each="user : ${userList}" th:value="${user.user_id}" th:text="${user.email}" th:selected="${user.user_id == userId}"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label for="expiryDateStart" class="block text-sm font-medium text-gray-700">Hạn sử dụng từ</label>
+                            <input type="date" id="expiryDateStart" name="expiryDateStart" th:value="${expiryDateStart != null ? #dates.format(expiryDateStart, 'yyyy-MM-dd') : ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        </div>
+                        <div>
+                            <label for="expiryDateEnd" class="block text-sm font-medium text-gray-700">Hạn sử dụng đến</label>
+                            <input type="date" id="expiryDateEnd" name="expiryDateEnd" th:value="${expiryDateEnd != null ? #dates.format(expiryDateEnd, 'yyyy-MM-dd') : ''}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-end space-x-3">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
+                            <i class="fas fa-filter mr-2"></i> Lọc
+                        </button>
+                        <a th:href="@{/admin/vouchers}" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">
+                            <i class="fas fa-sync-alt mr-2"></i> Đặt lại
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
         <!-- Voucher List Section -->
         <div class="bg-white p-6 rounded-lg shadow-sm">
             <div class="flex justify-between items-center mb-4">
@@ -70,36 +150,51 @@
                 </div>
             </div>
 
-            <div class="overflow-x-auto" th:unless="${vouchers.isEmpty()}">
-                <table class="min-w-full bg-white">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mã Voucher</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chương trình KM</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Người sở hữu</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày hết hạn</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Hành động</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <tr th:each="v : ${vouchers}">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" th:text="${v.maVoucher}"></td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800" th:text="${v.khuyenMai != null ? v.khuyenMai.tenKhuyenMai : 'N/A'}"></td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${v.user != null ? v.user.email : 'Chưa gán'}"></td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${#dates.format(v.ngayHetHan, 'dd-MM-yyyy')}"></td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <span th:text="${v.trangThai}" 
-                                      th:classappend="${v.trangThai == 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}" 
-                                      class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <a th:href="@{/admin/vouchers/deleteVoucher/{id}(id=${v.id})}" class="text-red-600 hover:text-red-900 ml-4" onclick="return confirm('Bạn có chắc chắn muốn xóa voucher này?')">Xóa</a>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" th:unless="${vouchers.isEmpty()}">
+                <!-- Voucher Card -->
+                <div th:each="v : ${vouchers}" class="relative bg-white p-5 rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="text-xs font-bold uppercase text-indigo-600" th:text="${v.voucherType == 'PERCENTAGE' ? 'Voucher Giảm giá %' : 'Voucher Giảm tiền'}"></div>
+                            <div class="text-2xl font-bold text-gray-800 mt-1">
+                                Giảm 
+                                <span th:if="${v.voucherType == 'PERCENTAGE'}" th:text="${v.giaTriGiam} + '%'"></span>
+                                <span th:if="${v.voucherType == 'AMOUNT'}" th:text="${#numbers.formatCurrency(v.giaTriGiam)}"></span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <!-- Status Badge -->
+                            <div class="text-sm font-semibold px-3 py-1 rounded-full inline-block"
+                                 th:text="${v.trangThai}"
+                                 th:classappend="${v.trangThai == 'ACTIVE'} ? 'bg-green-200 text-green-800' : (${v.trangThai == 'USED'} ? 'bg-yellow-200 text-yellow-800' : 'bg-red-200 text-red-800')">
+                            </div>
+                            <!-- Actions: Revoke or Restore -->
+                            <div class="mt-2">
+                                <a th:if="${v.trangThai == 'ACTIVE'}" th:href="@{/admin/vouchers/revokeVoucher/{id}(id=${v.id})}" class="text-red-500 hover:text-red-700 text-xs" onclick="return confirm('Bạn có chắc chắn muốn hủy voucher này không?')">
+                                    <i class="fas fa-ban"></i> Hủy
+                                </a>
+                                <a th:if="${v.trangThai == 'Đã hủy'}" th:href="@{/admin/vouchers/restoreVoucher/{id}(id=${v.id})}" class="text-green-500 hover:text-green-700 text-xs" onclick="return confirm('Bạn có chắc chắn muốn hoàn lại voucher này không?')">
+                                    <i class="fas fa-undo"></i> Hoàn lại
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-dashed border-gray-300 space-y-2">
+                        <div class="text-sm text-gray-600">
+                            <strong>Mã:</strong>
+                            <span class="font-mono bg-gray-200 text-gray-800 px-2 py-1 rounded" th:text="${v.maVoucher}"></span>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            <strong>Người dùng:</strong>
+                            <span class="font-semibold" th:text="${v.user != null ? v.user.email : 'Chưa gán'}"></span>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            <strong>Hạn sử dụng:</strong> 
+                            <span class="font-semibold" th:text="${#dates.format(v.ngayHetHan, 'dd-MM-yyyy')}"></span>
+                        </div>
+                    </div>
+                    <div class="absolute -bottom-4 -right-4 w-16 h-16 bg-indigo-100 rounded-full opacity-50"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -108,13 +203,68 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     $(document).ready(function() {
-        $('#khuyenMaiId').select2({
-            placeholder: "Chọn chương trình khuyến mãi",
-            allowClear: true
-        });
+        // Set min date for expiry date input
+        var today = new Date().toISOString().split('T')[0];
+        $('#ngayHetHan').attr('min', today);
+
         $('#userId').select2({
             placeholder: "Chọn người dùng",
             allowClear: true
+        });
+
+        function updateDiscountInput() {
+            var voucherType = $('#voucherType').val();
+            var giaTriGiamInput = $('#giaTriGiam');
+            var discountUnit = $('#discount-unit');
+
+            // Clear previous input value and event listeners
+            giaTriGiamInput.val('');
+            giaTriGiamInput.off('input');
+
+            if (voucherType === 'PERCENTAGE') {
+                discountUnit.text('%');
+                giaTriGiamInput.on('input', function(e) {
+                    var value = e.target.value.replace(/[^0-9]/g, ''); // Allow only numbers
+                    if (parseInt(value, 10) > 100) {
+                        value = '100'; // Cap at 100
+                    }
+                    e.target.value = value;
+                });
+            } else { // AMOUNT
+                discountUnit.text('VNĐ');
+                giaTriGiamInput.on('input', function(e) {
+                    var value = e.target.value.replace(/[^0-9]/g, ''); // Allow only numbers
+                    if (value) {
+                        e.target.value = parseInt(value, 10).toLocaleString('vi-VN');
+                    } else {
+                        e.target.value = '';
+                    }
+                });
+            }
+        }
+
+        // Initial setup
+        updateDiscountInput();
+
+        // Update on change
+        $('#voucherType').on('change', function() {
+            updateDiscountInput();
+        });
+
+        $('#toggle-filter-btn').on('click', function() {
+            $('#filter-section').toggleClass('hidden');
+            $(this).find('i').toggleClass('fa-chevron-down fa-chevron-up');
+        });
+
+        $('#toggle-add-voucher-btn').on('click', function() {
+            $('#add-voucher-section').toggleClass('hidden');
+            $(this).find('i').toggleClass('fa-chevron-down fa-chevron-up');
+        });
+
+        $('#update-status-btn').on('click', function() {
+            var btn = $(this);
+            btn.addClass('disabled opacity-75 cursor-not-allowed');
+            btn.html('<i class="fas fa-spinner fa-spin mr-2"></i> Đang xử lý...');
         });
     });
 </script>

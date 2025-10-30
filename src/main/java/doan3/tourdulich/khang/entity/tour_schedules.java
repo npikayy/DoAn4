@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import lombok.ToString;
+
 import java.time.LocalDate;
 
 @Entity
@@ -19,6 +21,7 @@ public class tour_schedules {
     @SequenceGenerator(name = "schedule_seq", sequenceName = "schedule_seq", allocationSize = 1)
     private Integer schedule_id;
     @ManyToOne
+    @ToString.Exclude
     private tours tour;
     private Integer day;
     private String title;

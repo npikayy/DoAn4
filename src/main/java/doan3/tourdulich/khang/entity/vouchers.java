@@ -20,16 +20,18 @@ public class vouchers {
     @Column(name = "ma_voucher", unique = true, nullable = false)
     private String maVoucher;
 
+    @Column(name = "voucher_type")
+    private String voucherType; // "PERCENTAGE" or "AMOUNT"
+
+    @Column(name = "gia_tri_giam")
+    private int giaTriGiam;
+
     @Column(name = "ngay_het_han")
     @Temporal(TemporalType.DATE)
     private Date ngayHetHan;
 
     @Column(name = "trang_thai")
     private String trangThai; // e.g., "ACTIVE", "USED", "EXPIRED"
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "khuyen_mai_id")
-    private KhuyenMai khuyenMai;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

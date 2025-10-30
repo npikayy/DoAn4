@@ -39,7 +39,7 @@ public class GeminiApiService {
 
             GenerationConfig config = new GenerationConfig();
             config.setTemperature(0.7);
-            config.setMaxOutputTokens(2048);
+            config.setMaxOutputTokens(4096);
             request.setGenerationConfig(config);
 
             String fullUrl = String.format(
@@ -66,7 +66,7 @@ public class GeminiApiService {
     }
 
     private String extractContent(String response) {
-        log.info("Raw Gemini API response: {}", response); // Add this line for debugging
+        log.info("Tạo cau trả lời thành công"); // Add this line for debugging
         try {
             com.fasterxml.jackson.databind.ObjectMapper mapper =
                     new com.fasterxml.jackson.databind.ObjectMapper();

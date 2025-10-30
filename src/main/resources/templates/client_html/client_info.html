@@ -259,9 +259,11 @@
                                     <div th:each="voucher : ${vouchers}" class="relative bg-gradient-to-br from-blue-50 to-indigo-100 p-5 rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                                         <div class="flex justify-between items-start">
                                             <div>
-                                                <div class="text-xs font-bold uppercase text-indigo-600" th:text="${voucher.khuyenMai?.tenKhuyenMai} ?: 'Voucher giảm giá'"></div>
+                                                <div class="text-xs font-bold uppercase text-indigo-600" th:text="${voucher.voucherType == 'PERCENTAGE' ? 'Voucher Giảm giá %' : 'Voucher Giảm tiền'}"></div>
                                                 <div class="text-2xl font-bold text-gray-800 mt-1">
-                                                    Giảm <span th:text="${voucher.khuyenMai?.phanTramGiamGia} ?: 0"></span>%
+                                                    Giảm 
+                                                    <span th:if="${voucher.voucherType == 'PERCENTAGE'}" th:text="${voucher.giaTriGiam} + '%'"></span>
+                                                    <span th:if="${voucher.voucherType == 'AMOUNT'}" th:text="${#numbers.formatCurrency(voucher.giaTriGiam)}"></span>
                                                 </div>
                                             </div>
                                             <div class="text-sm font-semibold px-3 py-1 rounded-full"
@@ -270,8 +272,12 @@
                                             </div>
                                         </div>
                                         <div class="mt-4 pt-4 border-t border-dashed border-gray-300">
-                                            <div class="text-sm text-gray-600">Mã voucher: 
-                                                <span class="font-mono bg-gray-200 text-gray-800 px-2 py-1 rounded" th:text="${voucher.maVoucher}"></span>
+                                            <div class="text-sm text-gray-600 flex items-center">
+                                                <span>Mã voucher:</span>
+                                                <span class="font-mono bg-gray-200 text-gray-800 px-2 py-1 rounded ml-2" th:id="'voucherCode-' + ${voucher.id}" th:text="${voucher.maVoucher}"></span>
+                                                <button class="copy-btn ml-2 text-gray-500 hover:text-indigo-600" th:attr="data-clipboard-target='#voucherCode-' + ${voucher.id}">
+                                                    <i class="fas fa-copy"></i>
+                                                </button>
                                             </div>
                                             <div class="text-sm text-gray-600 mt-2">Hạn sử dụng: 
                                                 <span class="font-semibold" th:text="${#dates.format(voucher.ngayHetHan, 'dd-MM-yyyy')}"></span>
@@ -638,41 +644,57 @@
         return '';
     }
 
-    // Tab switching logic
-    document.addEventListener('DOMContentLoaded', function() {
-        const tabInfo = document.getElementById('tab-info');
-        const tabVouchers = document.getElementById('tab-vouchers');
-        const contentInfo = document.getElementById('content-info');
-        const contentVouchers = document.getElementById('content-vouchers');
-
-        tabInfo.addEventListener('click', function(e) {
-            e.preventDefault();
-            // Activate Info tab
-            tabInfo.classList.add('border-indigo-500', 'text-indigo-600');
-            tabInfo.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
-            // Deactivate Vouchers tab
-            tabVouchers.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
-            tabVouchers.classList.remove('border-indigo-500', 'text-indigo-600');
-            // Show Info content
-            contentInfo.classList.remove('hidden');
-            contentVouchers.classList.add('hidden');
+            // Tab switching logic
+            const tabInfo = document.getElementById('tab-info');
+            const tabVouchers = document.getElementById('tab-vouchers');
+            const contentInfo = document.getElementById('content-info');
+            const contentVouchers = document.getElementById('content-vouchers');
+    
+            tabInfo.addEventListener('click', function(e) {
+                e.preventDefault();
+                // Activate Info tab
+                tabInfo.classList.add('border-indigo-500', 'text-indigo-600');
+                tabInfo.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                // Deactivate Vouchers tab
+                tabVouchers.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                tabVouchers.classList.remove('border-indigo-500', 'text-indigo-600');
+                // Show Info content
+                contentInfo.classList.remove('hidden');
+                contentVouchers.classList.add('hidden');
+            });
+    
+            tabVouchers.addEventListener('click', function(e) {
+                e.preventDefault();
+                // Activate Vouchers tab
+                tabVouchers.classList.add('border-indigo-500', 'text-indigo-600');
+                tabVouchers.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                // Deactivate Info tab
+                tabInfo.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+                tabInfo.classList.remove('border-indigo-500', 'text-indigo-600');
+                // Show Vouchers content
+                contentVouchers.classList.remove('hidden');
+                contentInfo.classList.add('hidden');
+            });
+    
+        const copyButtons = document.querySelectorAll('.copy-btn');
+        copyButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-clipboard-target');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    navigator.clipboard.writeText(targetElement.textContent).then(() => {
+                        // Show a success message, e.g., by changing the button text or showing a tooltip
+                        const originalIcon = this.innerHTML;
+                        this.innerHTML = '<i class="fas fa-check text-green-500"></i>';
+                        setTimeout(() => {
+                            this.innerHTML = originalIcon;
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Failed to copy: ', err);
+                    });
+                }
+            });
         });
-
-        tabVouchers.addEventListener('click', function(e) {
-            e.preventDefault();
-            // Activate Vouchers tab
-            tabVouchers.classList.add('border-indigo-500', 'text-indigo-600');
-            tabVouchers.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
-            // Deactivate Info tab
-            tabInfo.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
-            tabInfo.classList.remove('border-indigo-500', 'text-indigo-600');
-            // Show Vouchers content
-            contentVouchers.classList.remove('hidden');
-            contentInfo.classList.add('hidden');
-        });
-
-        // Other initializations...
-    });
 </script>
 </body>
 </html>

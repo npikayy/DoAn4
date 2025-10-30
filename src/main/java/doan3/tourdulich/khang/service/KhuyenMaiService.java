@@ -7,7 +7,9 @@ import doan3.tourdulich.khang.repository.tourRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.data.jpa.domain.Specification;
 
+import java.util.Date;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,6 +25,37 @@ public class KhuyenMaiService {
     private final KhuyenMaiRepository khuyenMaiRepository;
     private final tourRepo tourRepo;
     private static final String UPLOAD_DIR = "src/main/resources/static/uploads/khuyenmai";
+
+
+
+    public List<KhuyenMai> searchKhuyenMai(String name, String status, Date startDate, Date endDate) {
+        Specification<KhuyenMai> spec = Specification.where(null);
+
+        if (name != null && !name.isEmpty()) {
+            spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("tenKhuyenMai")), "%" + name.toLowerCase() + "%"));
+        }
+
+        if (startDate != null) {
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("ngayKetThuc"), startDate));
+        }
+
+        if (endDate != null) {
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("ngayBatDau"), endDate));
+        }
+
+        if (status != null && !status.isEmpty()) {
+            Date now = new Date();
+            if ("ongoing".equals(status)) {
+                spec = spec.and((root, query, cb) -> cb.and(cb.lessThanOrEqualTo(root.get("ngayBatDau"), now), cb.greaterThanOrEqualTo(root.get("ngayKetThuc"), now)));
+            } else if ("upcoming".equals(status)) {
+                spec = spec.and((root, query, cb) -> cb.greaterThan(root.get("ngayBatDau"), now));
+            } else if ("finished".equals(status)) {
+                spec = spec.and((root, query, cb) -> cb.lessThan(root.get("ngayKetThuc"), now));
+            }
+        }
+
+        return khuyenMaiRepository.findAll(spec);
+    }
 
     public List<KhuyenMai> getAllKhuyenMai() {
         return khuyenMaiRepository.findAll();

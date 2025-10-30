@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bạn đã nhận được một voucher mới</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            color: #007bff;
+            margin: 0;
+        }
+        .content {
+            padding: 20px 0;
+        }
+        .content p {
+            margin: 0 0 10px;
+        }
+        .footer {
+            text-align: center;
+            padding-top: 20px;
+            font-size: 0.9em;
+            color: #777;
+        }
+        .coupon {
+            background-color: #f8f9fa;
+            border: 1px dashed #ccc;
+            padding: 15px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .coupon-code {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Tôi Đi Du Lịch</h1>
+            <h2>Quà tặng tri ân</h2>
+        </div>
+        <div class="content">
+            <p>Kính gửi quý khách <strong th:text="${customerName}"></strong>,</p>
+            <p>Cảm ơn bạn đã luôn đồng hành cùng Tôi Đi Du Lịch. Chúng tôi xin gửi tặng bạn một voucher ưu đãi đặc biệt thay cho lời cảm ơn chân thành.</p>
+
+            <div class="coupon">
+                <p><strong>Mã voucher của bạn:</strong></p>
+                <p><span class="coupon-code" th:text="${voucherCode}"></span></p>
+                <p><strong>Ưu đãi:</strong> <span th:text="${discountValue}"></span></p>
+                <p><em>Hạn sử dụng đến ngày: <span th:text="${expiryDate}"></span></em></p>
+            </div>
+
+            <p>Hy vọng món quà nhỏ này sẽ mang lại niềm vui cho bạn và chúng tôi mong được tiếp tục phục vụ bạn trong những chuyến đi sắp tới.</p>
+        </div>
+        <div class="footer">
+            <p>Trân trọng,<br>Đội ngũ Tôi Đi Du Lịch</p>
+        </div>
+    </div>
+</body>
+</html>

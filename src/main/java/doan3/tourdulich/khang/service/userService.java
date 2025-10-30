@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +36,17 @@ public class userService implements UserDetailsService {
                 .created_at(java.time.LocalDate.now())
                 .build();
         userRepository.save(user);
+    }
+
+    public Page<users> getAllUsersExceptAdmin(Pageable pageable) {
+        return (Page<users>) userRepository.findAllUsersExceptAdmin(pageable);
+    }
+
+    public List<users> getAllUsersExceptAdmin() {
+        List<users> users = userRepository.findAllUsers();
+        return users.stream()
+                .filter(user -> !"admin@gmail.com".equals(user.getEmail()))
+                .collect(java.util.stream.Collectors.toList());
     }
 
     public List<users> getAllUsers() {

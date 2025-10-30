@@ -1,98 +1,96 @@
 package doan3.tourdulich.khang.controller;
-import doan3.tourdulich.khang.entity.KhuyenMai;
 import doan3.tourdulich.khang.entity.users;
 import doan3.tourdulich.khang.entity.vouchers;
-import doan3.tourdulich.khang.service.KhuyenMaiService;
+import doan3.tourdulich.khang.service.AsyncVoucherService;
 import doan3.tourdulich.khang.service.VoucherService;
+import doan3.tourdulich.khang.service.bookingService;
 import doan3.tourdulich.khang.service.userService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
-@RestController
+@Controller
 @Slf4j
 @RequestMapping("/admin/vouchers")
 @RequiredArgsConstructor
 public class vouchersController {
     private final VoucherService voucherService;
-    private final KhuyenMaiService khuyenMaiService;
     private final userService userService;
+    private final bookingService bookingService;
+    private final AsyncVoucherService asyncVoucherService;
 
     @GetMapping("")
-    public ModelAndView index(ModelAndView modelAndView) {
-        List<vouchers> voucherList = voucherService.getAllVouchers();
-        List<KhuyenMai> khuyenMaiList = khuyenMaiService.getAllKhuyenMai();
-        List<users> userList = userService.getAllUsers();
-
+    public ModelAndView index(@RequestParam(required = false) String voucherType,
+                              @RequestParam(required = false) String status,
+                              @RequestParam(required = false) String userId,
+                              @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date expiryDateStart,
+                              @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date expiryDateEnd) {
+        ModelAndView modelAndView = new ModelAndView("admin_html/voucher/voucher_management");
+        List<vouchers> voucherList = voucherService.searchVouchers(voucherType, status, userId, expiryDateStart, expiryDateEnd);
+        List<users> userList = userService.getAllUsersExceptAdmin();
+        log.info("Searching vouchers with params: voucherType={}, status={}, userId={}, expiryDateStart={}, expiryDateEnd={}", voucherType, status, userId, expiryDateStart, expiryDateEnd);
         modelAndView.addObject("vouchers", voucherList);
-        modelAndView.addObject("khuyenMaiList", khuyenMaiList);
         modelAndView.addObject("userList", userList);
+        modelAndView.addObject("voucherType", voucherType);
+        modelAndView.addObject("status", status);
+        modelAndView.addObject("userId", userId);
+        modelAndView.addObject("expiryDateStart", expiryDateStart);
+        modelAndView.addObject("expiryDateEnd", expiryDateEnd);
 
-        modelAndView.setViewName("admin_html/voucher/voucher_management");
         return modelAndView;
     }
-    @GetMapping("/deleteVoucher/{id}")
-    public ModelAndView delete(@PathVariable("id") int id, ModelAndView modelAndView) {
-        voucherService.deleteVoucher(id);
+
+
+    @GetMapping("/update-expired")
+    public String updateExpiredVouchers(RedirectAttributes redirectAttributes) {
+        int updatedCount = voucherService.updateExpiredVouchers();
+        redirectAttributes.addFlashAttribute("successMessage", "Đã cập nhật trạng thái cho " + updatedCount + " voucher hết hạn.");
+        return "redirect:/admin/vouchers";
+    }
+
+    @GetMapping("/restoreVoucher/{id}")
+    public ModelAndView restoreVoucher(@PathVariable("id") int id) {
+        voucherService.restoreVoucher(id);
+        return new ModelAndView("redirect:/admin/vouchers");
+    }
+
+    @GetMapping("/revokeVoucher/{id}")
+    public ModelAndView revokeVoucher(@PathVariable("id") int id) {
+        voucherService.revokeVoucher(id);
         return new ModelAndView("redirect:/admin/vouchers");
     }
 
     @PostMapping("/addVoucher")
-    public ModelAndView addVoucher(@RequestParam("khuyenMaiId") int khuyenMaiId,
+    public ModelAndView addVoucher(@RequestParam("voucherType") String voucherType,
+                                   @RequestParam("giaTriGiam") String giaTriGiamStr,
                                    @RequestParam("userId") String userId,
                                    @RequestParam("ngayHetHan") String ngayHetHan) {
         try {
-            vouchers newVoucher = new vouchers();
-
-            // Generate a unique voucher code
-            String code = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-            newVoucher.setMaVoucher(code);
-
-            // Set expiry date
-            newVoucher.setNgayHetHan(java.sql.Date.valueOf(ngayHetHan));
-
-            // Set status
-            newVoucher.setTrangThai("ACTIVE");
-
-            // Set relationships
-            khuyenMaiService.getKhuyenMaiById(khuyenMaiId).ifPresent(newVoucher::setKhuyenMai);
-            userService.findByUserId(userId).ifPresent(newVoucher::setUser);
-
-            voucherService.saveVoucher(newVoucher);
-
+            if ("ALL_USERS".equals(userId)) {
+                asyncVoucherService.createVouchersForAllUsers(voucherType, giaTriGiamStr, ngayHetHan);
+            } else {
+                int giaTriGiam = Integer.parseInt(giaTriGiamStr.replace(".", ""));
+                vouchers newVoucher = new vouchers();
+                String code = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+                newVoucher.setMaVoucher(code);
+                newVoucher.setVoucherType(voucherType);
+                newVoucher.setGiaTriGiam(giaTriGiam);
+                newVoucher.setNgayHetHan(java.sql.Date.valueOf(ngayHetHan));
+                newVoucher.setTrangThai("ACTIVE");
+                userService.findByUserId(userId).ifPresent(newVoucher::setUser);
+                vouchers savedVoucher = voucherService.saveVoucher(newVoucher);
+            }
         } catch (Exception e) {
             log.error("Error creating voucher: {}", e.getMessage());
         }
         return new ModelAndView("redirect:/admin/vouchers");
     }
 
-    @PostMapping("/api/validate")
-    public ResponseEntity<Map<String, Object>> validateVoucher(@RequestBody Map<String, String> payload) {
-        String maVoucher = payload.get("maVoucher");
-        String tourId = payload.get("tourId");
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof UserDetails)) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Bạn cần đăng nhập để sử dụng voucher.");
-            return ResponseEntity.status(401).body(response);
-        }
-
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        users currentUser = userService.findByUsername(userDetails.getUsername());
-
-        Map<String, Object> validationResult = voucherService.validateVoucher(maVoucher, currentUser.getUser_id(), tourId);
-        return ResponseEntity.ok(validationResult);
-    }
 }

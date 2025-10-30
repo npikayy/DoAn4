@@ -1,8 +1,11 @@
 package doan3.tourdulich.khang.service;
 
+import doan3.tourdulich.khang.entity.vouchers;
+import org.springframework.scheduling.annotation.Async;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.TemplateEngine;
 import doan3.tourdulich.khang.dto.MailBody;
 import doan3.tourdulich.khang.entity.tour_bookings;
-import doan3.tourdulich.khang.entity.users;
 import doan3.tourdulich.khang.repository.tourBookingRepo;
 import doan3.tourdulich.khang.repository.tourRepo;
 import doan3.tourdulich.khang.repository.userRepo;
@@ -14,21 +17,20 @@ import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.Locale;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class bookingService {
 
-    @Autowired
-    private tourBookingRepo tourBookingRepo;
-    @Autowired
-    private tourRepo tourRepo;
-    @Autowired
-    private userRepo userRepo;
-    @Autowired
-    private EmailService emailService;
+    private final tourBookingRepo tourBookingRepo;
+    private final tourRepo tourRepo;
+    private final userRepo userRepo;
+    private final EmailService emailService;
+    private final TemplateEngine templateEngine;
 
     public tour_bookings addBooking(
             String tourId, String userId, String userFullName, String userEmail,
@@ -61,7 +63,7 @@ public class bookingService {
 
 
         tourBookingRepo.save(booking);
-        sendBookingConfirmation(userEmail,booking.getBooking_id());
+        sendBookingConfirmation(booking);
         return booking;
 
     }
@@ -71,147 +73,92 @@ public class bookingService {
             tourBookingRepo.save(booking);
         });
     }
-    public void sendBookingConfirmation(String email, Integer booking_id) {
-        tour_bookings booking = tourBookingRepo.findByBooking_id(booking_id);
 
+    @Async
+    public void sendBookingConfirmation(tour_bookings booking) {
         NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
         String formattedAmount = currencyFormat.format(booking.getTotal_price());
 
+        Context context = new Context();
+        context.setVariable("customerName", booking.getUser_full_name());
+        context.setVariable("bookingId", "TOD-" + booking.getBooking_id());
+        context.setVariable("tourName", booking.getTour().getTour_name());
+        context.setVariable("startDate", booking.getStart_date().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        String guestCount = booking.getNumber_of_adults() + " người lớn" +
+                (booking.getNumber_of_children() > 0 ? ", " + booking.getNumber_of_children() + " trẻ em" : "") +
+                (booking.getNumber_of_infants() > 0 ? ", " + booking.getNumber_of_infants() + " em bé" : "");
+        context.setVariable("guestCount", guestCount);
+        context.setVariable("totalPrice", formattedAmount);
+        context.setVariable("paymentLink", "http://localhost:8080/Client/orderBooking/Payment/" + booking.getBooking_id());
+
+        String htmlContent = templateEngine.process("client_html/booking_confirmation_email", context);
+
         MailBody mailBody = MailBody.builder()
-                .to(email)
-                .subject("[Tôi Đi Du Lịch] Xác nhận đặt tour thành công - Mã đơn: " + booking_id)
-                .text(buildBookingConfirmationContent(booking, formattedAmount))
+                .to(booking.getUser_email())
+                .subject("[Tôi Đi Du Lịch] Xác nhận đặt tour thành công - Mã đơn: " + booking.getBooking_id())
+                .text(htmlContent)
                 .build();
 
-        log.info("Sending booking confirmation email to: {}", email);
-        emailService.sendSimpleMessage(mailBody);
+        log.info("Sending booking confirmation email to: {}", booking.getUser_email());
+        emailService.sendHtmlMessage(mailBody);
     }
 
+    @Async
     public void sendPaymentSuccessNotification(String email, Integer booking_id) {
         tour_bookings booking = tourBookingRepo.findByBooking_id(booking_id);
 
         NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
         String formattedAmount = currencyFormat.format(booking.getTotal_price());
 
+        Context context = new Context();
+        context.setVariable("customerName", booking.getUser_full_name());
+        context.setVariable("bookingId", "TOD-" + booking.getBooking_id());
+        context.setVariable("tourName", booking.getTour().getTour_name());
+        context.setVariable("startDate", booking.getStart_date().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        String guestCount = booking.getNumber_of_adults() + " người lớn" +
+                (booking.getNumber_of_children() > 0 ? ", " + booking.getNumber_of_children() + " trẻ em" : "") +
+                (booking.getNumber_of_infants() > 0 ? ", " + booking.getNumber_of_infants() + " em bé" : "");
+        context.setVariable("guestCount", guestCount);
+        context.setVariable("totalPrice", formattedAmount);
+        context.setVariable("paymentDate", LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+
+        String htmlContent = templateEngine.process("client_html/payment_success_email", context);
+
         MailBody mailBody = MailBody.builder()
                 .to(email)
                 .subject("[Tôi Đi Du Lịch] Thanh toán thành công - Mã đơn: " + booking_id)
-                .text(buildPaymentSuccessContent(booking, formattedAmount))
+                .text(htmlContent)
                 .build();
 
         log.info("Sending payment success email to: {}", email);
-        emailService.sendSimpleMessage(mailBody);
+        emailService.sendHtmlMessage(mailBody);
     }
 
-    private String buildBookingConfirmationContent(tour_bookings booking, String formattedAmount) {
-        StringBuilder content = new StringBuilder();
-
-        content.append("Kính chào ").append(booking.getUser_full_name()).append(",\n\n");
-        content.append("Cảm ơn bạn đã đặt tour tại Tôi Đi Du Lịch!\n\n");
-        content.append("Thông tin đơn hàng:\n");
-        content.append("- Mã đơn: TOD-").append(booking.getBooking_id()).append("\n");
-        content.append("- Tên tour: ").append(booking.getTour().getTour_name()).append("\n");
-        content.append("- Ngày khởi hành: ").append(booking.getStart_date()).append("\n");
-        content.append("- Số lượng khách: ")
-                .append(booking.getNumber_of_adults()).append(" người lớn")
-                .append(booking.getNumber_of_children() > 0 ? ", " + booking.getNumber_of_children() + " trẻ em" : "")
-                .append(booking.getNumber_of_infants() > 0 ? ", " + booking.getNumber_of_infants() + " em bé" : "")
-                .append("\n");
-        content.append("- Tổng tiền: ").append(formattedAmount).append("\n\n");
-
-        content.append("Vui lòng thanh toán trong vòng 24 giờ để hoàn tất đặt chỗ.\n");
-        content.append("Các hình thức thanh toán:\n");
-        content.append("1. Thanh toán trực tiếp tại văn phòng\n");
-        content.append("   Địa chỉ: Cần Thơ\n");
-        content.append("   Thời gian: 8:00 - 17:00 từ Thứ 2 đến Thứ 6\n\n");
-        content.append("2. Thanh toán online (VNPay)\n");
-        content.append("   Bấm vào link sau để thanh toán: [localhost:8080/Client/orderBooking/Payment/" + booking.getBooking_id() + "]\n\n");
-        content.append("Sau khi thanh toán thành công, hệ thống sẽ gửi email xác nhận đến bạn.\n\n");
-        content.append("Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ:\n");
-        content.append("- Hotline: 1900 1234 (24/7)\n");
-        content.append("- Email: support@toididulich.com\n\n");
-        content.append("Trân trọng,\n");
-        content.append("Đội ngũ Tôi Đi Du Lịch");
-
-        return content.toString();
-    }
-
-    private String buildPaymentSuccessContent(tour_bookings booking, String formattedAmount) {
-        StringBuilder content = new StringBuilder();
-
-        content.append("Kính chào ").append(booking.getUser_full_name()).append(",\n\n");
-        content.append("Cảm ơn bạn đã thanh toán thành công cho đơn đặt tour tại Tôi Đi Du Lịch!\n\n");
-        content.append("Thông tin đơn hàng:\n");
-        content.append("- Mã đơn: TOD-").append(booking.getBooking_id()).append("\n");
-        content.append("- Tên tour: ").append(booking.getTour().getTour_name()).append("\n");
-        content.append("- Ngày khởi hành: ").append(booking.getStart_date()).append("\n");
-        content.append("- Số lượng khách: ")
-                .append(booking.getNumber_of_adults()).append(" người lớn")
-                .append(booking.getNumber_of_children() > 0 ? ", " + booking.getNumber_of_children() + " trẻ em" : "")
-                .append(booking.getNumber_of_infants() > 0 ? ", " + booking.getNumber_of_infants() + " em bé" : "")
-                .append("\n");
-        content.append("- Số tiền thanh toán: ").append(formattedAmount).append("\n");
-        content.append("- Ngày thanh toán: ").append(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))).append("\n\n");
-
-        content.append("Thông tin hướng dẫn:\n");
-        content.append("- Vui lòng có mặt tại điểm tập trung trước giờ khởi hành ít nhất 30 phút\n");
-        content.append("- Mang theo CMND/CCCD bản gốc hoặc hộ chiếu khi đi tour\n");
-        content.append("- In email này hoặc trình mã đơn TOD-").append(booking.getBooking_id()).append(" khi làm thủ tục\n\n");
-
-        content.append("Liên hệ hỗ trợ:\n");
-        content.append("- Hotline: 1900 1234 (24/7)\n\n");
-        content.append("Chúc bạn có một chuyến đi thú vị!\n\n");
-        content.append("Trân trọng,\n");
-        content.append("Đội ngũ Tôi Đi Du Lịch");
-
-        return content.toString();
-    }
-    private String buildCashPaymentContent(tour_bookings booking) {
-        StringBuilder content = new StringBuilder();
-
-        content.append("Kính chào ").append(booking.getUser_full_name()).append(",\n\n");
-        content.append("Cảm ơn bạn đã đặt tour tại Tôi Đi Du Lịch và lựa chọn hình thức thanh toán tiền mặt!\n\n");
-        content.append("Thông tin đơn hàng:\n");
-        content.append("- Mã đơn: TOD-").append(booking.getBooking_id()).append("\n");
-        content.append("- Tên tour: ").append(booking.getTour().getTour_name()).append("\n");
-        content.append("- Ngày khởi hành: ").append(booking.getStart_date()).append("\n");
-        content.append("- Số lượng khách: ")
-                .append(booking.getNumber_of_adults()).append(" người lớn")
-                .append(booking.getNumber_of_children() > 0 ? ", " + booking.getNumber_of_children() + " trẻ em" : "")
-                .append(booking.getNumber_of_infants() > 0 ? ", " + booking.getNumber_of_infants() + " em bé" : "")
-                .append("\n");
-        content.append("- Tổng số tiền: ").append(NumberFormat.getCurrencyInstance(new Locale("vi", "VN")).format(booking.getTotal_price())).append("\n");
-        content.append("- Hình thức thanh toán: Tiền mặt khi làm thủ tục\n\n");
-
-        content.append("Hướng dẫn thanh toán:\n");
-        content.append("- Vui lòng thanh toán toàn bộ số tiền khi làm thủ tục trước ngày khởi hành\n");
-        content.append("- Chúng tôi sẽ liên hệ trước ngày khởi hành để xác nhận\n\n");
-
-        content.append("Thông tin hướng dẫn:\n");
-        content.append("- Vui lòng có mặt tại điểm tập trung trước giờ khởi hành ít nhất 30 phút\n");
-        content.append("- Mang theo CMND/CCCD bản gốc hoặc hộ chiếu khi đi tour\n");
-        content.append("- In email này hoặc trình mã đơn TOD-").append(booking.getBooking_id()).append(" khi làm thủ tục\n\n");
-
-        content.append("Liên hệ hỗ trợ:\n");
-        content.append("- Hotline: 1900 1234 (24/7)\n\n");
-        content.append("Chúc bạn có một chuyến đi thú vị!\n\n");
-        content.append("Trân trọng,\n");
-        content.append("Đội ngũ Tôi Đi Du Lịch");
-
-        return content.toString();
-    }
-
+    @Async
     public void sendCashPaymentNotification(String email, Integer booking_id) {
         tour_bookings booking = tourBookingRepo.findByBooking_id(booking_id);
+
+        Context context = new Context();
+        context.setVariable("customerName", booking.getUser_full_name());
+        context.setVariable("bookingId", "TOD-" + booking.getBooking_id());
+        context.setVariable("tourName", booking.getTour().getTour_name());
+        context.setVariable("startDate", booking.getStart_date().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        String guestCount = booking.getNumber_of_adults() + " người lớn" +
+                (booking.getNumber_of_children() > 0 ? ", " + booking.getNumber_of_children() + " trẻ em" : "") +
+                (booking.getNumber_of_infants() > 0 ? ", " + booking.getNumber_of_infants() + " em bé" : "");
+        context.setVariable("guestCount", guestCount);
+        context.setVariable("totalPrice", NumberFormat.getCurrencyInstance(new Locale("vi", "VN")).format(booking.getTotal_price()));
+
+        String htmlContent = templateEngine.process("client_html/cash_payment_email", context);
 
         MailBody mailBody = MailBody.builder()
                 .to(email)
                 .subject("[Tôi Đi Du Lịch] Xác nhận đặt tour - Mã đơn: " + booking_id)
-                .text(buildCashPaymentContent(booking))
+                .text(htmlContent)
                 .build();
 
         log.info("Sending cash payment confirmation email to: {}", email);
-        emailService.sendSimpleMessage(mailBody);
+        emailService.sendHtmlMessage(mailBody);
     }
     private String buildCancellationContent(tour_bookings booking) {
         StringBuilder content = new StringBuilder();
@@ -255,17 +202,33 @@ public class bookingService {
         return content.toString();
     }
 
+    @Async
     public void sendCancelNotification(String email, Integer booking_id) {
         tour_bookings booking = tourBookingRepo.findByBooking_id(booking_id);
+
+        Context context = new Context();
+        context.setVariable("customerName", booking.getUser_full_name());
+        context.setVariable("bookingId", "TOD-" + booking.getBooking_id());
+        context.setVariable("tourName", booking.getTour().getTour_name());
+        context.setVariable("startDate", booking.getStart_date().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        String guestCount = booking.getNumber_of_adults() + " người lớn" +
+                (booking.getNumber_of_children() > 0 ? ", " + booking.getNumber_of_children() + " trẻ em" : "") +
+                (booking.getNumber_of_infants() > 0 ? ", " + booking.getNumber_of_infants() + " em bé" : "");
+        context.setVariable("guestCount", guestCount);
+        context.setVariable("cancelReason", booking.getCancel_reason());
+        context.setVariable("isPaid", "PAID".equals(booking.getStatus()));
+        context.setVariable("refundAmount", NumberFormat.getCurrencyInstance(new Locale("vi", "VN")).format(booking.getTotal_price()));
+
+        String htmlContent = templateEngine.process("client_html/cancellation_email", context);
 
         MailBody mailBody = MailBody.builder()
                 .to(email)
                 .subject("[Tôi Đi Du Lịch] Thông báo hủy đơn - Mã đơn: TOD-" + booking_id)
-                .text(buildCancellationContent(booking))
+                .text(htmlContent)
                 .build();
 
         log.info("Sending cancellation notification email to: {}", email);
-        emailService.sendSimpleMessage(mailBody);
+        emailService.sendHtmlMessage(mailBody);
     }
 
     private String buildThankYouContent(tour_bookings booking) {
@@ -303,16 +266,28 @@ public class bookingService {
         return content.toString();
     }
 
+
+
+    @Async
     public void sendThankYouEmail(String email, Integer booking_id) {
         tour_bookings booking = tourBookingRepo.findByBooking_id(booking_id);
+
+        Context context = new Context();
+        context.setVariable("customerName", booking.getUser_full_name());
+        context.setVariable("bookingId", "TOD-" + booking.getBooking_id());
+        context.setVariable("tourName", booking.getTour().getTour_name());
+        context.setVariable("startDate", booking.getStart_date().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        context.setVariable("couponCode", "CAMON" + booking.getBooking_id());
+
+        String htmlContent = templateEngine.process("client_html/thank_you_email", context);
 
         MailBody mailBody = MailBody.builder()
                 .to(email)
                 .subject("[Tôi Đi Du Lịch] Lời cảm ơn chân thành từ đội ngũ chúng tôi")
-                .text(buildThankYouContent(booking))
+                .text(htmlContent)
                 .build();
 
         log.info("Sending thank you email to: {}", email);
-        emailService.sendSimpleMessage(mailBody);
+        emailService.sendHtmlMessage(mailBody);
     }
 }

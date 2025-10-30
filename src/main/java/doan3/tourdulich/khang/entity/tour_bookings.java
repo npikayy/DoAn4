@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import lombok.ToString;
+
 import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -23,6 +25,7 @@ public class tour_bookings {
     @SequenceGenerator(name = "booking_seq", sequenceName = "booking_seq", allocationSize = 1)
     private Integer booking_id;
     @ManyToOne
+    @ToString.Exclude
     private tours tour;
     private String user_id;
     private String user_full_name;

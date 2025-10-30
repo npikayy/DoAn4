@@ -486,8 +486,11 @@
                         </div>
                         <div class="flex justify-between" th:if="${tour.tour_infant_price != null}">
                             <span class="text-gray-600">Trẻ nhỏ ×<span id="infant-count">0</span></span>
-                            <span class="text-gray-400 line-through text-xs" id="infant-original-total"></span>
                             <span class="font-medium text-vietravel-blue" id="infant-total"></span>
+                        </div>
+                        <div id="voucher-discount-info" class="flex justify-between text-sm text-green-600" style="display: none;">
+                            <span>Giảm giá voucher</span>
+                            <span id="voucher-discount-amount"></span>
                         </div>
                     </div>
 
@@ -524,7 +527,7 @@
                                     <span id="original-final-total"></span>
                                 </div>
                             <span class="text-2xl font-bold text-vietravel-orange" id="final-total"
-                                  th:text="${#numbers.formatInteger((tour.tour_adult_price + (tour.tour_child_price != null ? tour.tour_child_price : 0) + (tour.tour_infant_price != null ? tour.tour_infant_price : 0)) * (1 - (tour.discount_promotion != null ? tour.discount_promotion.phanTramGiamGia/100 : 0)), 3, 'POINT') + '₫'}">
+                                  th:text="${#numbers.formatInteger((tour.tour_adult_price) * (1 - (tour.discount_promotion != null ? tour.discount_promotion.phanTramGiamGia/100.0 : 0)), 3, 'POINT') + '₫'}">
                             </span>
                         </div>
                     </div>
@@ -550,145 +553,98 @@
         </div>
     </div>
 </div>
-<div id="discountModal" class="discount-modal fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-    <div class="bg-white rounded-xl w-full max-w-md overflow-hidden shadow-xl">
-        <!-- Modal Header -->
-        <div class="bg-gradient-to-r from-vietravel-blue to-vietravel-teal p-4 text-white">
-            <div class="flex justify-between items-center">
-                <h3 class="text-xl font-bold flex items-center">
-                    <i class="fas fa-tag mr-2"></i>
-                    Mã Giảm Giá
-                </h3>
-                <button onclick="closeDiscountModal()" class="text-white hover:text-gray-200">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- Modal Body -->
-        <div class="p-5">
-            <!-- Ô nhập mã -->
-            <div class="mb-6 hidden">
-                <div class="relative flex shadow-sm ">
-                    <input type="text" id="discountCode"
-                           class="flex-1 border border-gray-200 rounded-l-lg py-3 px-4 focus:ring-2 focus:ring-vietravel-blue focus:border-vietravel-blue text-sm"
-                           placeholder="Nhập mã giảm giá">
-                    <button onclick="applyDiscount()"
-                            class="bg-gradient-to-r from-vietravel-orange to-vietravel-yellow text-white font-semibold py-3 px-4 rounded-r-lg hover:opacity-90 transition-opacity text-sm">
-                        Áp dụng
-                    </button>
-                </div>
-                <p id="discountMessage" class="text-sm mt-2 px-2 hidden"></p>
-            </div>
-
-            <!-- Danh sách mã -->
-            <div class="mb-4" th:if="${not #lists.isEmpty(vouchers)}">
-                <h4 class="font-semibold text-gray-700 mb-3 flex items-center text-sm">
-                    <i class="fas fa-fire-alt text-vietravel-orange mr-2"></i>
-                    MÃ KHUYẾN MÃI PHỔ BIẾN
-                </h4>
-
-                <div class="space-y-3">
-                    <!-- Hiển thị danh sách voucher từ Thymeleaf -->
-                    <div th:each="voucher : ${vouchers}"
-                         onclick="selectCoupon(this.getAttribute('data-voucher-code'), this.getAttribute('data-voucher-discount'), this.getAttribute('data-voucher-type'))"
-                         class="coupon-card border-l-vietravel-blue border-gray-100 border rounded-lg p-3 bg-gray-50 cursor-pointer"
-                         th:data-voucher-code='${voucher.voucher_code}'
-                         th:data-voucher-discount='${voucher.voucher_discount}'
-                         th:data-voucher-type='${voucher.voucher_type}'>
-                        <!-- Nội dung voucher -->
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <div class="font-bold" th:text="${voucher.voucher_code}"
-                                     th:class="${voucher.voucher_discount > 15 ? 'text-vietravel-orange' : 'text-vietravel-blue'}"></div>
-                                <div class="text-xs text-gray-600 mt-1" th:text="${voucher.voucher_description}"></div>
-                            </div>
-                            <div th:class="${voucher.voucher_discount > 15 ?
-                      'bg-vietravel-orange/10 text-vietravel-orange' :
-                      'bg-vietravel-blue/10 text-vietravel-blue'}
-                  + ' px-3 py-1 rounded-full text-xs font-bold'">
-                                <span th:if="${voucher.voucher_type == 'AMOUNT'}" th:text="'-' + ${#numbers.formatInteger(voucher.voucher_discount, 0, 'COMMA') + 'đ'}"></span>
-                                <span th:if="${voucher.voucher_type == 'PERCENT'}" th:text="'-' + ${voucher.voucher_discount} + '%'"></span>
-                            </div>
-                        </div>
-                        <div class="text-xs text-vietravel-orange mt-2 flex items-center">
-                            <i class="fas fa-clock mr-1"></i>
-                            HSD: <span th:text="${#temporals.format(voucher.voucher_end_date, 'dd/MM/yyyy')}"></span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Hiển thị khi không có voucher -->
-            <div th:if="${vouchers.size() == 0}" class="text-center py-6 bg-gray-50 rounded-lg">
-                <i class="fas fa-tag text-gray-400 text-2xl mb-2"></i>
-                <p class="text-gray-500 text-sm">Hiện không có mã giảm giá khả dụng</p>
-            </div>
-
-            <!-- Footer -->
-            <div class="text-center text-xs text-gray-500 bg-gray-50 p-2 rounded-lg mt-4">
-                <p>Mỗi đơn hàng chỉ áp dụng 1 mã giảm giá</p>
-            </div>
-        </div>
-    </div>
-</div>
 <footer th:replace="client_html/fragment/headerANDfooter :: footer"></footer>
 
 <script>
+    let appliedVoucher = {
+        code: null,
+        type: null,
+        value: 0
+    };
+
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('vi-VN').format(amount) + '₫';
+    }
+
+        function updatePrice() {
+        const adultCount = parseInt(document.getElementById('adultCount').value) || 0;
+        const childCount = parseInt(document.getElementById('childCount')?.value || 0);
+        const infantCount = parseInt(document.getElementById('infantCount')?.value || 0);
+
+        const adultPrice = [[${tour.tour_adult_price}]];
+        const childPrice = [[${tour.tour_child_price}]];
+        const infantPrice = [[${tour.tour_infant_price}]];
+
+        const subtotal = (adultCount * adultPrice) + (childCount * (childPrice || 0)) + (infantCount * (infantPrice || 0));
+
+        const promotionDiscount = [[${tour.discount_promotion != null ? tour.discount_promotion.phanTramGiamGia : 0}]];
+        const promotionStartDateStr = "[[${tour.discount_promotion != null ? #dates.format(tour.discount_promotion.ngayBatDau, 'yyyy-MM-dd') : ''}]]";
+        const promotionEndDateStr = "[[${tour.discount_promotion != null ? #dates.format(tour.discount_promotion.ngayKetThuc, 'yyyy-MM-dd') : ''}]]";
+
+        let tourDiscountPercentage = 0;
+        if (promotionDiscount > 0 && promotionStartDateStr && promotionEndDateStr) {
+            const now = new Date();
+            const startDate = new Date(promotionStartDateStr);
+            const endDate = new Date(promotionEndDateStr);
+            now.setHours(0, 0, 0, 0);
+            if (now >= startDate && now <= endDate) {
+                tourDiscountPercentage = promotionDiscount;
+            }
+        }
+        
+        const priceAfterTourDiscount = subtotal * (1 - (tourDiscountPercentage / 100.0));
+
+        let finalTotal = priceAfterTourDiscount;
+        const voucherDiscountInfo = document.getElementById('voucher-discount-info');
+        const voucherDiscountAmountEl = document.getElementById('voucher-discount-amount');
+
+        if (appliedVoucher.code) {
+            let voucherDiscountAmount = 0;
+            if (appliedVoucher.type === 'PERCENTAGE') {
+                voucherDiscountAmount = priceAfterTourDiscount * (appliedVoucher.value / 100.0);
+                voucherDiscountAmountEl.textContent = `-${appliedVoucher.value}%`;
+            } else if (appliedVoucher.type === 'AMOUNT') {
+                voucherDiscountAmount = appliedVoucher.value;
+                voucherDiscountAmountEl.textContent = `-${formatCurrency(voucherDiscountAmount)}`;
+            }
+            finalTotal = priceAfterTourDiscount - voucherDiscountAmount;
+            voucherDiscountInfo.style.display = 'flex';
+        } else {
+            voucherDiscountInfo.style.display = 'none';
+        }
+
+        document.getElementById('adult-count').textContent = adultCount;
+        if (document.getElementById('child-count')) document.getElementById('child-count').textContent = childCount;
+        if (document.getElementById('infant-count')) document.getElementById('infant-count').textContent = infantCount;
+
+        document.getElementById('adult-total').textContent = formatCurrency(adultCount * adultPrice * (1 - (tourDiscountPercentage / 100.0)));
+        if (document.getElementById('child-total')) document.getElementById('child-total').textContent = formatCurrency(childCount * (childPrice || 0) * (1 - (tourDiscountPercentage / 100.0)));
+        if (document.getElementById('infant-total')) document.getElementById('infant-total').textContent = formatCurrency(infantCount * (infantPrice || 0) * (1 - (tourDiscountPercentage / 100.0)));
+
+        document.getElementById('total-price').textContent = formatCurrency(subtotal);
+        document.getElementById('final-total').textContent = formatCurrency(finalTotal);
+
+        const originalFinalTotalContainer = document.getElementById('original-final-total-container');
+        if (finalTotal < subtotal) {
+            document.getElementById('original-final-total').textContent = formatCurrency(subtotal);
+            originalFinalTotalContainer.style.display = 'block';
+        } else {
+            originalFinalTotalContainer.style.display = 'none';
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-        // Hàm xử lý tên địa điểm
         function cleanLocationName(location) {
             return location.replace(/^(Tỉnh|Thành phố|phố)\s*/i, '');
         }
 
-        // Áp dụng cho tất cả các phần tử có class location
         document.querySelectorAll('.location').forEach(el => {
             const originalLocation = el.getAttribute('data-location');
             el.textContent = cleanLocationName(originalLocation);
         });
 
-        // Lấy giá tour từ Thymeleaf
-        const adultPrice = [[${tour.tour_adult_price}]];
-        const childPrice = [[${tour.tour_child_price}]];
-        const infantPrice = [[${tour.tour_infant_price}]];
-        const maxGuest = [[${max_num_guest}]]; // Lấy số lượng khách tối đa
+        const maxGuest = [[${max_num_guest}]];
 
-        // Xử lý tăng/giảm số lượng
-        document.querySelectorAll('.counter-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const isMinus = this.classList.contains('minus');
-                const input = this.parentElement.querySelector('input');
-                let value = parseInt(input.value);
-                const min = parseInt(input.min);
-                const max = parseInt(input.max || maxGuest); // Sử dụng maxGuest làm giới hạn tối đa
-
-                // Tính tổng số khách hiện tại
-                const currentTotalGuests = calculateTotalGuests();
-
-                if (isMinus && value > min) {
-                    input.value = value - 1;
-                    updateCounterButtons(input);
-                    updatePrice();
-                } else if (!isMinus) {
-                    // Kiểm tra nếu tổng số khách chưa vượt quá giới hạn
-                    if (currentTotalGuests < maxGuest) {
-                        input.value = value + 1;
-                        updateCounterButtons(input);
-                        updatePrice();
-                    } else {
-                        showMaxGuestAlert();
-                    }
-                }
-
-                // Hiệu ứng click
-                this.classList.add('active:scale-90');
-                setTimeout(() => {
-                    this.classList.remove('active:scale-90');
-                }, 100);
-            });
-        });
-
-        // Hàm tính tổng số khách hiện tại
         function calculateTotalGuests() {
             const adultCount = parseInt(document.getElementById('adultCount').value) || 0;
             const childCount = parseInt(document.getElementById('childCount')?.value || 0);
@@ -696,277 +652,97 @@
             return adultCount + childCount + infantCount;
         }
 
-        // Hiển thị thông báo khi vượt quá số khách tối đa
-        function showMaxGuestAlert() {
-            // Kiểm tra xem thông báo đã tồn tại chưa
-            let alertElement = document.getElementById('max-guest-alert');
-
-            if (!alertElement) {
-                alertElement = document.createElement('div');
-                alertElement.id = 'max-guest-alert';
-                alertElement.className = 'fixed top-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-lg z-50 flex items-start max-w-md';
-                alertElement.innerHTML = `
-                <div class="flex-shrink-0">
-                    <i class="fas fa-exclamation-circle text-red-500 text-xl mr-3 mt-0.5"></i>
-                </div>
-                <div>
-                    <p class="font-semibold">Đã đạt số lượng khách tối đa!</p>
-                    <p class="text-sm mt-1">Tour này chỉ có thể đặt tối đa ${maxGuest} khách. Vui lòng kiểm tra lại.</p>
-                </div>
-                <button onclick="this.parentElement.remove()" class="ml-4 text-red-500 hover:text-red-700">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-
-                document.body.appendChild(alertElement);
-
-                // Tự động ẩn sau 5 giây
-                setTimeout(() => {
-                    alertElement.remove();
-                }, 5000);
-            }
-        }
-
-        // Cập nhật trạng thái nút tăng/giảm
-        function updateCounterButtons(input) {
-            const value = parseInt(input.value);
-            const min = parseInt(input.min);
-            const max = parseInt(input.max || maxGuest);
+        function updateCounterButtons() {
             const currentTotalGuests = calculateTotalGuests();
-
-            const minusBtn = input.previousElementSibling;
-            const plusBtn = input.nextElementSibling;
-
-            minusBtn.classList.toggle('disabled', value <= min);
-            plusBtn.classList.toggle('disabled', value >= max || currentTotalGuests >= maxGuest);
+            document.querySelectorAll('input[type="number"]').forEach(input => {
+                const value = parseInt(input.value);
+                const min = parseInt(input.min);
+                input.previousElementSibling.disabled = value <= min;
+                input.nextElementSibling.disabled = currentTotalGuests >= maxGuest;
+            });
         }
 
-        // Cập nhật khi thay đổi giá trị input
-        document.querySelectorAll('input[type="number"]').forEach(input => {
-            input.addEventListener('change', function() {
-                const min = parseInt(this.min);
-                const max = parseInt(this.max || maxGuest);
-                let value = parseInt(this.value);
+        document.querySelectorAll('.counter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const isMinus = this.classList.contains('minus');
+                const input = this.parentElement.querySelector('input');
+                let value = parseInt(input.value);
+                const min = parseInt(input.min);
                 const currentTotalGuests = calculateTotalGuests();
 
-                if (isNaN(value)) value = min;
-                if (value < min) value = min;
-                if (value > max) value = max;
+                console.log(value,maxGuest);
 
-                // Kiểm tra tổng số khách không vượt quá maxGuest
-                const otherGuests = currentTotalGuests - (parseInt(this.value) || 0);
-                if (value + otherGuests > maxGuest) {
-                    value = maxGuest - otherGuests;
-                    if (value < min) value = min;
-                    showMaxGuestAlert();
+                if (isMinus && value > min) {
+                    input.value = value - 1;
+                } else if (!isMinus && currentTotalGuests < maxGuest) {
+                    input.value = value + 1;
+                } else if (!isMinus && currentTotalGuests >= maxGuest) {
+
                 }
-
-                this.value = value;
-                updateCounterButtons(this);
+                updateCounterButtons();
                 updatePrice();
             });
-
-            // Khởi tạo trạng thái ban đầu
-            updateCounterButtons(input);
         });
 
-        // ... (phần còn lại của hàm updatePrice và các hàm khác giữ nguyên)
-        // Cập nhật giá khi thay đổi số lượng
-        function updatePrice() {
-            const adultCount = parseInt(document.getElementById('adultCount').value) || 0;
-            const childCount = parseInt(document.getElementById('childCount')?.value || 0);
-            const infantCount = parseInt(document.getElementById('infantCount')?.value || 0);
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.addEventListener('change', () => {
+                updateCounterButtons();
+                updatePrice();
+            });
+            updateCounterButtons();
+        });
 
-            const adultOriginalPrice = [[${tour.tour_adult_price}]];
-            const childOriginalPrice = [[${tour.tour_child_price}]];
-            const infantOriginalPrice = [[${tour.tour_infant_price}]];
-
-            const promotionDiscount = [[${tour.discount_promotion != null ? tour.discount_promotion.phanTramGiamGia : 0}]];
-            const promotionStartDateStr = "[[${tour.discount_promotion != null ? #dates.format(tour.discount_promotion.ngayBatDau, 'yyyy-MM-dd') : ''}]]";
-            const promotionEndDateStr = "[[${tour.discount_promotion != null ? #dates.format(tour.discount_promotion.ngayKetThuc, 'yyyy-MM-dd') : ''}]]";
-
-            let initialDiscount = 0;
-            if (promotionDiscount > 0 && promotionStartDateStr && promotionEndDateStr) {
-                const now = new Date();
-                const startDate = new Date(promotionStartDateStr);
-                const endDate = new Date(promotionEndDateStr);
-                now.setHours(0, 0, 0, 0);
-                if (now >= startDate && now <= endDate) {
-                    initialDiscount = promotionDiscount;
-                }
-            }
-
-            const adultTotal = adultCount * adultOriginalPrice;
-            const childTotal = childCount * (childOriginalPrice || 0);
-            const infantTotal = infantCount * (infantOriginalPrice || 0);
-
-            const subtotal = adultTotal + childTotal + infantTotal;
-
-            // Apply validated voucher discount
-            const voucherDiscountPercentage = appliedVoucher.discountPercentage || 0;
-            const finalDiscountPercentage = voucherDiscountPercentage > 0 ? voucherDiscountPercentage : initialDiscount;
-            const finalTotal = subtotal * (1 - (finalDiscountPercentage / 100.0));
-
-            const adultDiscountedTotal = adultTotal * (1 - (finalDiscountPercentage / 100.0));
-            const childDiscountedTotal = childTotal * (1 - (finalDiscountPercentage / 100.0));
-            const infantDiscountedTotal = infantTotal * (1 - (finalDiscountPercentage / 100.0));
-
-            // Update counts
-            document.getElementById('adult-count').textContent = adultCount;
-            if (document.getElementById('child-count')) {
-                document.getElementById('child-count').textContent = childCount;
-            }
-            if (document.getElementById('infant-count')) {
-                document.getElementById('infant-count').textContent = infantCount;
-            }
-
-            // Update prices
-            document.getElementById('adult-original-total').textContent = formatCurrency(adultTotal);
-            document.getElementById('adult-total').textContent = formatCurrency(adultDiscountedTotal);
-            if (document.getElementById('child-total')) {
-                document.getElementById('child-original-total').textContent = formatCurrency(childTotal);
-                document.getElementById('child-total').textContent = formatCurrency(childDiscountedTotal);
-            }
-            if (document.getElementById('infant-total')) {
-                document.getElementById('infant-original-total').textContent = formatCurrency(infantTotal);
-                document.getElementById('infant-total').textContent = formatCurrency(infantDiscountedTotal);
-            }
-
-            document.getElementById('total-price').textContent = formatCurrency(subtotal);
-            document.getElementById('final-total').textContent = formatCurrency(finalTotal);
-
-            const originalFinalTotalContainer = document.getElementById('original-final-total-container');
-            if (originalFinalTotalContainer) {
-                if (finalTotal < subtotal) {
-                    document.getElementById('original-final-total').textContent = formatCurrency(subtotal);
-                    originalFinalTotalContainer.style.display = 'block';
-                } else {
-                    originalFinalTotalContainer.style.display = 'none';
-                }
-            }
-        }
-
-        // Định dạng tiền tệ
-        function formatCurrency(amount) {
-            return new Intl.NumberFormat('vi-VN').format(amount) + '₫';
-        }
-
-        // Khởi tạo giá trị ban đầu
         updatePrice();
     });
-    // Biến lưu trữ mã giảm giá hiện tại
-    let currentDiscountCode = '';
-    let currentDiscountValue = 0;
 
-    // Mở modal
-    function openDiscountModal() {
-        document.getElementById('discountModal').classList.add('active');
-        document.body.style.overflow = 'hidden';
-    }
+    document.getElementById('applyVoucherBtn').addEventListener('click', function() {
+        const voucherCode = document.getElementById('voucherCodeInput').value.trim();
+        const tourId = document.getElementById('tour_id').textContent.replace('Mã tour: ', '');
+        const messageEl = document.getElementById('voucherMessage');
 
-    // Đóng modal
-    function closeDiscountModal() {
-        document.getElementById('discountModal').classList.remove('active');
-        document.body.style.overflow = 'auto';
-    }
-
-    // Chọn mã từ danh sách
-    function selectCoupon(code, discount, type) {
-        document.getElementById('discountCode').value = code;
-        currentDiscountCode = code;
-        currentDiscountValue = parseFloat(discount);
-        currentDiscountType = type;
-
-        // Highlight voucher được chọn
-        document.querySelectorAll('.coupon-card').forEach(card => {
-            card.classList.remove('border-blue-500', 'bg-blue-50');
-        });
-        event.currentTarget.classList.add('border-blue-500', 'bg-blue-50');
-
-        // Cập nhật tổng tiền ngay lập tức
-        applyDiscount(code, discount, type)
-    }
-
-    // Áp dụng mã giảm giá
-    function applyDiscount(code, discount, type) {
-
-        const messageEl = document.getElementById('discountMessage');
-
-        if (!code) {
-            messageEl.textContent = 'Vui lòng nhập mã giảm giá';
-            messageEl.classList.remove('hidden');
-            messageEl.classList.add('text-red-500');
+        if (!voucherCode) {
+            messageEl.textContent = 'Vui lòng nhập mã voucher.';
+            messageEl.className = 'text-sm mt-2 px-1 text-red-600';
             return;
         }
 
-        // Giả sử mã nhập vào có giá trị giảm 10%
-        currentDiscountCode = code;
-        currentDiscountValue = parseFloat(discount); // Giả sử giảm 10%
-        currentDiscountType = type;
-
-        // Cập nhật tổng tiền và đóng modal
-        updateTotalWithDiscount();
-        closeDiscountModal();
-    }
-
-    // Hàm tính toán và cập nhật tổng tiền
-    function updateTotalWithDiscount() {
-        // Lấy giá trị từ tổng tiền sau giảm giá tour (đã bao gồm giảm 55%)
-        const totalElement = document.getElementById('total-price');
-        let subtotal = parseFloat(totalElement.textContent.replace(/[^\d]/g, ''));
-
-        // Áp dụng giảm giá từ voucher (nếu có)
-        let voucherDiscountAmount = 0;
-        if (currentDiscountValue > 0) {
-            if (currentDiscountType === 'PERCENT') {
-                voucherDiscountAmount = subtotal * currentDiscountValue / 100;
+        fetch('/Client/orderBooking/api/validate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ maVoucher: voucherCode, tourId: tourId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                appliedVoucher.code = data.maVoucher;
+                appliedVoucher.type = data.voucherType;
+                appliedVoucher.value = data.discountValue;
+                messageEl.textContent = data.message;
+                messageEl.className = 'text-sm mt-2 px-1 text-green-600';
             } else {
-                voucherDiscountAmount = currentDiscountValue;
+                appliedVoucher.code = null;
+                appliedVoucher.type = null;
+                appliedVoucher.value = 0;
+                messageEl.textContent = data.message || 'Có lỗi xảy ra.';
+                messageEl.className = 'text-sm mt-2 px-1 text-red-600';
             }
-        }
+            updatePrice();
+        })
+        .catch(err => {
+            console.error('Voucher validation error:', err);
+            messageEl.textContent = 'Không thể kết nối đến máy chủ để kiểm tra voucher.';
+            messageEl.className = 'text-sm mt-2 px-1 text-red-600';
+        });
+    });
 
-        const finalTotal = subtotal - voucherDiscountAmount;
-
-        // Cập nhật giao diện
-        document.getElementById('final-total').textContent = formatCurrency(finalTotal);
-
-        // Hiển thị thông tin giảm giá voucher (nằm dưới giảm giá tour)
-        const discountInfoEl = document.getElementById('discount-info');
-        if (currentDiscountValue > 0) {
-            if (!discountInfoEl) {
-                const priceDetails = document.querySelector('.space-y-2.mb-4.text-sm');
-                const discountHtml = `
-                    <div class="flex justify-between items-center pt-2 border-t border-gray-100" id="discount-info">
-                        <span class="text-gray-600">Giảm giá voucher <span class="text-green-500">${currentDiscountValue}${currentDiscountType == 'PERCENT' ? '%' : '₫'}</span> (${currentDiscountCode})</span>
-                        <span class="font-medium text-green-600">-${formatCurrency(voucherDiscountAmount)}</span>
-                    </div>
-                `;
-                priceDetails.insertAdjacentHTML('beforeend', discountHtml);
-            } else {
-                discountInfoEl.querySelector('span.text-green-500').textContent =
-                    `${currentDiscountValue}${currentDiscountType === 'PERCENT' ? '%' : '₫'} (${currentDiscountCode})`;
-                discountInfoEl.querySelector('span.text-green-600').textContent =
-                    `-${formatCurrency(voucherDiscountAmount)}`;
-            }
-        } else if (discountInfoEl) {
-            discountInfoEl.remove();
-        }
-    }
-
-    // Định dạng tiền tệ
-    function formatCurrency(amount) {
-        return new Intl.NumberFormat('vi-VN').format(amount) + '₫';
-    }
-
-    // Xử lý sự kiện nhấn nút đặt tour
     document.getElementById('submitBooking').addEventListener('click', function() {
-        // Validate điều khoản
         if (!document.getElementById('terms').checked) {
             alert('Vui lòng đồng ý với điều khoản và chính sách');
             return;
         }
 
-        // Lấy dữ liệu từ form
         const bookingData = {
             tour_id: "[[${tour.tour_id}]]",
             user_id: "[[${user?.user_id ?: ''}]]",
@@ -981,23 +757,18 @@
             number_of_children: parseInt(document.getElementById('childCount')?.value || 0),
             number_of_infants: parseInt(document.getElementById('infantCount')?.value || 0),
             voucherCode: appliedVoucher.code,
-            voucher_discount: currentDiscountValue,
             note: document.getElementById('note').value
         };
-        console.log(bookingData);
-        // Validate dữ liệu
+
         if (!bookingData.user_full_name || !bookingData.user_email || !bookingData.user_phone_number) {
             alert('Vui lòng điền đầy đủ thông tin bắt buộc');
             return;
         }
 
-        // Hiệu ứng loading
         const submitBtn = document.getElementById('submitBooking');
-        const originalBtnText = submitBtn.innerHTML;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Đang xử lý...';
         submitBtn.disabled = true;
 
-        // Gửi dữ liệu bằng AJAX
         fetch('/Client/orderBooking/addBooking', {
             method: 'POST',
             headers: {
@@ -1005,128 +776,22 @@
             },
             body: JSON.stringify(bookingData)
         })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => { throw err; });
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    console.log(data);
-                    localStorage.setItem("pendingBooking", JSON.stringify(data));
-                    window.location.href = `/Client/orderBooking/Payment/${data.booking_id}`;
-                } else {
-                    alert(data.message || 'Đã có lỗi xảy ra khi đặt tour');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert(error.message || 'Đã có lỗi xảy ra khi kết nối đến server');
-            })
-            .finally(() => {
-                submitBtn.innerHTML = originalBtnText;
-                submitBtn.disabled = false;
-            });
-    });
-
-    // Event delegation cho các voucher
-    document.getElementById('discountModal')?.addEventListener('click', function(e) {
-        const voucherCard = e.target.closest('.coupon-card');
-        if (voucherCard) {
-            const voucherCode = voucherCard.getAttribute('data-voucher-code');
-            const voucherDiscount = voucherCard.getAttribute('data-voucher-discount');
-            const voucherType = voucherCard.getAttribute('data-voucher-type');
-            selectCoupon(voucherCode, voucherDiscount, voucherType);
-        }
-    });
-
-    // Xử lý sự kiện nhấn Enter trong ô nhập mã
-    document.getElementById('discountCode')?.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            applyDiscount();
-        }
-    });
-
-    // --- NEW VOUCHER LOGIC ---
-    let appliedVoucher = {
-        code: null,
-        discountPercentage: 0
-    };
-
-    document.getElementById('applyVoucherBtn').addEventListener('click', function() {
-        const voucherCode = document.getElementById('voucherCodeInput').value.trim();
-        const tourId = document.getElementById('tour_id').textContent.replace('Mã tour: ', '');
-        const messageEl = document.getElementById('voucherMessage');
-
-        if (!voucherCode) {
-            messageEl.textContent = 'Vui lòng nhập mã voucher.';
-            messageEl.className = 'text-sm mt-2 px-1 text-red-600';
-            return;
-        }
-
-        // API call to validate voucher
-        fetch('/admin/vouchers/api/validate', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ maVoucher: voucherCode, tourId: tourId })
-        })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                appliedVoucher.code = data.maVoucher;
-                appliedVoucher.discountPercentage = data.discountPercentage;
-                messageEl.textContent = data.message;
-                messageEl.className = 'text-sm mt-2 px-1 text-green-600';
-                updatePrice(); // Recalculate price with new discount
+                window.location.href = `/Client/orderBooking/Payment/${data.booking_id}`;
             } else {
-                appliedVoucher.code = null;
-                appliedVoucher.discountPercentage = 0;
-                messageEl.textContent = data.message || 'Có lỗi xảy ra.';
-                messageEl.className = 'text-sm mt-2 px-1 text-red-600';
-                updatePrice(); // Recalculate price without discount
+                alert(data.message || 'Đã có lỗi xảy ra khi đặt tour');
             }
         })
-        .catch(err => {
-            console.error('Voucher validation error:', err);
-            messageEl.textContent = 'Không thể kết nối đến máy chủ để kiểm tra voucher.';
-            messageEl.className = 'text-sm mt-2 px-1 text-red-600';
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Đã có lỗi xảy ra khi kết nối đến server');
+        })
+        .finally(() => {
+            submitBtn.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i> ĐẶT TOUR NGAY';
+            submitBtn.disabled = false;
         });
-    });
-
-    document.addEventListener('DOMContentLoaded', function() {
-        // Chỉ xử lý cho người dùng chưa đăng nhập
-        const userLoggedIn = "[[${user_id}]]";
-        console.log(userLoggedIn);
-        if (!userLoggedIn) {
-            const pendingBooking = localStorage.getItem('pendingBooking');
-
-            if (pendingBooking) {
-                try {
-                    const bookingData = JSON.parse(pendingBooking);
-                    const continuePaymentBtn = document.getElementById('continuePaymentBtn');
-
-                    // Nếu không có booking_id từ server nhưng có trong localStorage
-                    if (!continuePaymentBtn && bookingData.booking_id) {
-                        // Tạo nút thanh toán mới
-                        const newPaymentBtn = document.createElement('a');
-                        newPaymentBtn.id = 'continuePaymentBtn';
-                        newPaymentBtn.href = `/Client/orderBooking/Payment/${bookingData.booking_id}`;
-                        newPaymentBtn.className = 'text-vietravel-blue hover:text-vietravel-orange font-medium flex items-center transition-all hover:-translate-x-1';
-                        newPaymentBtn.innerHTML = 'Bạn có đơn đặt tour chưa thanh toán <i class="fas fa-arrow-right ml-2"></i>';
-
-                        // Thêm vào DOM
-                        const container = document.querySelector('.flex.justify-between.items-center.mb-6');
-                        const spacer = container.querySelector('#w-8');
-                        container.insertBefore(newPaymentBtn, spacer.nextSibling);
-                    }
-                } catch (e) {
-                    console.error('Error parsing booking data:', e);
-                }
-            }
-        }
     });
 </script>
 </body>

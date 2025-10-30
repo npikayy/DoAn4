@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cảm ơn quý khách</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            color: #007bff;
+            margin: 0;
+        }
+        .content {
+            padding: 20px 0;
+        }
+        .content p {
+            margin: 0 0 10px;
+        }
+        .booking-details {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .booking-details th, .booking-details td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .booking-details th {
+            background-color: #f2f2f2;
+        }
+        .footer {
+            text-align: center;
+            padding-top: 20px;
+            font-size: 0.9em;
+            color: #777;
+        }
+        .coupon {
+            background-color: #f8f9fa;
+            border: 1px dashed #ccc;
+            padding: 15px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .coupon-code {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Tôi Đi Du Lịch</h1>
+            <h2>Lời cảm ơn chân thành</h2>
+        </div>
+        <div class="content">
+            <p>Kính gửi quý khách <strong th:text="${customerName}"></strong>,</p>
+            <p>Từ toàn thể đội ngũ Tôi Đi Du Lịch, chúng tôi xin được gửi lời cảm ơn chân thành nhất vì đã tin tưởng lựa chọn và đồng hành cùng chúng tôi trong chuyến đi vừa qua.</p>
+
+            <h3>Thông tin chuyến đi</h3>
+            <table class="booking-details">
+                <tr>
+                    <th>Mã đơn hàng</th>
+                    <td th:text="${bookingId}"></td>
+                </tr>
+                <tr>
+                    <th>Tên tour</th>
+                    <td th:text="${tourName}"></td>
+                </tr>
+                <tr>
+                    <th>Ngày khởi hành</th>
+                    <td th:text="${startDate}"></td>
+                </tr>
+            </table>
+
+            <p>Sự đồng hành của quý khách là niềm vinh hạnh lớn lao đối với chúng tôi. Mong rằng quý khách đã có những trải nghiệm đáng nhớ và khoảnh khắc tuyệt vời trong suốt hành trình.</p>
+
+            <p>Chúng tôi luôn mong được tiếp tục đồng hành cùng quý khách trong những hành trình khám phá mới đầy thú vị sắp tới.</p>
+        </div>
+        <div class="footer">
+            <p>Trân trọng cảm ơn,<br>Đội ngũ Tôi Đi Du Lịch</p>
+            <hr>
+            <p>Hotline: 1900 1234 | Email: thankyou@toididulich.com | Website: https://toididulich.com</p>
+        </div>
+    </div>
+</body>
+</html>
