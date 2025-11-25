@@ -1,27 +1,33 @@
 package doan3.tourdulich.khang.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
-@Builder
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
+@Table(name = "user_history")
 public class userHistory {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    @SequenceGenerator(name = "history_seq", sequenceName = "history_seq", allocationSize = 1)
-    private Integer history_id;
-    private String region;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+
     @ManyToOne
+    @JoinColumn(name = "user_id")
     private users user;
+
+    private String region;
+
     private LocalDateTime timeStamp;
 }

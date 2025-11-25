@@ -3,18 +3,8 @@ package doan3.tourdulich.khang.controller;
 import doan3.tourdulich.khang.dto.UpdateInfoRequest;
 import doan3.tourdulich.khang.dto.rating;
 import doan3.tourdulich.khang.entity.*;
-import doan3.tourdulich.khang.repository.bannerRepo;
-import doan3.tourdulich.khang.repository.tourRepo;
-import doan3.tourdulich.khang.repository.tourPicRepo;
-import doan3.tourdulich.khang.repository.userRepo;
-import doan3.tourdulich.khang.repository.ratingRepo;
-import doan3.tourdulich.khang.repository.scheduleRepo;
-import doan3.tourdulich.khang.repository.startDateRepo;
-import doan3.tourdulich.khang.repository.tourBookingRepo;
-import doan3.tourdulich.khang.repository.historyRepo;
-import doan3.tourdulich.khang.service.KhuyenMaiService;
-import doan3.tourdulich.khang.service.bookingService;
-import doan3.tourdulich.khang.service.tourService;
+import doan3.tourdulich.khang.repository.*;
+import doan3.tourdulich.khang.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -33,29 +23,6 @@ import java.util.*;
 @RestController
 public class clientController {
 
-    @GetMapping("/khuyen-mai")
-    public ModelAndView showAllPromotions(ModelAndView modelAndView) {
-        getCurrentUser(modelAndView);
-        List<KhuyenMai> promotions = khuyenMaiService.getActivePromotionsWithImages();
-        modelAndView.addObject("promotions", promotions);
-        modelAndView.setViewName("client_html/promotions_list");
-        return modelAndView;
-    }
-
-    @GetMapping("/khuyen-mai/{id}")
-    public ModelAndView showPromotionDetail(@PathVariable("id") int id, ModelAndView modelAndView) {
-        getCurrentUser(modelAndView);
-        KhuyenMai promotion = khuyenMaiService.getKhuyenMaiById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid promotion Id:" + id));
-        
-        List<tours> tours = promotion.getTours();
-
-        modelAndView.addObject("promotion", promotion);
-        prepareTourData(modelAndView, tours, "tourThumbnails", "tourStartDates");
-        
-        modelAndView.setViewName("client_html/promotion_detail");
-        return modelAndView;
-    }
     @Autowired
     private bannerRepo bannerRepo;
     @Autowired
@@ -80,6 +47,32 @@ public class clientController {
     private KhuyenMaiService khuyenMaiService;
     @Autowired
     private tourService tourService;
+    @Autowired
+    private userService userService;
+
+    @GetMapping("/khuyen-mai")
+    public ModelAndView showAllPromotions(ModelAndView modelAndView) {
+        getCurrentUser(modelAndView);
+        List<KhuyenMai> promotions = khuyenMaiService.getActivePromotionsWithImages();
+        modelAndView.addObject("promotions", promotions);
+        modelAndView.setViewName("client_html/promotions_list");
+        return modelAndView;
+    }
+
+    @GetMapping("/khuyen-mai/{id}")
+    public ModelAndView showPromotionDetail(@PathVariable("id") int id, ModelAndView modelAndView) {
+        getCurrentUser(modelAndView);
+        KhuyenMai promotion = khuyenMaiService.getKhuyenMaiById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid promotion Id:" + id));
+        
+        List<tours> tours = promotion.getTours();
+
+        modelAndView.addObject("promotion", promotion);
+        prepareTourData(modelAndView, tours, "tourThumbnails", "tourStartDates");
+        
+        modelAndView.setViewName("client_html/promotion_detail");
+        return modelAndView;
+    }
 
     public void getCurrentUser(ModelAndView modelAndView) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -170,7 +163,6 @@ public class clientController {
     @GetMapping("/ToursList")
     public ModelAndView ToursList(
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) Boolean isAbroad,
             @RequestParam(required = false) String duration,
             @RequestParam(required = false) String transportation,
@@ -179,11 +171,12 @@ public class clientController {
             @RequestParam(required = false) String region,
             @RequestParam(required = false) Boolean hasPromotion,
             @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String rating,
             ModelAndView modelAndView) {
         
         getCurrentUser(modelAndView);
 
-        List<tours> tours = tourService.findTours(keyword, sortBy, isAbroad, null, duration, transportation, priceRange, location, region, hasPromotion, null, startDate, null);
+        List<tours> tours = tourService.findTours(keyword, isAbroad, null, duration, transportation, priceRange, location, region, hasPromotion, null, startDate, null, rating, null);
 
         List<String> uniqueLocations = tourRepo.findDistinctEndLocations();
         modelAndView.addObject("uniqueLocations", uniqueLocations);
@@ -298,12 +291,7 @@ public class clientController {
             tour.setTour_rating(temp_rating);
             tourRepo.save(tour);
 
-
-                tourBookingRepo.findById(requestData.getBooking_id()).ifPresent(booking -> {
-                booking.setStatus("Completed");
-                tourBookingRepo.save(booking);
-                bookingService.sendThankYouEmail(booking.getUser_email(), booking.getBooking_id());
-            });
+            bookingService.handleTourCompletionTasks(tourBookingRepo.findById(requestData.getBooking_id()).get());
 
             response.put("success", true);
             response.put("message", "Cảm ơn bạn đã dành thời gian đánh giá chuyến đi! Đánh giá của bạn giúp chúng tôi cải thiện dịch vụ tốt hơn.");

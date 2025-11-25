@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chi tiết Tour</title>
+    <link rel="stylesheet" href="/css/styles.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -92,17 +93,26 @@
             <div class="flex flex-wrap gap-2 mt-4 md:mt-0">
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
                     <a th:href="@{'/admin/tours/editTour/' + ${tour.tour_id}}"
-                       class="flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition action-btn">
+                       class="flex items-center justify-center px-4 py-2 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 ease-in-out bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700">
                         <i class="fas fa-edit mr-2"></i>Chỉnh sửa
                     </a>
                     <a th:href="@{'/admin/tours/addImage/' + ${tour.tour_id}}"
-                       class="flex items-center justify-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition action-btn">
+                       class="flex items-center justify-center px-4 py-2 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 ease-in-out bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700">
                         <i class="fas fa-images mr-2"></i>Ảnh
                     </a>
                     <a th:href="'/admin/tours/tourSchedule/' + ${tour.tour_id}"
-                       class="flex items-center justify-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md transition action-btn">
+                       class="flex items-center justify-center px-4 py-2 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 ease-in-out bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700">
                         <i class="fas fa-calendar-alt mr-2"></i>Lịch trình
                     </a>
+                    <button th:id="'toggleRedeemableBtn-' + ${tour.tour_id}"
+                            th:data-tour-id="${tour.tour_id}"
+                            th:data-redeemable="${tour.redeemableWithPoints}"
+                            class="flex items-center justify-center px-4 py-2 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 ease-in-out bg-gradient-to-r"
+                            th:classappend="${tour.redeemableWithPoints} ? 'from-red-500 to-red-600 hover:from-red-600 hover:to-red-700' : 'from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'"
+                            onclick="toggleRedeemable(this)">
+                        <i class="fas fa-coins mr-2"></i>
+                        <span th:text="${tour.redeemableWithPoints} ? 'Không cho phép đổi điểm' : 'Cho phép đổi điểm'"></span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -210,7 +220,10 @@
             <!-- Right Column - Tour Details -->
             <div class="space-y-6">
                 <!-- Tour Information Card -->
-                <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="bg-white rounded-lg shadow-sm p-6"
+                     th:with="promotion=${tour.getDiscount_promotion()},
+                              isPromotionActive=${promotion != null and #dates.createNow().after(promotion.ngayBatDau) and #dates.createNow().before(promotion.ngayKetThuc)},
+                              isPromotionUpcoming=${promotion != null and #dates.createNow().before(promotion.ngayBatDau)}">
                     <div class="flex justify-between items-start mb-4">
                         <h2 class="text-xl font-bold text-gray-800" th:text="${tour.tour_name}"></h2>
                         <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold"
@@ -222,17 +235,23 @@
                             <div class="flex items-center justify-between">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-500">Khuyến mãi</label>
-                                    <div th:if="${tour.getDiscount_promotion() != null}" class="mt-1">
-                                        <span class="text-lg font-semibold text-green-600" th:text="${tour.getDiscount_promotion().tenKhuyenMai} + ' (-' + ${tour.getDiscount_promotion().phanTramGiamGia} + ' %)'"></span>
+                                    <div th:if="${isPromotionActive}" class="mt-1">
+                                        <span class="text-lg font-semibold text-green-600" th:text="${promotion.tenKhuyenMai} + ' (-' + ${promotion.phanTramGiamGia} + ' %)'"></span>
                                     </div>
-                                    <div th:unless="${tour.getDiscount_promotion() != null}" class="mt-1">
+                                    <div th:if="${isPromotionUpcoming}" class="mt-1">
+                                        <span class="text-lg font-semibold text-blue-600" th:text="${promotion.tenKhuyenMai} + ' (Sắp diễn ra)'"></span>
+                                    </div>
+                                    <div th:if="${isPromotionExpired}" class="mt-1">
+                                        <span class="text-lg font-semibold text-red-600" th:text="${promotion.tenKhuyenMai} + ' (Đã hết hạn)'"></span>
+                                    </div>
+                                    <div th:if="${promotion == null}" class="mt-1">
                                         <span class="text-gray-600">Không có khuyến mãi</span>
                                     </div>
                                 </div>
-                                <div th:if="${tour.getDiscount_promotion() != null}">
-                                    <a th:href="@{/admin/khuyen-mai/edit/{id}(id=${tour.getDiscount_promotion().id})}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Sửa khuyến mãi</a>
+                                <div th:if="${promotion != null}">
+                                    <a th:href="@{/admin/khuyen-mai/edit/{id}(id=${promotion.id})}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Sửa khuyến mãi</a>
                                 </div>
-                                <div th:unless="${tour.getDiscount_promotion() != null}">
+                                <div th:unless="${promotion != null}">
                                     <a th:href="@{/admin/khuyen-mai}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Quản lý khuyến mãi</a>
                                 </div>
                             </div>
@@ -253,66 +272,51 @@
                             <div class="flex flex-col">
                                 <div class="flex justify-between">
                                     <span class="text-gray-700">Người lớn:</span>
-                                        <div class="text-right">
-                                            <span th:if="${tour.getDiscount_promotion() != null}"
-                                                  class="text-sm text-gray-400 line-through"
-                                                  th:text="${#numbers.formatInteger(tour.tour_adult_price, 0, 'POINT') + ' VNĐ'}"></span>
-                                            <p class="font-semibold text-gray-900"
-                                               th:text="${#numbers.formatInteger(tour.getDiscount_promotion() != null ? (tour.tour_adult_price * (100 - tour.getDiscount_promotion().phanTramGiamGia) / 100) : tour.tour_adult_price, 0, 'POINT') + ' VNĐ'}"></p>
-                                        </div>
+                                    <div class="text-right">
+                                        <span th:if="${isPromotionActive}"
+                                              class="text-sm text-gray-400 line-through"
+                                              th:text="${#numbers.formatInteger(tour.tour_adult_price, 0, 'POINT') + ' VNĐ'}"></span>
+                                        <p class="font-semibold text-gray-900"
+                                           th:text="${#numbers.formatInteger(isPromotionActive ? (tour.tour_adult_price * (100 - promotion.phanTramGiamGia) / 100) : tour.tour_adult_price, 0, 'POINT') + ' VNĐ'}"></p>
+                                    </div>
                                 </div>
                                 <span class="text-xs text-red-500 self-end"
-                                      th:if="${tour.getDiscount_promotion() != null && tour.getDiscount_promotion().getPhanTramGiamGia() > 0}"
-                                      th:text="'-' + ${tour.getDiscount_promotion().getPhanTramGiamGia()} + '%'">
-                                </span>
+                                      th:if="${isPromotionActive}"
+                                      th:text="'-' + ${promotion.getPhanTramGiamGia()} + '%'"></span>
                             </div>
 
                             <!-- Child Price -->
-                            <div th:if="${tour.tour_child_price != null}" class="flex flex-col">
+                            <div class="flex flex-col" th:if="${tour.tour_child_price != null}">
                                 <div class="flex justify-between">
                                     <span class="text-gray-700">Trẻ em:</span>
-                                    <div class="flex flex-col items-end">
-                                        <span class="text-gray-500 line-through text-sm"
-                                              th:if="${tour.getDiscount_promotion() != null && tour.getDiscount_promotion().getPhanTramGiamGia() > 0}"
-                                              th:text="${#numbers.formatInteger(tour.tour_child_price, 3, 'POINT') + ' VND'}">
-                                        </span>
-                                        <span class="font-bold text-blue-600"
-                                              th:text="${#numbers.formatInteger(
-                                              tour.getDiscount_promotion() != null ?
-                                              (tour.tour_child_price * (100 - tour.getDiscount_promotion().getPhanTramGiamGia()) / 100) :
-                                              tour.tour_child_price,
-                                              3, 'POINT') + ' VND'}">
-                                        </span>
+                                    <div class="text-right">
+                                        <span th:if="${isPromotionActive}"
+                                              class="text-sm text-gray-400 line-through"
+                                              th:text="${#numbers.formatInteger(tour.tour_child_price, 0, 'POINT') + ' VNĐ'}"></span>
+                                        <p class="font-semibold text-gray-900"
+                                           th:text="${#numbers.formatInteger(isPromotionActive ? (tour.tour_child_price * (100 - promotion.phanTramGiamGia) / 100) : tour.tour_child_price, 0, 'POINT') + ' VNĐ'}"></p>
                                     </div>
                                 </div>
                                 <span class="text-xs text-red-500 self-end"
-                                      th:if="${tour.getDiscount_promotion() != null && tour.getDiscount_promotion().getPhanTramGiamGia() > 0}"
-                                      th:text="'-' + ${tour.getDiscount_promotion().getPhanTramGiamGia()} + '%'">
-                                </span>
+                                      th:if="${isPromotionActive}"
+                                      th:text="'-' + ${promotion.getPhanTramGiamGia()} + '%'"></span>
                             </div>
 
                             <!-- Infant Price -->
-                            <div th:if="${tour.tour_infant_price != null}" class="flex flex-col">
+                            <div class="flex flex-col" th:if="${tour.tour_infant_price != null}">
                                 <div class="flex justify-between">
-                                    <span class="text-gray-700">Em bé:</span>
-                                    <div class="flex flex-col items-end">
-                                        <span class="text-gray-500 line-through text-sm"
-                                              th:if="${tour.getDiscount_promotion() != null && tour.getDiscount_promotion().getPhanTramGiamGia() > 0}"
-                                              th:text="${#numbers.formatInteger(tour.tour_infant_price, 3, 'POINT') + ' VND'}">
-                                        </span>
-                                        <span class="font-bold text-blue-600"
-                                              th:text="${#numbers.formatInteger(
-                                              tour.getDiscount_promotion() != null ?
-                                              (tour.tour_infant_price * (100 - tour.getDiscount_promotion().getPhanTramGiamGia()) / 100) :
-                                              tour.tour_infant_price,
-                                              3, 'POINT') + ' VND'}">
-                                        </span>
+                                    <span class="text-gray-700">Trẻ nhỏ:</span>
+                                    <div class="text-right">
+                                        <span th:if="${isPromotionActive}"
+                                              class="text-sm text-gray-400 line-through"
+                                              th:text="${#numbers.formatInteger(tour.tour_infant_price, 0, 'POINT') + ' VNĐ'}"></span>
+                                        <p class="font-semibold text-gray-900"
+                                           th:text="${#numbers.formatInteger(isPromotionActive ? (tour.tour_infant_price * (100 - promotion.phanTramGiamGia) / 100) : tour.tour_infant_price, 0, 'POINT') + ' VNĐ'}"></p>
                                     </div>
                                 </div>
                                 <span class="text-xs text-red-500 self-end"
-                                      th:if="${tour.getDiscount_promotion() != null && tour.getDiscount_promotion().getPhanTramGiamGia() > 0}"
-                                      th:text="'-' + ${tour.getDiscount_promotion().getPhanTramGiamGia()} + '%'">
-                                </span>
+                                      th:if="${isPromotionActive}"
+                                      th:text="'-' + ${promotion.getPhanTramGiamGia()} + '%'"></span>
                             </div>
                         </div>
                     </div>
@@ -832,6 +836,50 @@
     });
     });
     });
+
+    function toggleRedeemable(button) {
+        const tourId = button.dataset.tourId;
+        const currentRedeemable = button.dataset.redeemable === 'true';
+        const newRedeemable = !currentRedeemable;
+
+        if (!confirm(`Bạn có chắc muốn ${newRedeemable ? 'cho phép' : 'không cho phép'} tour này đổi bằng điểm?`)) {
+            return;
+        }
+
+        fetch(`/admin/tours/toggleRedeemableWithPoints/${tourId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ redeemable: newRedeemable })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw new Error(err.message || 'Có lỗi xảy ra khi cập nhật trạng thái đổi điểm.'); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                button.dataset.redeemable = newRedeemable;
+                            if (newRedeemable) { // If the *new* state is true (can be redeemed)
+                                button.classList.remove('from-green-500', 'to-green-600', 'hover:from-green-600', 'hover:to-green-700');
+                                button.classList.add('from-red-500', 'to-red-600', 'hover:from-red-600', 'hover:to-red-700');
+                                button.querySelector('span').textContent = 'Không cho phép đổi điểm';
+                            } else { // If the *new* state is false (cannot be redeemed)
+                                button.classList.remove('from-red-500', 'to-red-600', 'hover:from-red-600', 'hover:to-red-700');
+                                button.classList.add('from-green-500', 'to-green-600', 'hover:from-green-600', 'hover:to-green-700');
+                                button.querySelector('span').textContent = 'Cho phép đổi điểm';
+                            }                showAlert('Cập nhật trạng thái đổi điểm thành công!');
+            } else {
+                showAlert(data.message || 'Cập nhật trạng thái đổi điểm thất bại!');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert(error.message || 'Có lỗi xảy ra khi gửi yêu cầu.');
+        });
+    }
 </script>
 </body>
 </html>

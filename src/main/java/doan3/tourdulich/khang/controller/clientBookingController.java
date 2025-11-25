@@ -4,6 +4,7 @@ import doan3.tourdulich.khang.dto.TourBookingRequest;
 import doan3.tourdulich.khang.entity.*;
 import doan3.tourdulich.khang.repository.tourPicRepo;
 import doan3.tourdulich.khang.repository.tourRepo;
+import doan3.tourdulich.khang.repository.RankRepository;
 import doan3.tourdulich.khang.repository.userRepo;
 import doan3.tourdulich.khang.repository.voucherRepo;
 import doan3.tourdulich.khang.repository.tourBookingRepo;
@@ -55,6 +56,8 @@ public class clientBookingController {
     private startDateRepo startDateRepo;
     @Autowired
     private KhuyenMaiService khuyenMaiService;
+    @Autowired
+    private RankRepository rankRepository;
 
     public void getCurrentUser(ModelAndView modelAndView) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -110,6 +113,7 @@ public class clientBookingController {
             return ResponseEntity.status(401).body(response);
         }
 
+
         users currentUser = userService.findByUsername(username);
 
         Map<String, Object> validationResult = voucherService.validateVoucher(maVoucher, currentUser.getUser_id(), tourId);
@@ -127,7 +131,33 @@ public class clientBookingController {
     public ModelAndView clientBooking(@PathVariable String tour_id,
                                       @PathVariable @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate start_date,
                                       ModelAndView modelAndView) {
-        getCurrentUser(modelAndView);
+        // Manually retrieve current user
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        users currentUser = null;
+        String username = null;
+
+        if (authentication != null && authentication.isAuthenticated()) {
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof UserDetails userDetails) {
+                username = userDetails.getUsername();
+            } else if (principal instanceof org.springframework.security.oauth2.core.user.OAuth2User oauth2User) {
+                username = oauth2User.getAttribute("email");
+            }
+
+            if (username != null) {
+                currentUser = userService.findByUsername(username);
+            }
+        }
+
+        // Add currentUser and user_id to model if user is found
+        if (currentUser != null) {
+            modelAndView.addObject("currentUser", currentUser);
+            modelAndView.addObject("user_id", currentUser.getUser_id());
+            log.info("DEBUG: clientBooking - Current User ID: {}", currentUser.getUser_id());
+        } else {
+            log.info("DEBUG: clientBooking - No user authenticated.");
+        }
+
         Optional<tours> tourOptional = tourRepo.findById(tour_id);
         System.out.println(tourOptional.isPresent());
 
@@ -144,8 +174,9 @@ public class clientBookingController {
             modelAndView.addObject("max_num_guest", tourOptional.get().getTour_max_number_of_people() - num_guest);
         }
 
-        if (modelAndView.getModel().get("user_id") != null && tourBookingRepo.existsByTourIdAndUserIdAndStartDate(tour_id, modelAndView.getModel().get("user_id").toString(), start_date)) {
-            tour_bookings tourBooking = tourBookingRepo.findByIdAndUserIdAndStartDate(tour_id, modelAndView.getModel().get("user_id").toString(), start_date);
+        // Use currentUser.getUser_id() here
+        if (currentUser != null && tourBookingRepo.existsByTourIdAndUserIdAndStartDate(tour_id, currentUser.getUser_id(), start_date)) {
+            tour_bookings tourBooking = tourBookingRepo.findByIdAndUserIdAndStartDate(tour_id, currentUser.getUser_id(), start_date);
             if (tourBooking.getStatus().equals("Pending payment")) {
                 modelAndView.addObject("booking_id", tourBookingRepo.findByIdAndUserIdAndStartDate(tour_id, tourBooking.getUser_id(), start_date).getBooking_id());
             }
@@ -157,12 +188,38 @@ public class clientBookingController {
             KhuyenMai activePromotion = tour.getDiscount_promotion();
             modelAndView.addObject("discount_promotion", activePromotion);
 
+
+            // --- NEW RANK DISCOUNT LOGIC ---
+            double rankDiscountPercentage = 0.0;
+            // Get user_id from currentUser directly, after null check
+            String user_id = (currentUser != null) ? currentUser.getUser_id() : null;
+            log.info("DEBUG: clientBooking - user_id for rank check: {}", user_id);
+
+            if (user_id != null) {
+                Rank userRank = rankRepository.findByUser_id(user_id);
+                if (userRank != null) {
+                    log.info("DEBUG: clientBooking - User Rank found: {}", userRank.getRank());
+                    if ("Bạc".equals(userRank.getRank())) {
+                        rankDiscountPercentage = 0.05; // 5%
+                    } else if ("Vàng".equals(userRank.getRank())) {
+                        rankDiscountPercentage = 0.15; // 15%
+                    }
+                    modelAndView.addObject("userRank", userRank);
+                } else {
+                    log.info("DEBUG: clientBooking - No Rank object found for user_id: {}", user_id);
+                }
+            }
+        log.info("DEBUG: clientBooking - Final rankDiscountPercentage: {}", rankDiscountPercentage);
+        modelAndView.addObject("rankDiscountPercentage", rankDiscountPercentage);
+            // --- END NEW RANK DISCOUNT LOGIC ---
+
             modelAndView.addObject("tourPics", tourPicRepo.findByTourId(tour_id));
             modelAndView.addObject("start_date", start_date);
             modelAndView.addObject("end_date", endDate);
             modelAndView.addObject("tour", tour);
-            if (modelAndView.getModel().get("user_id") != null) {
-                modelAndView.addObject("vouchers", voucherService.findByUserId(modelAndView.getModel().get("user_id").toString()));
+            // Use currentUser.getUser_id() here
+            if (currentUser != null) {
+                modelAndView.addObject("vouchers", voucherService.findByUserId(currentUser.getUser_id()));
             }
             modelAndView.setViewName("client_html/order_booking");
             return modelAndView;
@@ -172,7 +229,7 @@ public class clientBookingController {
     @ResponseBody
     public ResponseEntity<Map<String, Object>> addBooking(@RequestBody TourBookingRequest request) {
         Map<String, Object> response = new HashMap<>();
-
+        log.info("tourBooking info",request.getTotal_price());
         try {
             // Re-validate voucher on server-side before booking
             int discountValue = 0;
@@ -190,39 +247,6 @@ public class clientBookingController {
                 }
             }
 
-            // Calculate final price
-            tours tour = tourRepo.findById(request.getTour_id()).orElseThrow(() -> new RuntimeException("Tour not found"));
-            long basePrice = (long) request.getNumber_of_adults() * tour.getTour_adult_price() +
-                             (long) request.getNumber_of_children() * (tour.getTour_child_price() != null ? tour.getTour_child_price() : 0) +
-                             (long) request.getNumber_of_infants() * (tour.getTour_infant_price() != null ? tour.getTour_infant_price() : 0);
-
-            // Step 1: Apply tour-specific promotion
-            double priceAfterTourDiscount = basePrice;
-            KhuyenMai promotion = tour.getDiscount_promotion();
-            if (promotion != null && promotion.getNgayBatDau() != null && promotion.getNgayKetThuc() != null) {
-                Date now = new Date();
-                if (!now.before(promotion.getNgayBatDau()) && !now.after(promotion.getNgayKetThuc())) {
-                    priceAfterTourDiscount = basePrice * (1 - (promotion.getPhanTramGiamGia() / 100.0));
-                }
-            }
-
-            // Step 2: Apply voucher
-            double finalPrice = priceAfterTourDiscount;
-            if ("PERCENTAGE".equals(voucherType)) {
-                finalPrice = priceAfterTourDiscount * (1 - (discountValue / 100.0));
-            } else if ("AMOUNT".equals(voucherType)) {
-                finalPrice = priceAfterTourDiscount - discountValue;
-            }
-
-
-            tour_bookings tourBooking = tourBookingRepo.findByIdAndUserIdAndStartDate(request.getTour_id(), request.getUser_id(), request.getStart_date());
-            if (tourBooking != null && !tourBooking.getStatus().equals("Cancelled")) {
-                response.put("success", false);
-                response.put("booking_id",tourBookingRepo.findByIdAndUserIdAndStartDate(request.getTour_id(),request.getUser_id(),request.getStart_date()).getBooking_id());
-                response.put("message", "Bạn đã đặt thành công rồi, vui lòng hãy tiến hành thanh toán");
-                return ResponseEntity.badRequest().body(response);
-            }
-
             tour_bookings booking = bookingService.addBooking(
                     request.getTour_id(),
                     request.getUser_id(),
@@ -232,12 +256,13 @@ public class clientBookingController {
                     request.getUser_address(),
                     request.getTour_name(),
                     request.getStart_date(),
-                    (int) finalPrice, // Use the server-calculated final price
+                    request.getTotal_price(), // Use the price from the request
                     request.getNumber_of_adults(),
                     request.getNumber_of_children(),
                     request.getNumber_of_infants(),
                     discountValue, // Save the applied discount value
-                    request.getNote()
+                    request.getNote(),
+                    request.getBookingType()
             );
 
             // Mark voucher as used if applied
@@ -245,7 +270,10 @@ public class clientBookingController {
                 voucherService.markVoucherAsUsed(request.getVoucherCode());
             }
 
-            updateNumGuest(request.getTour_id(), request.getStart_date(), request.getNumber_of_adults() + request.getNumber_of_children() + request.getNumber_of_infants());
+            if (request.getBookingType().equals("group")) {
+                updateNumGuest(request.getTour_id(), request.getStart_date(), request.getNumber_of_adults() + request.getNumber_of_children() + request.getNumber_of_infants());
+
+            }
 
             response.put("success", true);
             response.put("booking_id", booking.getBooking_id());
@@ -269,8 +297,9 @@ public class clientBookingController {
 
         bookingService.sendCancelNotification(booking.get().getUser_email(), booking_id);
 
-        updateNumGuest(booking.get().getTour().getTour_id(), booking.get().getStart_date(), -(booking.get().getNumber_of_adults() + booking.get().getNumber_of_children() + booking.get().getNumber_of_infants()));
-
+        if (booking.get().getBookingType() == "group") {
+            updateNumGuest(booking.get().getTour().getTour_id(), booking.get().getStart_date(), -(booking.get().getNumber_of_adults() + booking.get().getNumber_of_children() + booking.get().getNumber_of_infants()));
+        }
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         return ResponseEntity.ok(response);

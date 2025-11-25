@@ -5,136 +5,166 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${promotion.tenKhuyenMai}"></title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Link Swiper's CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
+        .swiper-button-next, .swiper-button-prev {
+            color: #4f46e5; /* indigo-600 */
         }
-        .tour-card {
+        .tour-card-mini {
             transition: all 0.3s ease;
         }
-        .tour-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        .tour-card-mini:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1);
         }
     </style>
 </head>
 <body>
 <header th:replace="client_html/fragment/headerANDfooter :: header"></header>
 
-<div class="container mx-auto px-4 py-8">
-    <!-- Breadcrumb -->
-    <div class="text-sm text-gray-600 mb-6">
-        <a href="/Client/Home" class="hover:text-blue-800 hover:underline">Trang chủ</a>
-        <span class="mx-2">/</span>
-        <a href="/Client/khuyen-mai" class="hover:text-blue-800 hover:underline">Khuyến mãi</a>
-        <span class="mx-2">/</span>
-        <a class="text-blue-600 hover:underline" th:text="${promotion.tenKhuyenMai}"></a>
-    </div>
-</div>
-
-<main class="py-12">
-    <div class="container mx-auto px-4">
-        <!-- Promotion Detail Section -->
-        <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-12">
-            <div class="grid grid-cols-1 md:grid-cols-2">
-                <!-- Promotion Image -->
-                <div class="relative">
-                    <img th:src="${promotion.hinhAnh != null && !promotion.hinhAnh.isEmpty() ? promotion.hinhAnh : '/img/default-tour.jpg'}" alt="Promotion Image" class="w-full h-full object-cover min-h-[300px]">
-                </div>
-                <!-- Promotion Info -->
-                <div class="p-8 flex flex-col justify-center">
-                    <div class="mb-4">
-                        <span class="px-3 py-1 rounded-full text-sm font-semibold text-white"
-                              th:classappend="${#dates.createNow().after(promotion.ngayKetThuc)} ? 'bg-red-500' : (${#dates.createNow().before(promotion.ngayBatDau)} ? 'bg-yellow-500' : 'bg-green-500')"
-                              th:text="${#dates.createNow().after(promotion.ngayKetThuc)} ? 'Đã kết thúc' : (${#dates.createNow().before(promotion.ngayBatDau)} ? 'Sắp diễn ra' : 'Đang hoạt động')">
-                        </span>
-                    </div>
-                    <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4" th:text="${promotion.tenKhuyenMai}"></h1>
-                    <p class="text-gray-600 mb-6" th:text="${promotion.moTa}"></p>
-                    
-                    <div class="bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg p-6 space-y-4 border-l-4 border-blue-500">
-                        <div class="flex items-center">
-                            <span class="text-white text-lg font-bold bg-red-500 rounded-full h-16 w-16 flex items-center justify-center shadow-lg transform -rotate-12">
-                                <span th:text="'-' + ${promotion.phanTramGiamGia} + '%'"></span>
-                            </span>
-                            <span class="ml-4 text-2xl font-bold text-gray-800">Ưu đãi đặc biệt</span>
-                        </div>
-                        <div class="flex items-center text-gray-700 pt-4 border-t border-blue-200">
-                            <i class="fas fa-calendar-alt w-5 mr-3 text-blue-500"></i>
-                            <div>
-                                <span class="font-semibold">Thời gian áp dụng:</span>
-                                <span th:text="${#dates.format(promotion.ngayBatDau, 'dd/MM/yyyy')} + ' - ' + ${#dates.format(promotion.ngayKetThuc, 'dd/MM/yyyy')}"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<!-- Immersive Hero Section -->
+<section class="relative h-[50vh] bg-black">
+    <img th:src="${promotion.hinhAnh != null && !promotion.hinhAnh.isEmpty() ? promotion.hinhAnh : '/img/default-tour.jpg'}"
+         alt="Promotion Background"
+         class="absolute inset-0 w-full h-full object-cover opacity-50"/>
+    <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+    <div class="relative h-full flex flex-col justify-end text-white p-8 md:p-12">
+        <div class="container mx-auto">
+            <span class="px-4 py-2 rounded-full text-sm font-semibold"
+                  th:classappend="${#dates.createNow().after(promotion.ngayKetThuc)} ? 'bg-red-500' : (${#dates.createNow().before(promotion.ngayBatDau)} ? 'bg-blue-500' : 'bg-green-500')"
+                  th:text="${#dates.createNow().after(promotion.ngayKetThuc)} ? 'Đã kết thúc' : (${#dates.createNow().before(promotion.ngayBatDau)} ? 'Sắp diễn ra' : 'Đang hoạt động')">
+            </span>
+            <h1 class="text-4xl md:text-6xl font-extrabold mt-4" th:text="${promotion.tenKhuyenMai}"></h1>
+            <p class="mt-2 text-lg text-gray-300 max-w-3xl" th:text="${promotion.moTa}"></p>
         </div>
+    </div>
+</section>
 
-        <!-- Applied Tours Section -->
-        <div>
-            <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-8 text-center">Các Tour Đang Áp Dụng Khuyến Mãi</h2>
-
-            <div th:if="${tours != null and !tours.isEmpty()}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Re-using the tour card design -->
-                <div th:each="tour : ${tours}"
-                     class="tour-card bg-white rounded-xl shadow-md overflow-hidden flex flex-col group"
-                     th:with="isPromotionActive=${tour.discount_promotion != null and !#dates.createNow().after(tour.discount_promotion.ngayKetThuc) and !#dates.createNow().before(tour.discount_promotion.ngayBatDau)}">
-                     <a th:href="@{/Client/TourDetail/{id}(id=${tour.tour_id})}" class="block h-full flex flex-col">
-                        <!-- Tour Image -->
-                        <div class="relative h-56 overflow-hidden">
-                            <img th:if="${tourThumbnails.get(tour.tour_id) != null and !tourThumbnails.get(tour.tour_id).isEmpty()}"
-                                 th:src="${tourThumbnails.get(tour.tour_id)}"
-                                 alt="Tour image"
-                                 class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
-                            <img th:unless="${tourThumbnails.get(tour.tour_id) != null and !tourThumbnails.get(tour.tour_id).isEmpty()}"
-                                 src="/img/default-tour.jpg"
-                                 alt="Default tour image"
-                                 class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
-
-                            <div th:if="${isPromotionActive}" class="absolute top-0 right-0 bg-red-600 text-white px-3 py-2 font-bold transform rotate-45 translate-x-8 -translate-y-2 w-32 text-center">
-                                <span th:text="'Giảm ' + ${tour.discount_promotion.phanTramGiamGia} + '%'"></span>
-                            </div>
-                        </div>
-
-                        <!-- Tour Info -->
-                        <div class="p-5 flex-grow flex flex-col">
-                            <h3 class="text-lg font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors" th:text="${tour.tour_name}"></h3>
-                            <div class="flex items-center text-gray-600 mb-3 text-sm">
-                                <i class="fas fa-map-marker-alt text-blue-500 mr-2"></i>
-                                <span th:text="${tour.tour_end_location}"></span>
-                            </div>
-                            <div class="flex justify-between items-center pt-3 border-t border-gray-100 mt-auto">
-                                <div>
-                                    <div th:if="${isPromotionActive}">
-                                        <div class="text-sm text-gray-400 line-through" th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + '₫'}"></div>
-                                        <div class="text-blue-700 font-bold text-lg" th:text="${#numbers.formatInteger(tour.tour_adult_price * (100 - tour.discount_promotion.phanTramGiamGia) / 100, 3, 'POINT') + '₫'}"></div>
-                                    </div>
-                                    <div th:unless="${isPromotionActive}">
-                                        <div class="text-blue-700 font-bold text-lg" th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + '₫'}"></div>
-                                    </div>
-                                </div>
-                                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm">
-                                    Xem chi tiết
-                                </button>
-                            </div>
-                        </div>
-                    </a>
-                </div>
+<main class="container mx-auto px-4 py-16 grid grid-cols-1 lg:grid-cols-4 gap-12">
+    <!-- Main Content -->
+    <div class="lg:col-span-3">
+        <div class="bg-white p-8 rounded-2xl shadow-lg">
+            <h2 class="text-2xl font-bold mb-6">Chi tiết chương trình</h2>
+            <div class="prose max-w-none text-gray-700" th:utext="${promotion.moTa}">
+                <!-- The description can contain HTML for rich text -->
             </div>
-
-            <div th:if="${tours == null or tours.isEmpty()}" class="text-center py-16">
-                <div class="flex flex-col items-center justify-center text-gray-400">
-                    <i class="fas fa-folder-open text-5xl mb-4"></i>
-                    <p class="text-xl">Không có tour nào được áp dụng cho khuyến mãi này.</p>
-                </div>
+            <div class="mt-8 border-t pt-6">
+                <h3 class="text-xl font-bold mb-4">Điều khoản và điều kiện</h3>
+                <ul class="list-disc list-inside space-y-2 text-gray-600">
+                    <li>Chương trình không áp dụng đồng thời với các khuyến mãi khác.</li>
+                    <li>Mức giảm giá không quy đổi thành tiền mặt.</li>
+                    <li>Áp dụng cho các tour được liệt kê bên dưới.</li>
+                </ul>
             </div>
         </div>
     </div>
+
+    <!-- Sticky Sidebar -->
+    <aside class="lg:col-span-1">
+        <div class="sticky top-24 bg-white p-6 rounded-2xl shadow-lg">
+            <div class="text-center mb-5">
+                <p class="text-lg font-semibold text-gray-700">Mức ưu đãi</p>
+                <p class="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500"
+                   th:text="${promotion.phanTramGiamGia} + '%'"></p>
+            </div>
+            <div class="space-y-4 text-sm">
+                <div class="flex items-start">
+                    <i class="fas fa-calendar-check mt-1 mr-3 text-indigo-500"></i>
+                    <div>
+                        <p class="font-semibold text-gray-800">Thời gian diễn ra</p>
+                        <p class="text-gray-600" th:text="${#dates.format(promotion.ngayBatDau, 'dd/MM/yy')} + ' - ' + ${#dates.format(promotion.ngayKetThuc, 'dd/MM/yy')}"></p>
+                    </div>
+                </div>
+                <div class="flex items-start">
+                    <i class="fas fa-plane-departure mt-1 mr-3 text-indigo-500"></i>
+                    <div>
+                        <p class="font-semibold text-gray-800">Số tour áp dụng</p>
+                        <p class="text-gray-600" th:text="${#lists.size(tours)} + ' tour'"></p>
+                    </div>
+                </div>
+            </div>
+            <a href="#applied-tours" class="mt-6 block w-full text-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 shadow-md">
+                Xem tour áp dụng
+            </a>
+        </div>
+    </aside>
 </main>
 
+<!-- Applied Tours Section -->
+<section id="applied-tours" class="py-16 bg-white">
+    <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-bold text-center mb-10">Tour được áp dụng</h2>
+
+        <div th:if="${tours != null and !tours.isEmpty()}" class="relative">
+            <!-- Swiper Carousel -->
+            <div class="swiper-container">
+                <div class="swiper-wrapper">
+                    <!-- Tour Card Mini -->
+                    <div th:each="tour : ${tours}" class="swiper-slide p-2">
+                        <div class="tour-card-mini bg-gray-50 rounded-xl overflow-hidden shadow-sm border border-transparent hover:border-indigo-400 group"
+                             th:with="isPromotionActive=${tour.discount_promotion != null and !#dates.createNow().after(tour.discount_promotion.ngayKetThuc) and !#dates.createNow().before(tour.discount_promotion.ngayBatDau)}">
+                            <a th:href="@{/Client/TourDetail/{id}(id=${tour.tour_id})}" class="block h-full">
+                                <div class="relative h-48">
+                                    <img th:src="${tourThumbnails.get(tour.tour_id) != null ? tourThumbnails.get(tour.tour_id) : '/img/default-tour.jpg'}" alt="Tour Image" class="w-full h-full object-cover"/>
+                                </div>
+                                <div class="p-4">
+                                    <h4 class="font-bold text-lg truncate mb-1 group-hover:text-indigo-600" th:text="${tour.tour_name}"></h4>
+                                    <div th:if="${isPromotionActive}">
+                                        <span class="text-sm text-gray-500 line-through" th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + '₫'}"></span>
+                                        <span class="font-bold text-indigo-600" th:text="${#numbers.formatInteger(tour.tour_adult_price * (100 - tour.discount_promotion.phanTramGiamGia) / 100, 3, 'POINT') + '₫'}"></span>
+                                    </div>
+                                    <div th:unless="${isPromotionActive}" class="font-bold text-indigo-600" th:text="${#numbers.formatInteger(tour.tour_adult_price, 3, 'POINT') + '₫'}"></div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Swiper Navigation -->
+            <div class="swiper-button-next"></div>
+            <div class="swiper-button-prev"></div>
+        </div>
+
+        <div th:if="${tours == null or tours.isEmpty()}" class="text-center py-16">
+            <i class="fas fa-box-open text-6xl mb-4 text-gray-400"></i>
+            <h3 class="text-2xl font-semibold">Hiện chưa có tour nào cho ưu đãi này</h3>
+        </div>
+    </div>
+</section>
+
 <footer th:replace="client_html/fragment/headerANDfooter :: footer"></footer>
+
+<!-- Swiper JS -->
+<script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var swiper = new Swiper('.swiper-container', {
+            slidesPerView: 1,
+            spaceBetween: 10,
+            loop: true,
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            breakpoints: {
+                640: {
+                    slidesPerView: 2,
+                    spaceBetween: 20,
+                },
+                768: {
+                    slidesPerView: 3,
+                    spaceBetween: 30,
+                },
+                1024: {
+                    slidesPerView: 4,
+                    spaceBetween: 40,
+                },
+            }
+        });
+    });
+</script>
+
 </body>
 </html>

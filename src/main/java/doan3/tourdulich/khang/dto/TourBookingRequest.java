@@ -23,4 +23,5 @@ public class TourBookingRequest {
     private String voucherCode;
     private Integer voucher_discount;
     private String note;
+    private String bookingType;
 }

@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Montserrat', sans-serif; }
+    </style>
 </head>
 <body>
 <header th:fragment="header" class="bg-white shadow-sm sticky top-0 z-50">
@@ -173,22 +177,28 @@
 
             <a href="/Client/ToursList" class="text-gray-700 hover:text-blue-700 font-medium px-2 py-1">Tour du lịch</a>
             <a href="/Client/khuyen-mai" class="text-gray-700 hover:text-blue-700 font-medium px-2 py-1">Khuyến mãi</a>
+            <a href="/Client/rank-system" class="text-gray-700 hover:text-blue-700 font-medium px-2 py-1">Hạng thành viên</a>
         </nav>
 
         <div class="flex items-center space-x-4">
-            <!-- Hiển thị khi chưa đăng nhập -->
-            <div th:unless="${user}">
-                <a href="/login" class="text-blue-700 hover:underline text-sm hidden md:block">Đăng nhập</a>
-            </div>
-            <div th:unless="${user}">
-                <a href="/register" class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-md text-sm font-medium">
-                    Đăng ký
-                </a>
-            </div>
-
             <!-- Hiển thị khi đã đăng nhập -->
-            <div th:if="${user}" class="flex items-center space-x-2">
-                <span class="text-sm font-medium text-gray-700 hidden md:block" th:text="${user.full_name}"></span>
+            <div th:if="${currentUser}" class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm font-medium hidden md:block"
+                          th:text="${currentUser.full_name}"
+                          th:classappend="${userRank != null ?
+                              (userRank.rank == 'Vàng' ? 'text-yellow-500' :
+                              (userRank.rank == 'Bạc' ? 'text-gray-500' :
+                              (userRank.rank == 'Đồng' ? 'text-amber-700' : 'text-gray-700'))) : 'text-gray-700'}"></span>
+                    <span th:if="${userRank != null && userRank.rank != 'Chưa có'}"
+                          class="px-2 py-0.5 rounded-full text-xs font-semibold"
+                          th:classappend="${userRank.rank == 'Vàng'} ? 'bg-yellow-400 text-yellow-900' :
+                                          (${userRank.rank == 'Bạc'} ? 'bg-gray-300 text-gray-800' :
+                                          'bg-amber-600 text-white')">
+                        <i class="fas fa-medal mr-1"></i>
+                        <span th:text="${userRank.rank}"></span>
+                    </span>
+                </div>
                 <div class="relative group" x-data="{ open: false }">
                     <!-- Avatar button -->
                     <button
@@ -196,8 +206,12 @@
                             class="flex items-center space-x-1 focus:outline-none transition-all duration-200"
                             @click.outside="open = false"
                     >
-                        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-teal-500 flex items-center justify-center text-white font-medium shadow-sm"
-                             th:text="${#strings.substring(user.username, 0, 1).toUpperCase()}"></div>
+                        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-teal-500 flex items-center justify-center text-white font-medium shadow-sm border-2"
+                             th:classappend="${userRank != null ?
+                                 (userRank.rank == 'Vàng' ? 'border-yellow-400' :
+                                 (userRank.rank == 'Bạc' ? 'border-gray-400' :
+                                 (userRank.rank == 'Đồng' ? 'border-amber-600' : 'border-transparent'))) : 'border-transparent'}"
+                             th:text="${#strings.substring(currentUser.username, 0, 1).toUpperCase()}"></div>
                         <svg class="w-4 h-4 text-gray-600 transition-transform duration-200"
                              :class="{ 'transform rotate-180': open }"
                              fill="none"
@@ -220,8 +234,8 @@
                     >
                         <!-- User info -->
                         <div class="px-4 py-3 border-b border-gray-100 bg-gray-50">
-                            <p class="text-sm font-medium text-gray-900" th:text="${user.username}"></p>
-                            <p class="text-xs text-gray-500 truncate" th:text="${user.email}"></p>
+                            <p class="text-sm font-medium text-gray-900" th:text="${currentUser.username}"></p>
+                            <p class="text-xs text-gray-500 truncate" th:text="${currentUser.email}"></p>
                         </div>
 
                         <!-- Menu items -->
@@ -251,13 +265,17 @@
                 </div>
             </div>
 
-            <!-- Menu mobile -->
-            <button class="md:hidden text-gray-700">
-                <i class="fas fa-bars text-xl"></i>
-            </button>
-        </div>
+            <!-- Hiển thị khi chưa đăng nhập -->
+            <div th:unless="${currentUser}">
+                <a href="/login" class="text-blue-700 hover:underline text-sm hidden md:block">Đăng nhập</a>
+            </div>
+            <div th:unless="${currentUser}">
+                <a href="/register" class="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-md text-sm font-medium">
+                    Đăng ký
+                </a>
+            </div>
     </div>
-
+    </div>
 </header>
 <!-- Footer -->
 <footer th:fragment="footer" class="bg-gray-800 text-white py-12">

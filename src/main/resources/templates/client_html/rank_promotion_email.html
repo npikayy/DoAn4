@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Chúc Mừng Thăng Hạng</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #4a90e2, #50e3c2);
+            color: #ffffff;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .content {
+            padding: 30px 40px;
+        }
+        .content p {
+            margin: 0 0 15px;
+            font-size: 16px;
+        }
+        .highlight {
+            font-weight: bold;
+            color: #4a90e2;
+        }
+        .rank-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .rank-chua-co { background-color: #888; color: #fff; } /* No Rank */
+        .rank-dong { background-color: #cd7f32; color: #fff; } /* Bronze */
+        .rank-bac { background-color: #c0c0c0; color: #333; } /* Silver */
+        .rank-vang { background-color: #ffd700; color: #333; } /* Gold */
+        .cta-button {
+            display: inline-block;
+            background-color: #4a90e2;
+            color: #ffffff;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .footer {
+            background-color: #f8f8f8;
+            padding: 20px 40px;
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+        }
+        .footer a {
+            color: #4a90e2;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>THĂNG HẠNG THÀNH VIÊN</h1>
+        </div>
+        <div class="content">
+            <p>Xin chào <strong th:text="${customerName}">Khách hàng</strong>,</p>
+            <p>
+                Đội ngũ <span class="highlight">Tôi Đi Du Lịch</span> xin gửi lời chúc mừng chân thành đến bạn!
+                Nhờ sự đồng hành và tin tưởng của bạn, chúng tôi vui mừng thông báo bạn đã được thăng hạng thành viên.
+            </p>
+            <p style="text-align: center; font-size: 18px; margin: 30px 0;">
+                Từ hạng
+                <span th:text="${oldRank}"
+                      th:style="'display: inline-block; padding: 5px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; ' +
+                                 (${#strings.equalsIgnoreCase(oldRank, 'Vàng')} ? 'background-color: #ffd700; color: #333;' :
+                                  (${#strings.equalsIgnoreCase(oldRank, 'Bạc')} ? 'background-color: #c0c0c0; color: #333;' :
+                                   (${#strings.equalsIgnoreCase(oldRank, 'Đồng')} ? 'background-color: #cd7f32; color: #fff;' :
+                                    'background-color: #888; color: #fff;')))"></span>
+                lên hạng
+                <span th:text="${newRank}"
+                      th:style="'display: inline-block; padding: 5px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; ' +
+                                 (${#strings.equalsIgnoreCase(newRank, 'Vàng')} ? 'background-color: #ffd700; color: #333;' :
+                                  (${#strings.equalsIgnoreCase(newRank, 'Bạc')} ? 'background-color: #c0c0c0; color: #333;' :
+                                   (${#strings.equalsIgnoreCase(newRank, 'Đồng')} ? 'background-color: #cd7f32; color: #fff;' :
+                                    'background-color: #888; color: #fff;')))"></span>
+            </p>
+            <p>
+                Hạng thành viên mới sẽ mang đến cho bạn nhiều ưu đãi và đặc quyền hấp dẫn hơn trong những chuyến đi sắp tới.
+                Hãy khám phá ngay những quyền lợi dành riêng cho bạn!
+            </p>
+            <div style="text-align: center;">
+                <a href="http://localhost:8080/Client/Information" class="cta-button">Xem thông tin tài khoản</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Đây là email tự động, vui lòng không trả lời.</p>
+            <p>&copy; 2025 Tôi Đi Du Lịch | <a href="http://localhost:8080/Client/Home">toididulich.com</a></p>
+        </div>
+    </div>
+</body>
+</html>

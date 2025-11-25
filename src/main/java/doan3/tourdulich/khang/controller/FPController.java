@@ -42,35 +42,35 @@ public class FPController {
         modelAndView.setViewName("verifyEmail");
         return modelAndView;
     }
-    @PostMapping("/verifyEmail")
-    public ModelAndView verifyEmail(String email) {
-        ModelAndView modelAndView = new ModelAndView();
-        users user = userRepository.findByEmail(email);
-        if (user == null) {
-            modelAndView.addObject("message", "Email không tồn tại, vui lòng kiểm tra lại.");
-            modelAndView.setViewName("verifyEmail");
-            return modelAndView;
-        }
-        forgotPassword forgotPassword = user.getForgotPassword();
-        if (forgotPassword == null) {
-            sendOTP(email);
-        } else {
-            if (forgotPassword.getExpiryDate().before(Date.from(Instant.now()))) {
-            forgotPassword.setUser(null);
-            fpRepository.save(forgotPassword);
-            user.setForgotPassword(null);
-            userRepository.save(user);
-            fpRepository.deleteByFpId(forgotPassword.getFpId());
-            sendOTP(email);
-            } else {
-            log.info("OTP already sent to " + email);
-                }
-            }
-        modelAndView.addObject("email", email);
-        modelAndView.addObject("message", "Mã OTP vừa được gửi đến email của bạn, mã có hiệu lực trong vòng 10 phút, vui lòng kiểm tra hộp thư đến hoặc spam để nhận mã OTP.");
-        modelAndView.setViewName("verifyEmail");
-        return modelAndView;
-        }
+//    @PostMapping("/verifyEmail")
+//    public ModelAndView verifyEmail(String email) {
+//        ModelAndView modelAndView = new ModelAndView();
+//        users user = userRepository.findByEmail(email);
+//        if (user == null) {
+//            modelAndView.addObject("message", "Email không tồn tại, vui lòng kiểm tra lại.");
+//            modelAndView.setViewName("verifyEmail");
+//            return modelAndView;
+//        }
+//        forgotPassword forgotPassword = user.getForgotPassword();
+//        if (forgotPassword == null) {
+//            sendOTP(email);
+//        } else {
+//            if (forgotPassword.getExpiryDate().before(Date.from(Instant.now()))) {
+//            forgotPassword.setUser(null);
+//            fpRepository.save(forgotPassword);
+//            user.setForgotPassword(null);
+//            userRepository.save(user);
+//            fpRepository.deleteByFpId(forgotPassword.getFpId());
+//            sendOTP(email);
+//            } else {
+//            log.info("OTP already sent to " + email);
+//                }
+//            }
+//        modelAndView.addObject("email", email);
+//        modelAndView.addObject("message", "Mã OTP vừa được gửi đến email của bạn, mã có hiệu lực trong vòng 10 phút, vui lòng kiểm tra hộp thư đến hoặc spam để nhận mã OTP.");
+//        modelAndView.setViewName("verifyEmail");
+//        return modelAndView;
+//        }
 
     private void sendOTP(String email) {
         users user = userRepository.findByEmail(email);
@@ -127,31 +127,31 @@ public class FPController {
         modelAndView.setViewName("/changePassword");
         return modelAndView;
     }
-    @PostMapping("/changePassword")
-    public ModelAndView changePassword(String email, String password, HttpSession session) {
-        if (password.length() < 8) {
-            ModelAndView modelAndView = new ModelAndView("/changePassword");
-            modelAndView.addObject("email", email);
-            modelAndView.addObject("message", "Mật khẩu phải dài ít nhất 8 ký tự");
-            return modelAndView;
-        }
-        // Xóa trạng thái OTP trong session
-        session.removeAttribute("otpVerified");
-
-        users user = userRepository.findByEmail(email);
-        forgotPassword forgotPassword = fpRepository.findByUser(user);
-        if (forgotPassword != null) {
-            forgotPassword.setUser(null);
-            fpRepository.save(forgotPassword);
-            user.setForgotPassword(null);
-            userRepository.save(user);
-            fpRepository.deleteByFpId(forgotPassword.getFpId());
-        }
-
-        password = passwordEncoder.encode(password);
-//        userRepository.updatePassword(email,password);
-        return new ModelAndView("redirect:/login");
-    }
+//    @PostMapping("/changePassword")
+//    public ModelAndView changePassword(String email, String password, HttpSession session) {
+//        if (password.length() < 8) {
+//            ModelAndView modelAndView = new ModelAndView("/changePassword");
+//            modelAndView.addObject("email", email);
+//            modelAndView.addObject("message", "Mật khẩu phải dài ít nhất 8 ký tự");
+//            return modelAndView;
+//        }
+//        // Xóa trạng thái OTP trong session
+//        session.removeAttribute("otpVerified");
+//
+//        users user = userRepository.findByEmail(email);
+//        forgotPassword forgotPassword = fpRepository.findByUser(user);
+//        if (forgotPassword != null) {
+//            forgotPassword.setUser(null);
+//            fpRepository.save(forgotPassword);
+//            user.setForgotPassword(null);
+//            userRepository.save(user);
+//            fpRepository.deleteByFpId(forgotPassword.getFpId());
+//        }
+//
+//        password = passwordEncoder.encode(password);
+////        userRepository.updatePassword(email,password);
+//        return new ModelAndView("redirect:/login");
+//    }
     private Integer generateOTP() {
         Random random = new Random();
         return random.nextInt(100_000, 999_999);

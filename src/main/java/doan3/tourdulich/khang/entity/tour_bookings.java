@@ -44,4 +44,5 @@ public class tour_bookings {
     private Integer voucher_discount;
     private String note;
     private String cancel_reason;
+    private String bookingType;
 }

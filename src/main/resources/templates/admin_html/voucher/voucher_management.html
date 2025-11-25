@@ -79,6 +79,67 @@
                 </form>
             </div>
         </div>
+        <!-- Add Point Voucher Form Section -->
+        <div class="bg-white p-6 rounded-lg shadow-sm mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Tạo Voucher Đổi Điểm</h2>
+                <button type="button" id="toggle-add-point-voucher-btn" class="text-blue-600 hover:text-blue-800">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div id="add-point-voucher-section" class="hidden">
+                <form th:action="@{/admin/vouchers/addPointVoucher}" method="post">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Voucher Name -->
+                        <div>
+                            <label for="pointVoucherName" class="block text-sm font-medium text-gray-700 mb-2">Tên Voucher</label>
+                            <input type="text" id="pointVoucherName" name="name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
+                        </div>
+
+                        <!-- Points Cost -->
+                        <div>
+                            <label for="pointsCost" class="block text-sm font-medium text-gray-700 mb-2">Chi phí điểm</label>
+                            <input type="number" id="pointsCost" name="pointsCost" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
+                        </div>
+
+                        <!-- Quantity -->
+                        <div>
+                            <label for="pointVoucherQuantity" class="block text-sm font-medium text-gray-700 mb-2">Số lượng</label>
+                            <input type="number" id="pointVoucherQuantity" name="quantity" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required min="1">
+                        </div>
+
+                        <!-- Discount Type -->
+                        <div>
+                            <label for="pointVoucherType" class="block text-sm font-medium text-gray-700 mb-2">Loại Giảm Giá</label>
+                            <select id="pointVoucherType" name="voucherType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                <option value="PERCENTAGE">Giảm theo %</option>
+                                <option value="AMOUNT">Giảm số tiền</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Discount Fields -->
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="pointVoucherGiaTriGiam" class="block text-sm font-medium text-gray-700 mb-2">Giá trị giảm</label>
+                            <div class="relative">
+                                <input type="text" id="pointVoucherGiaTriGiam" name="giaTriGiam" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                <span id="point-discount-unit" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+
+
+                    <div class="mt-6 text-right">
+                        <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition">
+                            <i class="fas fa-plus-circle mr-2"></i>Tạo Voucher Đổi Điểm
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- Filter Section -->
         <div class="bg-white p-6 rounded-lg shadow-sm mb-8">
             <div class="flex justify-between items-center mb-4">
@@ -197,6 +258,50 @@
                 </div>
             </div>
         </div>
+
+        <!-- Point Redeemable Voucher List Section -->
+        <div class="bg-white p-6 rounded-lg shadow-sm mt-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Danh sách Voucher Đổi Điểm</h2>
+                <div class="text-sm text-gray-500" th:text="'Tổng số: ' + ${pointVouchers.size()}"></div>
+            </div>
+
+            <div th:if="${pointVouchers.isEmpty()}" class="text-center py-12">
+                <div class="flex flex-col items-center justify-center text-gray-400">
+                    <i class="fas fa-gift text-4xl mb-3"></i>
+                    <p class="text-lg">Chưa có voucher đổi điểm nào</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" th:unless="${pointVouchers.isEmpty()}">
+                <!-- Point Voucher Card -->
+                <div th:each="v : ${pointVouchers}" class="relative bg-white p-5 rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="text-xs font-bold uppercase text-purple-600">Voucher Đổi Điểm</div>
+                            <div class="text-2xl font-bold text-gray-800 mt-1" th:text="${v.name}"></div>
+                        </div>
+                        <div class="text-right">
+                            <a th:href="@{/admin/vouchers/deletePointVoucher/{id}(id=${v.id})}" class="text-red-500 hover:text-red-700 text-xs" onclick="return confirm('Bạn có chắc chắn muốn xóa voucher này không?')">
+                                <i class="fas fa-trash"></i> Xóa
+                            </a>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-dashed border-gray-300 space-y-2">
+                        <div class="text-sm text-gray-600">
+                            <strong>Chi phí:</strong>
+                            <span class="font-semibold text-purple-600" th:text="${v.pointsCost} + ' điểm'"></span>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            <strong>Giá trị giảm:</strong>
+                            <span th:if="${v.voucherType == 'PERCENTAGE'}" th:text="${v.giaTriGiam} + '%'"></span>
+                            <span th:if="${v.voucherType == 'AMOUNT'}" th:text="${#numbers.formatCurrency(v.giaTriGiam)}"></span>
+                        </div>
+                    </div>
+                    <div class="absolute -bottom-4 -right-4 w-16 h-16 bg-purple-100 rounded-full opacity-50"></div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -265,6 +370,48 @@
             var btn = $(this);
             btn.addClass('disabled opacity-75 cursor-not-allowed');
             btn.html('<i class="fas fa-spinner fa-spin mr-2"></i> Đang xử lý...');
+        });
+
+        $('#toggle-add-point-voucher-btn').on('click', function() {
+            $('#add-point-voucher-section').toggleClass('hidden');
+            $(this).find('i').toggleClass('fa-chevron-down fa-chevron-up');
+        });
+
+        function updatePointDiscountInput() {
+            var voucherType = $('#pointVoucherType').val();
+            var giaTriGiamInput = $('#pointVoucherGiaTriGiam');
+            var discountUnit = $('#point-discount-unit');
+
+            // Clear previous input value and event listeners
+            giaTriGiamInput.val('');
+            giaTriGiamInput.off('input');
+
+            if (voucherType === 'PERCENTAGE') {
+                discountUnit.text('%');
+                giaTriGiamInput.on('input', function(e) {
+                    var value = e.target.value.replace(/[^0-9]/g, ''); // Allow only numbers
+                    if (parseInt(value, 10) > 100) {
+                        value = '100'; // Cap at 100
+                    }
+                    e.target.value = value;
+                });
+            } else { // AMOUNT
+                discountUnit.text('VNĐ');
+                giaTriGiamInput.on('input', function(e) {
+                    var value = e.target.value.replace(/[^0-9]/g, ''); // Allow only numbers
+                    if (value) {
+                        e.target.value = parseInt(value, 10).toLocaleString('vi-VN');
+                    } else {
+                        e.target.value = '';
+                    }
+                });
+            }
+        }
+
+        updatePointDiscountInput();
+
+        $('#pointVoucherType').on('change', function() {
+            updatePointDiscountInput();
         });
     });
 </script>

@@ -19,7 +19,8 @@ import java.util.Map;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final userRepo userRepository;
-    
+    @Autowired
+    private RankService rankService; // Changed from GradeService
     @Lazy
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -47,8 +48,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             user.setFull_name(name);
             user.setProvider("GOOGLE");
             userRepository.save(user);
+            rankService.createDefaultRank(user);
         }
-        
         return oAuth2User;
     }
 }

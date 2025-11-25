@@ -11,6 +11,7 @@ import doan3.tourdulich.khang.repository.ratingRepo;
 import doan3.tourdulich.khang.repository.startDateRepo;
 import doan3.tourdulich.khang.service.KhuyenMaiService;
 import jakarta.annotation.Nullable;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 @RequestMapping("/admin/tours")
 @RestController
+@Slf4j
 public class tourController {
     @Autowired
     private tourService tourService;
@@ -61,9 +63,10 @@ public class tourController {
                                  @RequestParam(required = false) String location,
                                  @RequestParam(required = false) String departureStatus,
                                  @RequestParam(required = false) String promotionStatus,
-                                 @RequestParam(required = false) String sortBy) {
+                                 @RequestParam(required = false) String rating,
+                                 @RequestParam(required = false) Boolean redeemableWithPoints) {
 
-        List<tours> tours = tourService.findTours(keyword, sortBy, null, tourType, null, null, priceRange, location, region, null, promotionStatus, null, departureStatus);
+        List<tours> tours = tourService.findTours(keyword, null, tourType, null, null, priceRange, location, region, null, promotionStatus, null, departureStatus, rating, redeemableWithPoints);
 
         Map<String, String> tourThumbnails = new HashMap<>();
         Map<String, List<tour_start_date>> tourStartDates = new HashMap<>();
@@ -91,7 +94,8 @@ public class tourController {
         modelAndView.addObject("location", location);
         modelAndView.addObject("departureStatus", departureStatus);
         modelAndView.addObject("promotionStatus", promotionStatus);
-        modelAndView.addObject("sortBy", sortBy);
+        modelAndView.addObject("rating", rating);
+        modelAndView.addObject("redeemableWithPoints", redeemableWithPoints);
 
         modelAndView.setViewName("admin_html/tour/tour_management");
         return modelAndView;
@@ -358,5 +362,30 @@ public class tourController {
     public ModelAndView deleteStartDate(@PathVariable String tourId, @PathVariable Integer startDateId) {
         startDateRepo.deleteById(startDateId);
         return new ModelAndView("redirect:/admin/tours/detail/" + tourId);
+    }
+
+    @PostMapping("/toggleRedeemableWithPoints/{tour_id}")
+    public ResponseEntity<Map<String, Object>> toggleRedeemableWithPoints(@PathVariable String tour_id, @RequestBody Map<String, Boolean> request) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            tours tour = tourRepo.findById(tour_id)
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid tour Id:" + tour_id));
+
+            Boolean redeemable = request.get("redeemable");
+            if (redeemable == null) {
+                throw new IllegalArgumentException("Missing 'redeemable' field in request body.");
+            }
+            tour.setRedeemableWithPoints(redeemable);
+            tourRepo.save(tour);
+
+            response.put("success", true);
+            response.put("message", "Cập nhật trạng thái đổi điểm thành công!");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error toggling redeemableWithPoints for tour {}: {}", tour_id, e.getMessage());
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
     }
 }

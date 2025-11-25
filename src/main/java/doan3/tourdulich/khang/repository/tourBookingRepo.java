@@ -1,14 +1,16 @@
 package doan3.tourdulich.khang.repository;
 
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import doan3.tourdulich.khang.entity.tour_bookings;
 import doan3.tourdulich.khang.entity.users;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
 
-public interface tourBookingRepo extends JpaRepository<tour_bookings, Integer> {
+public interface tourBookingRepo extends JpaRepository<tour_bookings, Integer>, JpaSpecificationExecutor<tour_bookings> {
     @Query("SELECT COUNT(b) > 0 FROM tour_bookings b WHERE b.tour.tour_id = :tourId AND b.user_id = :userId AND b.start_date = :startDate AND b.status = 'Pending payment'")
     boolean existsByTourIdAndUserIdAndStartDate(String tourId, String userId, LocalDate startDate);
 
@@ -51,4 +53,10 @@ public interface tourBookingRepo extends JpaRepository<tour_bookings, Integer> {
 
     @Query("SELECT b FROM tour_bookings b ORDER BY b.booking_date DESC LIMIT 5")
     List<tour_bookings> find5LatestBookings();
+
+    @Query("SELECT count(*) FROM tour_bookings b WHERE b.user_id = ?1 AND b.status = ?2")
+    int countByUser_idAndStatus(String userId, String status);
+
+    @Query("SELECT SUM(b.total_price) FROM tour_bookings b WHERE b.user_id = :userId AND b.status = :status")
+    Integer findTotalSpendByUserIdAndStatus(@Param("userId") String userId, @Param("status") String status);
 }

@@ -5,8 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thông Tin Cá Nhân | TOD</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Montserrat', sans-serif; }
         .profile-section {
             background: linear-gradient(to bottom, #f8fafc 0%, #f1f5f9 100%);
         }
@@ -68,7 +71,7 @@
                                 </div>
                             </div>
 
-                            <div class="space-y-4">
+                            <div class="space-y-4 mt-4">
                                 <!-- Phone -->
                                 <div class="p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
                                     <div class="flex items-center">
@@ -294,7 +297,6 @@
         </div>
     </div>
 </main>
-
 <!-- Footer -->
 <footer th:replace="client_html/fragment/headerANDfooter :: footer"></footer>
 
@@ -343,7 +345,7 @@
         </div>
 
         <div class="flex justify-end space-x-3">
-            <button type="button" onclick="document.getElementById('addressModal').classList.add('hidden')" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
+            <button type="button" onclick="document.getElementById('addressModal').classList.add('hidden')">
                 Hủy bỏ
             </button>
             <button type="button" onclick="updateAddress()" class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">

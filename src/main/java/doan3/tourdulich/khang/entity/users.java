@@ -28,8 +28,8 @@ public class users {
     String email;
     String role;
     String provider;
-    @OneToOne(mappedBy = "user")
-    private forgotPassword forgotPassword;
-    @OneToMany(mappedBy = "user")
-    private List<userHistory> userHistoryList;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Rank rank;
+
 }

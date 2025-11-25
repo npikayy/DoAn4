@@ -36,4 +36,8 @@ public class vouchers {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private users user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tour_id")
+    private tours tour; // New field to associate voucher with a specific tour
 }

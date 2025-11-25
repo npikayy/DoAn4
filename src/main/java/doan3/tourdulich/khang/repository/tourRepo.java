@@ -60,4 +60,8 @@ public interface tourRepo extends JpaRepository<tours, String>, JpaSpecification
 
     @Query("SELECT t FROM tours t WHERE t.discount_promotion IS NULL")
     List<tours> findByDiscount_promotionIsNull();
+
+    List<tours> findByRedeemableWithPointsTrue();
+
+    List<tours> findByRedeemableWithPoints(Boolean redeemableWithPoints);
 }

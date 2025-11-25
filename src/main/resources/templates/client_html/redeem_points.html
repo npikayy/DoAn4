@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Trang đổi thưởng</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #F8F7F4;
+        }
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+            opacity: 0;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .line-clamp-2 {
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+<header th:replace="client_html/fragment/headerANDfooter :: header"></header>
+
+<main class="container mx-auto px-4 py-16">
+    <div class="fade-in">
+        <button onclick="history.back()" class="inline-flex items-center gap-2 text-slate-600 font-semibold hover:text-blue-600 transition-colors mb-8">
+            <i class="fas fa-arrow-left"></i>
+            Quay lại
+        </button>
+        <h1 class="font-serif text-5xl md:text-6xl font-bold tracking-tight text-slate-900">Trung Tâm Đổi Thưởng</h1>
+        <p class="text-lg mt-4 text-slate-500 max-w-2xl">Nơi điểm tích lũy của bạn được trao giá trị xứng đáng.</p>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-12 mt-12">
+        <!-- Left Sticky Column -->
+        <div class="lg:w-1/4 lg:sticky lg:top-8 h-fit fade-in" style="animation-delay: 0.2s;">
+            <!-- User Points -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 mb-8">
+                <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Điểm hiện có</h2>
+                <p class="text-5xl font-extrabold text-blue-600 mt-2" th:text="${userPoints}"></p>
+            </div>
+
+            <!-- NEW: Redemption Limits -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 mb-8">
+                <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Giới hạn đổi thưởng tháng này</h2>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-600 font-medium"><i class="fas fa-ticket-alt mr-2 text-blue-500"></i>Voucher:</span>
+                        <span class="font-bold text-slate-800" th:text="${remainingVouchers} + '/' + ${maxVouchers}"></span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-slate-600 font-medium"><i class="fas fa-plane-departure mr-2 text-blue-500"></i>Tour:</span>
+                        <span class="font-bold text-slate-800" th:text="${remainingTours} + '/' + ${maxTours}"></span>
+                    </div>
+                </div>
+            </div>
+            <!-- END NEW: Redemption Limits -->
+
+            <!-- Navigation -->
+            <div class="space-y-3">
+                <button class="nav-item w-full text-left p-4 rounded-lg text-lg font-bold flex items-center gap-4 transition-all duration-200 bg-blue-600 text-white shadow-lg" data-tab="vouchers">
+                    <i class="fas fa-ticket-alt fa-fw text-2xl"></i>
+                    <span class="font-bold">Vouchers</span>
+                </button>
+                <button class="nav-item w-full text-left p-4 rounded-lg text-lg font-bold flex items-center gap-4 transition-all duration-200 text-slate-600 hover:bg-slate-200" data-tab="tours">
+                    <i class="fas fa-plane-departure fa-fw text-2xl"></i>
+                    <span class="font-bold">Tours</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Content Column -->
+        <div class="lg:w-3/4 fade-in" style="animation-delay: 0.4s;">
+            <!-- Vouchers Content -->
+            <div id="vouchers" class="tab-content">
+                <div th:if="${redeemableVouchers.isEmpty()}" class="text-center py-12 text-slate-500 bg-white rounded-2xl border border-slate-200"><i class="fas fa-ticket-alt text-5xl mb-4 text-slate-400"></i><p class="text-xl">Hiện chưa có voucher nào có thể đổi.</p></div>
+                <div th:unless="${redeemableVouchers.isEmpty()}" class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                    <div th:each="voucher, iterStat : ${redeemableVouchers}" class="card bg-white rounded-2xl border border-slate-200 flex flex-col transition-all duration-300 hover:shadow-xl hover:border-blue-200">
+                        <div class="p-6 flex-grow">
+                            <h3 class="text-xl font-bold text-slate-800 voucher-name mb-2" th:text="${voucher.name}"></h3>
+                            <p class="text-sm text-slate-500">Giảm giá trực tiếp</p>
+                            <p class="font-serif text-5xl font-bold text-blue-600 my-4" th:text="${voucher.giaTriGiam} + (${voucher.voucherType == 'PERCENTAGE' ? '%' : ' VNĐ'})"></p>
+                        </div>
+                        <div class="p-6 bg-slate-50 rounded-b-2xl border-t border-slate-200">
+                            <div class="space-y-3 text-sm mb-6">
+                                <div class="flex justify-between"><span class="text-slate-500">Số lượng còn lại</span><span class="font-semibold" th:classappend="${voucher.quantity <= 5} ? 'text-red-500' : 'text-slate-700'" th:text="${voucher.quantity}"></span></div>
+                                <div class="flex justify-between"><span class="text-slate-500">Chi phí</span><span class="font-semibold text-blue-600 points-cost" th:text="${voucher.pointsCost} + ' điểm'"></span></div>
+                            </div>
+                            <form th:action="@{/Client/points/redeem/{id}(id=${voucher.id})}" method="post">
+                                <button type="submit" th:disabled="${userPoints < voucher.pointsCost or voucher.quantity <= 0}" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed">
+                                    <span th:if="${userPoints >= voucher.pointsCost and voucher.quantity > 0}">Đổi ngay</span>
+                                    <span th:if="${userPoints < voucher.pointsCost}">Không đủ điểm</span>
+                                    <span th:if="${voucher.quantity <= 0}">Hết số lượng</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Tours Content -->
+            <div id="tours" class="tab-content hidden">
+                <div th:if="${redeemableTours.isEmpty()}" class="text-center py-12 text-slate-500 bg-white rounded-2xl border border-slate-200"><i class="fas fa-plane-departure text-5xl mb-4 text-slate-400"></i><p class="text-xl">Hiện chưa có tour nào có thể đổi.</p></div>
+                <div th:unless="${redeemableTours.isEmpty()}" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div th:each="tour, iterStat : ${redeemableTours}" class="card bg-white rounded-2xl border border-slate-200 flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-blue-200 group">
+                        <a th:href="@{/Client/TourDetail/{id}(id=${tour.tour_id})}" class="block">
+                            <div class="relative overflow-hidden">
+                                <img th:if="${tourThumbnails.get(tour.tour_id) != null and !tourThumbnails.get(tour.tour_id).isEmpty()}" th:src="${tourThumbnails.get(tour.tour_id)}" alt="Tour image" class="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-300">
+                                <img th:unless="${tourThumbnails.get(tour.tour_id) != null and !tourThumbnails.get(tour.tour_id).isEmpty()}" src="/img/default-tour.jpg" alt="Default tour image" class="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-300">
+                            </div>
+                            <div class="p-6 flex-grow">
+                                <h3 class="tour-name text-xl font-bold text-slate-800" th:text="${tour.tour_name}"></h3>
+                                <p class="mt-2 text-sm text-slate-500 line-clamp-2" th:text="${tour.tour_description}"></p>
+                                <div class="mt-4 pt-4 border-t border-slate-200 space-y-2 text-sm">
+                                    <div class="flex items-center text-slate-600"><i class="fas fa-clock fa-fw w-5 mr-2 text-blue-500"></i><span><span class="font-semibold" th:text="${tour.tour_duration} + ' ngày'"></span></span></div>
+                                    <div class="flex items-center text-slate-600"><i class="fas fa-map-marker-alt fa-fw w-5 mr-2 text-blue-500"></i><span><span class="font-semibold" th:text="${tour.tour_start_location}"></span></span></div>
+                                    <div class="flex items-center text-slate-600"><i class="fas fa-car fa-fw w-5 mr-2 text-blue-500"></i><span><span class="font-semibold" th:text="${tour.tour_transportation}"></span></span></div>
+                                </div>
+                            </div>
+                        </a>
+                        <div class="p-6 bg-slate-50 rounded-b-2xl border-t border-slate-200">
+                            <div class="flex justify-between items-center mb-4">
+                                <span class="text-slate-500 text-sm">Chi phí đổi điểm</span>
+                                <span class="font-serif font-bold text-2xl text-blue-600 required-points" th:text="${(tour.tour_adult_price / 10000)}"></span>
+                            </div>
+                            <form th:action="@{/Client/points/redeemTour/{id}(id=${tour.tour_id})}" method="post">
+                                <button type="submit" th:disabled="${userPoints < (tour.tour_adult_price / 10000)}" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed">
+                                    <span th:if="${userPoints >= (tour.tour_adult_price / 10000)}">Đổi ngay</span>
+                                    <span th:if="${userPoints < (tour.tour_adult_price / 10000)}">Không đủ điểm</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Toast Notification Container -->
+<div id="toast-container" class="fixed top-8 right-8 z-50 space-y-3"></div>
+
+<!-- Confirmation Modal -->
+<div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-300">
+    <div id="modal-content" class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl transform transition-all duration-300 scale-95 opacity-0">
+        <div class="flex items-start mb-4">
+            <div class="bg-blue-100 rounded-full p-3 mr-4"><i class="fas fa-question-circle text-blue-600 text-2xl"></i></div>
+            <div class="flex-grow"><h3 class="text-xl font-bold text-slate-800">Xác nhận đổi</h3><p class="text-slate-600 mt-2" id="confirmationMessage"></p></div>
+        </div>
+        <div class="flex justify-end space-x-3 mt-8">
+            <button type="button" onclick="closeConfirmationModal()" class="px-6 py-2 bg-slate-200 text-slate-800 font-semibold hover:bg-slate-300 rounded-lg transition">Hủy</button>
+            <button type="button" id="confirmRedeemBtn" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition">Xác nhận</button>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="client_html/fragment/headerANDfooter :: footer"></footer>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const successMessage = /*[[${redemptionMessage}]]*/ null;
+    const errorMessage = /*[[${redemptionError}]]*/ null;
+    /*]]>*/
+</script>
+<script>
+    function showToast(message, isError = false) {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        const bgColor = isError ? 'bg-red-500' : 'bg-green-500';
+        const icon = isError ? '<i class="fas fa-exclamation-circle mr-3"></i>' : '<i class="fas fa-check-circle mr-3"></i>';
+
+        toast.className = `flex items-center p-4 rounded-lg shadow-lg text-white ${bgColor} transform transition-all duration-300 translate-x-full opacity-0`;
+        toast.style.transform = 'translateX(100%)';
+        toast.innerHTML = `
+            ${icon}
+            <span>${message}</span>
+        `;
+
+        container.appendChild(toast);
+
+        // Animate in
+        requestAnimationFrame(() => {
+            toast.style.transform = 'translateX(0)';
+            toast.classList.remove('opacity-0');
+        });
+
+        // Animate out and remove after a delay
+        setTimeout(() => {
+            toast.style.transform = 'translateX(100%)';
+            toast.classList.add('opacity-0');
+            toast.addEventListener('transitionend', () => {
+                toast.remove();
+            });
+        }, 5000); // 5 seconds
+    }
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        let currentRedeemForm = null;
+        const modal = document.getElementById('confirmationModal');
+        const modalContent = document.getElementById('modal-content');
+
+        function openConfirmationModal(form, message) {
+            currentRedeemForm = form;
+            document.getElementById('confirmationMessage').innerHTML = message;
+            modal.classList.remove('hidden');
+            void modal.offsetWidth;
+            modal.classList.remove('opacity-0');
+            modalContent.classList.remove('scale-95', 'opacity-0');
+        }
+
+        window.closeConfirmationModal = function() {
+            modal.classList.add('opacity-0');
+            modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                currentRedeemForm = null;
+            }, 300);
+        }
+
+        document.getElementById('confirmRedeemBtn').addEventListener('click', function() {
+            if (currentRedeemForm) {
+                currentRedeemForm.submit();
+            }
+            closeConfirmationModal();
+        });
+
+        // Tab functionality
+        const navItems = document.querySelectorAll('.nav-item');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        function updateNav(clickedItem) {
+            const tabId = clickedItem.dataset.tab;
+
+            // Reset all items to default/inactive state
+            navItems.forEach(item => {
+                item.classList.remove('bg-blue-600', 'text-white', 'shadow-lg');
+                item.classList.add('text-slate-600', 'hover:bg-slate-200');
+            });
+
+            // Activate the clicked one
+            clickedItem.classList.remove('text-slate-600', 'hover:bg-slate-200');
+            clickedItem.classList.add('bg-blue-600', 'text-white', 'shadow-lg');
+
+            // Show the correct content
+            tabContents.forEach(c => c.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+        }
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => updateNav(item));
+        });
+
+        // Redemption Logic
+        document.querySelectorAll('form[action*="/Client/points/redeem/"]').forEach(form => {
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const card = this.closest('.card');
+                const voucherName = card.querySelector('.voucher-name').textContent;
+                const pointsCost = card.querySelector('.points-cost').textContent;
+                const message = `Bạn có chắc chắn muốn đổi voucher <br><b>"${voucherName}"</b> với giá <b>${pointsCost}</b>?`;
+                openConfirmationModal(this, message);
+            });
+        });
+
+        document.querySelectorAll('form[action*="/Client/points/redeemTour/"]').forEach(form => {
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const card = this.closest('.card');
+                const tourName = card.querySelector('.tour-name').textContent;
+                const requiredPoints = card.querySelector('.required-points').textContent;
+                const message = `Bạn có chắc chắn muốn đổi tour <br><b>"${tourName}"</b> với giá <b>${requiredPoints} điểm</b>?`;
+                openConfirmationModal(this, message);
+            });
+        });
+
+        // Toast trigger logic
+        if (successMessage) {
+            showToast(successMessage, false);
+        }
+        if (errorMessage) {
+            showToast(errorMessage, true);
+        }
+    });
+</script>
+</body>
+</html>

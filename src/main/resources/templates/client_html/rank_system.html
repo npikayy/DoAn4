@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Hạng thành viên</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/vn.js"></script>
+    <link href="https://unpkg.com/swiper/swiper-bundle.min.css" rel="stylesheet">
+</head>
+<body>
+<header th:replace="client_html/fragment/headerANDfooter :: header"></header>
+
+<main class="bg-gray-50 py-12">
+    <div class="container mx-auto px-4">
+        <h1 class="text-4xl font-extrabold text-center text-gray-900 mb-4">Hệ thống cấp bậc thành viên</h1>
+        <p class="text-lg text-center text-gray-600 max-w-3xl mx-auto mb-12">
+            Khám phá các cấp bậc thành viên độc quyền của chúng tôi và những ưu đãi hấp dẫn bạn có thể nhận được.
+            Càng đi nhiều, ưu đãi càng lớn!
+        </p>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Section 1: Rank and History -->
+            <div class="lg:col-span-2 space-y-8">
+                <div th:if="${userRank}">
+                    <!-- User's Current Rank & Progress Section -->
+                    <div class="bg-white rounded-2xl shadow-xl p-8 border-t-4 border-blue-500">
+                        <div class="flex flex-col md:flex-row items-center justify-between mb-6">
+                            <div class="flex items-center mb-4 md:mb-0">
+                                <div class="w-20 h-20 rounded-full flex items-center justify-center text-white text-3xl font-bold mr-4"
+                                     th:classappend="${userRank.rank == 'Vàng'} ? 'bg-yellow-500' :
+                                                    (${userRank.rank == 'Bạc'} ? 'bg-gray-400' :
+                                                    (${userRank.rank == 'Đồng'} ? 'bg-amber-600' : 'bg-gray-500'))">
+                                    <i class="fas fa-medal"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Cấp bậc hiện tại của bạn</p>
+                                    <h2 class="text-3xl font-bold text-gray-800" th:text="${userRank.rank}"></h2>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-gray-700 text-lg">Số tour đã hoàn thành: <span
+                                        class="font-bold text-blue-600" th:text="${completedTours}"></span></p>
+                            </div>
+                        </div>
+
+                        <div class="mt-6" th:if="${userRank.rank != 'Vàng'}">
+                            <p class="text-lg text-gray-700 mb-3">Tiến trình lên hạng <span
+                                    class="font-bold text-blue-600" th:text="${nextRank}"></span>
+                                <i class="fas fa-check-circle text-green-500 ml-2"
+                                   th:if="${completedTours >= toursToNextTier}"></i>
+                                :</p>
+                            <div class="w-full bg-gray-200 rounded-full h-3 mb-2">
+                                <div class="bg-blue-600 h-3 rounded-full transition-all duration-500 ease-out"
+                                     th:style="'width:' + ${tourProgressPercentage} + '%'"></div>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-600">
+                                <span class="font-bold" th:text="${completedTours} + ' tour'"></span>
+                                <span class="font-bold"
+                                      th:text="${toursNeededForNextRank} + ' tour để lên hạng'"></span>
+                            </div>
+                        </div>
+                        <div class="mt-6" th:if="${userRank.rank != 'Vàng'}">
+                            <p class="text-lg text-gray-700 mb-3">Tổng chi tiêu cho hạng <span
+                                    class="font-bold text-blue-600" th:text="${nextRank}"></span>
+                                <i class="fas fa-check-circle text-green-500 ml-2"
+                                   th:if="${totalSpend >= spendToNextTier}"></i>
+                                :</p>
+                            <div class="w-full bg-gray-200 rounded-full h-3 mb-2">
+                                <div class="bg-green-500 h-3 rounded-full transition-all duration-500 ease-out"
+                                     th:style="'width:' + ${spendProgressPercentage} + '%'"></div>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-600">
+                                <span class="font-bold"
+                                      th:text="${#numbers.formatDecimal(totalSpend, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></span>
+                                <span class="font-bold"
+                                      th:text="'Còn ' + ${#numbers.formatDecimal(spendNeededForNextRank, 0, 'COMMA', 0, 'POINT')} + ' VNĐ để lên hạng'"></span>
+                            </div>
+                        </div>
+                        <div class="mt-6 text-center text-green-600 font-semibold text-lg"
+                             th:if="${userRank.rank == 'Vàng'}">
+                            <p><i class="fas fa-crown mr-2"></i> Bạn đã đạt cấp bậc cao nhất! Xin chúc mừng!</p>
+                        </div>
+                    </div>
+
+                    <!-- Rank History Section -->
+                    <section class="bg-white rounded-2xl shadow-xl p-8">
+                        <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Lịch sử thăng hạng của bạn</h2>
+                        <div class="text-center py-8 text-gray-500"
+                             th:if="${rankHistory == null || rankHistory.isEmpty()}">
+                            <i class="fas fa-history text-4xl mb-3"></i>
+                            <p class="text-lg">Bạn chưa có lịch sử thăng hạng nào.</p>
+                        </div>
+                        <div class="overflow-x-auto" th:unless="${rankHistory == null || rankHistory.isEmpty()}">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-blue-100">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider"
+                                        scope="col">
+                                        Hạng mới
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider"
+                                        scope="col">
+                                        Hạng cũ
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider"
+                                        scope="col">
+                                        Ngày thăng hạng
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider"
+                                        scope="col">
+                                        Mô tả
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-bold text-blue-700 uppercase tracking-wider"
+                                        scope="col">
+                                        Ưu đãi
+                                    </th>
+                                </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                <tr class="hover:bg-blue-50 transition-colors" th:each="history : ${rankHistory}">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-4 py-1 rounded-full text-sm font-bold"
+                                                          th:classappend="${history.newRank == 'Vàng'} ? 'bg-yellow-200 text-yellow-800' :
+                                                          (${history.newRank == 'Bạc'} ? 'bg-gray-200 text-gray-800' :
+                                                          (${history.newRank == 'Đồng'} ? 'bg-amber-200 text-amber-800' : 'bg-gray-200 text-gray-800'))"
+                                                          th:text="${history.newRank}"></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    <span class="px-4 py-1 rounded-full text-sm font-medium"
+                                                          th:classappend="${history.oldRank == 'Vàng'} ? 'bg-yellow-100 text-yellow-700' :
+                                                          (${history.oldRank == 'Bạc'} ? 'bg-gray-100 text-gray-700' :
+                                                          (${history.oldRank == 'Đồng'} ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-700'))"
+                                                          th:text="${history.oldRank}"></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                                        th:text="${#temporals.format(history.promotionDate, 'dd/MM/yyyy')}"></td>
+                                    <td class="px-6 py-4 text-sm text-gray-900" th:text="${history.description}"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <span class="font-medium text-green-700"
+                                              th:text="${history.newRank == 'Đồng' ? 'Không có giảm giá' : (history.newRank == 'Bạc' ? '5% giảm giá toàn bộ tour' : (history.newRank == 'Vàng' ? '15% giảm giá toàn bộ tour' : ''))}"></span>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <!-- Point History Section -->
+                    <section class="bg-white rounded-2xl shadow-xl p-8 mt-8">
+                        <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Lịch sử điểm</h2>
+                        <div class="text-center py-8 text-gray-500"
+                             th:if="${pointHistory == null || pointHistory.isEmpty()}">
+                            <i class="fas fa-history text-4xl mb-3"></i>
+                            <p class="text-lg">Bạn chưa có lịch sử điểm nào.</p>
+                        </div>
+                        <div class="overflow-x-auto" th:unless="${pointHistory == null || pointHistory.isEmpty()}">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-green-100">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-bold text-green-700 uppercase tracking-wider"
+                                        scope="col">
+                                        Loại
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-bold text-green-700 uppercase tracking-wider"
+                                        scope="col">
+                                        Mô tả
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-bold text-green-700 uppercase tracking-wider"
+                                        scope="col">
+                                        Thay đổi điểm
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-bold text-green-700 uppercase tracking-wider"
+                                        scope="col">
+                                        Thời gian
+                                    </th>
+                                </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                <tr class="hover:bg-green-50 transition-colors" th:each="history : ${pointHistory}">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium"
+                                        th:classappend="${history.type.name()== 'ADDITION'} ? 'text-green-600' : 'text-red-600'"
+                                        th:text="${history.type.name()== 'ADDITION'} ? 'Cộng điểm' : 'Đổi điểm'"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                                        th:text="${history.description}"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold"
+                                        th:classappend="${history.pointsChange > 0} ? 'text-green-600' : 'text-red-600'"
+                                        th:text="${history.pointsChange > 0} ? '+' + ${history.pointsChange} : ${history.pointsChange}"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                                        th:text="${#temporals.format(history.creationDate, 'dd/MM/yyyy HH:mm')}"></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+                <div class="bg-white rounded-2xl shadow-xl p-8 text-center border-t-4 border-blue-500"
+                     th:unless="${userRank}">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Thông tin cấp bậc của bạn</h2>
+                    <p class="text-gray-600 mb-6">Vui lòng đăng nhập để xem cấp bậc hiện tại, tiến trình thăng hạng và
+                        lịch sử thăng hạng của bạn.</p>
+                    <a class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full transition-colors duration-300"
+                       th:href="@{/login}">Đăng
+                        nhập ngay</a>
+                </div>
+            </div>
+
+            <!-- Section 3: Points Redemption -->
+            <div class="lg:col-span-1 space-y-8">
+                <div th:if="${userPoints >= 0}">
+                    <!-- My Points Section -->
+                    <section class="bg-blue-100 rounded-2xl shadow-xl p-8 text-center border-b-4 border-blue-500">
+                        <h2 class="text-2xl font-bold text-blue-800 mb-4">Điểm tích lũy của bạn</h2>
+                        <p class="text-5xl font-extrabold text-blue-600 mb-4" th:text="${userPoints}"></p>
+                        <p class="text-lg text-blue-700">điểm</p>
+                        <a class="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full transition-colors duration-300"
+                           th:href="@{/Client/points/redeem}">Đổi
+                            điểm</a>
+                    </section>
+                </div>
+                <div class="bg-white rounded-2xl shadow-xl p-8 text-center border-t-4 border-blue-500"
+                     th:unless="${userPoints >= 0}">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Hệ thống tích điểm</h2>
+                    <p class="text-gray-600 mb-6">Vui lòng đăng nhập để xem điểm tích lũy và đổi voucher của bạn.</p>
+                    <a class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full transition-colors duration-300"
+                       th:href="@{/login}">Đăng
+                        nhập ngay</a>
+                </div>
+
+                <!-- Points System Introduction Section -->
+                <section class="bg-green-50 rounded-2xl shadow-xl p-8">
+                    <h2 class="text-3xl font-bold text-green-800 text-center mb-8">Hệ thống tích điểm và đổi
+                        Voucher</h2>
+                    <div class="max-w-4xl mx-auto text-lg text-gray-700 leading-relaxed">
+                        <p class="mb-4">
+                            Chúng tôi trân trọng mỗi chuyến đi của bạn! Với mỗi <strong>100.000 VNĐ</strong> chi tiêu
+                            cho các tour du lịch đã hoàn thành, bạn sẽ tích lũy được <strong>1 điểm</strong>.
+                            Điểm tích lũy có thể được sử dụng để đổi lấy những Voucher giảm giá hấp dẫn, giúp bạn tiết
+                            kiệm hơn cho những hành trình tiếp theo.
+                        </p>
+                        <p class="mb-4 font-semibold text-gray-800">Cách thức hoạt động:</p>
+                        <ul class="list-disc list-inside space-y-2 pl-4">
+                            <li><span class="font-bold text-green-600">Tích điểm:</span> Tự động nhận 1 điểm cho mỗi
+                                100.000 VNĐ chi tiêu sau khi tour hoàn tất.
+                            </li>
+                            <li><span class="font-bold text-green-600">Kiểm tra điểm:</span> Bạn có thể xem số điểm hiện
+                                có của mình trong phần thông tin tài khoản hoặc tại đây.
+                            </li>
+                            <li><span class="font-bold text-green-600">Đổi Voucher:</span> Truy cập trang đổi điểm để
+                                khám phá các loại Voucher có sẵn và đổi điểm của bạn.
+                            </li>
+                            <li><span class="font-bold text-green-600">Đổi Tour bằng điểm:</span> Khi bạn đã hoàn thành
+                                đủ 5 tour, bạn có thể sử dụng điểm tích lũy để đổi lấy các tour du lịch miễn phí.
+                            </li>
+                        </ul>
+                        <p class="mt-4">
+                            Hãy tiếp tục khám phá và tích lũy điểm để nhận được nhiều ưu đãi hơn nữa!
+                        </p>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- Section 2: Other Information -->
+        <div class="space-y-8 mt-8">
+            <!-- Rank Tiers Overview Section -->
+            <section class="mb-12">
+                <h2 class="text-3xl font-bold text-gray-800 text-center mb-8">Các cấp bậc thành viên</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Rank Card: Đồng -->
+                    <div class="rank-card bg-white rounded-xl shadow-lg p-6 text-center border-t-4 border-amber-600 transform hover:scale-105 transition-all duration-300">
+                        <div class="text-amber-600 text-5xl mb-4">
+                            <i class="fas fa-medal"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-2">Đồng</h3>
+                        <p class="text-gray-600 mb-4">Dành cho những người mới bắt đầu hành trình khám phá.</p>
+                        <div class="border-t border-gray-200 pt-4 mt-4">
+                            <p class="text-lg font-semibold text-gray-700 mb-2">Yêu cầu:</p>
+                            <ul class="text-sm text-gray-600 space-y-2 text-left">
+                                <li class="flex items-center"><i class="fas fa-hiking text-blue-500 mr-2"></i> Hoàn
+                                    thành 1 tour
+                                </li>
+                            </ul>
+                            <p class="text-lg font-semibold text-gray-700 mt-4 mb-2">Quyền lợi:</p>
+                            <ul class="text-sm text-gray-600 space-y-2 text-left">
+                                <li class="flex items-center"><i class="fas fa-headset text-blue-500 mr-2"></i> Ưu tiên
+                                    hỗ trợ khách hàng
+                                </li>
+                                <li class="flex items-center"><i class="fas fa-info-circle text-gray-500 mr-2"></i>
+                                    Thông tin tour mới nhất qua email
+                                </li>
+                                <li class="flex items-center"><i class="fas fa-ticket-alt text-purple-500 mr-2"></i>
+                                    Được đổi 3 voucher/tháng
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Rank Card: Bạc -->
+                    <div class="rank-card bg-white rounded-xl shadow-lg p-6 text-center border-t-4 border-gray-400 transform hover:scale-105 transition-all duration-300">
+                        <div class="text-gray-400 text-5xl mb-4">
+                            <i class="fas fa-medal"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-2">Bạc</h3>
+                        <p class="text-gray-600 mb-4">Dành cho những khách hàng thân thiết với nhiều chuyến đi.</p>
+                        <div class="border-t border-gray-200 pt-4 mt-4">
+                            <p class="text-lg font-semibold text-gray-700 mb-2">Yêu cầu:</p>
+                            <ul class="text-sm text-gray-600 space-y-2 text-left">
+                                <li class="flex items-center"><i class="fas fa-hiking text-blue-500 mr-2"></i> Hoàn
+                                    thành 10 tour
+                                </li>
+                                <li class="flex items-center"><i class="fas fa-wallet text-green-500 mr-2"></i> Tổng chi
+                                    tiêu 35.000.000 VNĐ
+                                </li>
+                            </ul>
+                            <p class="text-lg font-semibold text-gray-700 mt-4 mb-2">Quyền lợi:</p>
+                            <ul class="text-sm text-gray-600 space-y-2 text-left">
+                                <li class="flex items-center"><i class="fas fa-tag text-green-500 mr-2"></i> Giảm giá 5%
+                                    cho tất cả các tour
+                                </li>
+                                <li class="flex items-center"><i class="fas fa-chair text-purple-500 mr-2"></i> Ưu tiên
+                                    chọn chỗ ngồi trên phương tiện
+                                </li>
+                                <li class="flex items-center"><i class="fas fa-gift text-red-500 mr-2"></i> Quà tặng
+                                    sinh nhật đặc biệt
+                                </li>
+                                <li class="flex items-center"><i class="fas fa-calendar-alt text-indigo-500 mr-2"></i>
+                                    Quyền truy cập sớm vào các tour mới
+                                </li>
+                                <li class="flex items-center"><i class="fas fa-ticket-alt text-purple-500 mr-2"></i>
+                                    Được đổi 5 voucher/tháng
+                                </li>
+                                <li class="flex items-center"><i class="fas fa-plane text-purple-500 mr-2"></i> Được đổi
+                                    1 tour/tháng
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Rank Card: Vàng -->
+                    <div class="rank-card bg-white rounded-xl shadow-lg p-6 text-center border-t-4 border-yellow-500 transform hover:scale-105 transition-all duration-300">
+                        <div class="text-yellow-500 text-5xl mb-4">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800 mb-2">Vàng</h3>
+                        <p class="text-gray-600 mb-4">Cấp bậc cao nhất với những đặc quyền không giới hạn.</p>
+                        <div class="border-t border-gray-200 pt-4 mt-4">
+                            <p class="text-lg font-semibold text-gray-700 mb-2">Yêu cầu:</p>
+                            <ul class="text-sm text-gray-600 space-y-2 text-left">
+                                <li class="flex items-center"><i class="fas fa-hiking text-blue-500 mr-2"></i> Hoàn
+                                    thành 20 tour
+                                </li>
+                                <li class="flex items-center"><i class="fas fa-wallet text-green-500 mr-2"></i> Tổng chi
+                                    tiêu 80.000.000 VNĐ
+                                </li>
+                            </ul>
+                            <p class="text-lg font-semibold text-gray-700 mt-4 mb-2">Quyền lợi:</p>
+                            <ul class="text-sm text-gray-600 space-y-2 text-left">
+                                <li class="flex items-center"><i class="fas fa-tag text-green-500 mr-2"></i> Giảm giá
+                                    15% cho tất cả các tour
+                                </li>
+                                <li class="flex items-center"><i class="fas fa-concierge-bell text-yellow-600 mr-2"></i>
+                                    Hỗ trợ khách hàng 24/7
+                                </li>
+                                <li class="flex items-center"><i class="fas fa-hotel text-cyan-500 mr-2"></i> Nâng hạng
+                                    phòng khách sạn miễn phí (tùy thuộc vào tình trạng)
+                                </li>
+                                <li class="flex items-center"><i class="fas fa-handshake text-orange-500 mr-2"></i> Ưu
+                                    đãi độc quyền từ các đối tác cao cấp
+                                </li>
+                                <li class="flex items-center"><i class="fas fa-plane-departure text-blue-600 mr-2"></i>
+                                    Mời tham gia sự kiện du lịch VIP
+                                </li>
+                                <li class="flex items-center"><i class="fas fa-ticket-alt text-purple-500 mr-2"></i>
+                                    Được đổi 10 voucher/tháng
+                                </li>
+                                <li class="flex items-center"><i class="fas fa-plane text-purple-500 mr-2"></i> Được đổi
+                                    2 tour/tháng
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- How the Ranking System Works Section -->
+            <section class="mb-12 bg-blue-50 rounded-2xl shadow-inner p-8">
+                <h2 class="text-3xl font-bold text-blue-800 text-center mb-8">Cách thức hoạt động của hệ thống cấp
+                    bậc</h2>
+                <div class="max-w-4xl mx-auto text-lg text-gray-700 leading-relaxed">
+                    <p class="mb-4">
+                        Hệ thống cấp bậc thành viên của chúng tôi được thiết kế để tri ân những khách hàng thân thiết
+                        nhất.
+                        Bạn sẽ tự động thăng cấp khi hoàn thành đủ số lượng tour du lịch và đạt mốc chi tiêu tương ứng.
+                        Mỗi cấp bậc sẽ mở khóa những ưu đãi và đặc quyền độc quyền,
+                        giúp trải nghiệm du lịch của bạn trở nên tuyệt vời hơn.
+                    </p>
+                    <p class="mb-4 font-semibold text-gray-800">Dưới đây là các tiêu chí để đạt được từng cấp bậc:</p>
+                    <ul class="list-disc list-inside space-y-2 pl-4">
+                        <li><span class="font-bold text-amber-600">Đồng:</span> Hoàn thành 1 tour du lịch.</li>
+                        <li><span class="font-bold text-gray-400">Bạc:</span> Hoàn thành 10 tour và đạt tổng chi tiêu
+                            35.000.000 VNĐ.
+                        </li>
+                        <li><span class="font-bold text-yellow-500">Vàng:</span> Hoàn thành 20 tour và đạt tổng chi tiêu
+                            80.000.000 VNĐ.
+                        </li>
+                    </ul>
+                    <p class="mt-4">
+                        Hãy tiếp tục khám phá thế giới cùng chúng tôi để mở khóa những cấp bậc cao hơn và tận hưởng
+                        những đặc quyền xứng đáng!
+                    </p>
+                </div>
+            </section>
+
+            <!-- FAQ Section -->
+            <section class="mb-12 bg-white rounded-2xl shadow-xl p-8">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Câu hỏi thường gặp (FAQ)</h2>
+                <div class="space-y-6">
+                    <!-- FAQ Item 1 -->
+                    <div class="border-b border-gray-200 pb-4">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Làm thế nào để tôi thăng cấp bậc?</h3>
+                        <p class="text-gray-600">Bạn sẽ tự động thăng cấp khi hoàn thành đủ số lượng tour du lịch yêu
+                            cầu cho mỗi cấp bậc. Hệ thống sẽ tự động cập nhật cấp bậc của bạn sau khi tour kết thúc và
+                            được xác nhận.</p>
+                    </div>
+                    <!-- FAQ Item 2 -->
+                    <div class="border-b border-gray-200 pb-4">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Khi nào cấp bậc của tôi được cập nhật?</h3>
+                        <p class="text-gray-600">Cấp bậc của bạn sẽ được cập nhật trong vòng 24 giờ sau khi bạn hoàn
+                            thành một tour du lịch và giao dịch được xác nhận thành công.</p>
+                    </div>
+                    <!-- FAQ Item 3 -->
+                    <div class="border-b border-gray-200 pb-4">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Các ưu đãi có được áp dụng tự động
+                            không?</h3>
+                        <p class="text-gray-600">Có, các ưu đãi giảm giá sẽ được áp dụng tự động khi bạn đặt tour. Đối
+                            với các ưu đãi khác như quà tặng sinh nhật hoặc nâng hạng phòng, chúng tôi sẽ liên hệ trực
+                            tiếp với bạn hoặc bạn có thể liên hệ bộ phận hỗ trợ khách hàng để được hướng dẫn.</p>
+                    </div>
+                    <!-- FAQ Item 4 -->
+                    <div class="border-b border-gray-200 pb-4">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Cấp bậc của tôi có bị hạ không?</h3>
+                        <p class="text-gray-600">Cấp bậc của bạn sẽ không bị hạ cấp trong vòng 12 tháng kể từ ngày bạn
+                            đạt được cấp bậc đó. Sau thời gian này, cấp bậc có thể được đánh giá lại dựa trên hoạt động
+                            du lịch của bạn.</p>
+                    </div>
+                    <!-- FAQ Item 5 -->
+                    <div class="pb-4">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Tôi có thể kiểm tra lịch sử thăng hạng ở
+                            đâu?</h3>
+                        <p class="text-gray-600">Bạn có thể xem lịch sử thăng hạng của mình ngay trên trang này, trong
+                            phần "Lịch sử thăng hạng của bạn".</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Terms and Conditions Section -->
+            <section class="mb-12 bg-white rounded-2xl shadow-xl p-8">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Điều khoản và Điều kiện</h2>
+                <div class="text-gray-700 space-y-4 leading-relaxed">
+                    <p>Chào mừng bạn đến với Hệ thống cấp bậc thành viên của chúng tôi. Bằng việc tham gia và sử dụng
+                        các đặc quyền của hệ thống này, bạn đồng ý tuân thủ các điều khoản và điều kiện sau:</p>
+
+                    <h3 class="text-xl font-semibold text-gray-700 mt-6 mb-2">1. Tư cách thành viên</h3>
+                    <ul class="list-disc list-inside pl-4 space-y-2">
+                        <li>Tư cách thành viên được cấp tự động cho tất cả khách hàng đã đăng ký tài khoản và hoàn thành
+                            ít nhất một tour du lịch.
+                        </li>
+                        <li>Tư cách thành viên không thể chuyển nhượng.</li>
+                    </ul>
+
+                    <h3 class="text-xl font-semibold text-gray-700 mt-6 mb-2">2. Thăng cấp bậc</h3>
+                    <ul class="list-disc list-inside pl-4 space-y-2">
+                        <li>Cấp bậc được xác định dựa trên tổng số tour du lịch đã hoàn thành và được thanh toán đầy
+                            đủ.
+                        </li>
+                        <li>Hệ thống sẽ tự động cập nhật cấp bậc của bạn sau khi các điều kiện thăng cấp được đáp ứng.
+                        </li>
+                        <li>Quyết định cuối cùng về việc thăng cấp thuộc về chúng tôi.</li>
+                    </ul>
+
+                    <h3 class="text-xl font-semibold text-gray-700 mt-6 mb-2">3. Ưu đãi và Đặc quyền</h3>
+                    <ul class="list-disc list-inside pl-4 space-y-2">
+                        <li>Các ưu đãi và đặc quyền dành cho mỗi cấp bậc có thể thay đổi mà không cần thông báo trước.
+                        </li>
+                        <li>Ưu đãi giảm giá được áp dụng trực tiếp khi đặt tour và chỉ có hiệu lực khi bạn đã đăng nhập
+                            vào tài khoản của mình. Các ưu đãi khác sẽ được thông báo và hướng dẫn cụ thể.
+                        </li>
+                        <li>Ưu đãi không có giá trị quy đổi thành tiền mặt.</li>
+                    </ul>
+
+                    <h3 class="text-xl font-semibold text-gray-700 mt-6 mb-2">4. Bảo lưu quyền</h3>
+                    <p>Chúng tôi có quyền sửa đổi, đình chỉ hoặc chấm dứt Hệ thống cấp bậc thành viên hoặc bất kỳ phần
+                        nào của nó, hoặc sửa đổi các điều khoản và điều kiện này bất cứ lúc nào mà không cần thông báo
+                        trước.</p>
+
+                    <h3 class="text-xl font-semibold text-gray-700 mt-6 mb-2">5. Chấm dứt tư cách thành viên</h3>
+                    <p>Chúng tôi có quyền chấm dứt tư cách thành viên của bất kỳ cá nhân nào nếu phát hiện vi phạm các
+                        điều khoản và điều kiện này hoặc có hành vi gian lận.</p>
+
+                    <p class="mt-6">Bằng việc tiếp tục sử dụng dịch vụ, bạn xác nhận đã đọc, hiểu và đồng ý với các điều
+                        khoản và điều kiện trên.</p>
+                </div>
+            </section>
+
+        </div>
+    </div>
+</main>
+
+<footer th:replace="client_html/fragment/headerANDfooter :: footer"></footer>
+
+</body>
+</html>

@@ -6,6 +6,7 @@
     <title>Quản Lý Khách Hàng - Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
+    <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
         tailwind.config = {
@@ -28,57 +29,39 @@
                             dark: '#B45309'
                         }
                     },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif']
-                    },
                     boxShadow: {
                         'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                        'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+                        'card-hover': '0 10px 20px -5px rgba(0, 0, 0, 0.07)'
                     }
                 }
             }
         }
     </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
+            background-color: #f7fafc;
         }
 
         .customer-card {
             transition: all 0.3s ease;
+            border: 1px solid transparent;
         }
+
         .customer-card:hover {
             transform: translateY(-5px);
-        }
-
-        .badge {
-            transition: all 0.2s ease;
-        }
-
-        .filter-input:focus {
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
-        }
-        .hidden-row {
-            display: none;
+            border-color: #4338CA;
         }
 
         .status-dot {
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            display: inline-block;
-            margin-right: 5px;
+            border: 2px solid white;
         }
 
         .status-active {
             background-color: #10B981;
-        }
-
-        .status-inactive {
-            background-color: #EF4444;
+            box-shadow: 0 0 8px #10B981;
         }
     </style>
 </head>
@@ -100,36 +83,31 @@
 
 
             <!-- Filter Section -->
-            <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+            <form method="get" action="/admin/customers" class="bg-white rounded-xl shadow-sm p-6 mb-8">
                 <h2 class="text-lg font-semibold text-gray-800 mb-4">Bộ Lọc Tìm Kiếm</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                     <!-- Search Field -->
                     <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Tìm kiếm khách hàng</label>
+                        <label for="searchCustomer" class="block text-sm font-medium text-gray-700 mb-1.5">Tìm kiếm khách hàng</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <i class="fas fa-search text-gray-400"></i>
                             </div>
-                            <input type="text" id="searchCustomer" placeholder="Nhập tên, email, số điện thoại..."
+                            <input type="text" id="searchCustomer" name="searchQuery" th:value="${searchQuery}" placeholder="Nhập tên, email, số điện thoại..."
                                    class="pl-10 w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light filter-input">
                         </div>
-                    </div>
-                    <!-- Action Buttons -->
-                    <div class="flex items-end space-x-3 md:col-span-1">
-                        <button id="resetFilters" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-2.5 px-4 rounded-lg font-medium transition-colors duration-300">
-                            Đặt lại bộ lọc
-                        </button>
                     </div>
 
                     <!-- Gender -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Giới tính</label>
+                        <label for="filterGender" class="block text-sm font-medium text-gray-700 mb-1.5">Giới tính</label>
                         <div class="relative">
-                            <select id="filterGender" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light filter-input appearance-none">
+                            <select id="filterGender" name="gender"
+                                    class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light filter-input appearance-none">
                                 <option value="">Tất cả giới tính</option>
-                                <option value="Nam">Nam</option>
-                                <option value="Nữ">Nữ</option>
-                                <option value="OTHER">Khác</option>
+                                <option value="Nam" th:selected="${gender == 'Nam'}">Nam</option>
+                                <option value="Nữ" th:selected="${gender == 'Nữ'}">Nữ</option>
+                                <option value="OTHER" th:selected="${gender == 'OTHER'}">Khác</option>
                             </select>
                             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                 <i class="fas fa-chevron-down text-gray-400"></i>
@@ -139,15 +117,16 @@
 
                     <!-- Age Range -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Độ tuổi</label>
+                        <label for="filterAgeRange" class="block text-sm font-medium text-gray-700 mb-1.5">Độ tuổi</label>
                         <div class="relative">
-                            <select id="filterAgeRange" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light filter-input appearance-none">
+                            <select id="filterAgeRange" name="ageRange"
+                                    class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light filter-input appearance-none">
                                 <option value="">Tất cả độ tuổi</option>
-                                <option value="0-18">Dưới 18</option>
-                                <option value="18-25">18 - 25</option>
-                                <option value="26-35">26 - 35</option>
-                                <option value="36-50">36 - 50</option>
-                                <option value="51-999">Trên 50</option>
+                                <option value="0-18" th:selected="${ageRange == '0-18'}">Dưới 18</option>
+                                <option value="18-25" th:selected="${ageRange == '18-25'}">18 - 25</option>
+                                <option value="26-35" th:selected="${ageRange == '26-35'}">26 - 35</option>
+                                <option value="36-50" th:selected="${ageRange == '36-50'}">36 - 50</option>
+                                <option value="51-999" th:selected="${ageRange == '51-999'}">Trên 50</option>
                             </select>
                             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                 <i class="fas fa-chevron-down text-gray-400"></i>
@@ -157,15 +136,15 @@
 
                     <!-- Registration Date -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Ngày đăng ký</label>
+                        <label for="filterRegistrationDate" class="block text-sm font-medium text-gray-700 mb-1.5">Ngày đăng ký</label>
                         <div class="relative">
-                            <select id="filterRegistrationDate" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light filter-input appearance-none">
+                            <select id="filterRegistrationDate" name="registrationDate"
+                                    class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light filter-input appearance-none">
                                 <option value="">Tất cả thời gian</option>
-                                <option value="today">Hôm nay</option>
-                                <option value="week">Tuần này</option>
-                                <option value="month">Tháng này</option>
-                                <option value="year">Năm nay</option>
-                                <option value="custom">Tùy chọn</option>
+                                <option value="today" th:selected="${registrationDate == 'today'}">Hôm nay</option>
+                                <option value="week" th:selected="${registrationDate == 'week'}">Tuần này</option>
+                                <option value="month" th:selected="${registrationDate == 'month'}">Tháng này</option>
+                                <option value="year" th:selected="${registrationDate == 'year'}">Năm nay</option>
                             </select>
                             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                 <i class="fas fa-chevron-down text-gray-400"></i>
@@ -173,334 +152,104 @@
                         </div>
                     </div>
 
-                    <div id="customDateRangeContainer" class="hidden md:col-span-2">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Từ ngày</label>
-                                <input type="date" id="customDateStart" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Đến ngày</label>
-                                <input type="date" id="customDateEnd" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light">
-                            </div>
-                        </div>
+                    <!-- Action Buttons -->
+                    <div class="flex items-end space-x-3">
+                         <button type="submit" class="w-full bg-primary hover:bg-primary-dark text-white py-2.5 px-4 rounded-lg font-medium transition-colors duration-300">
+                            Áp dụng
+                        </button>
+                        <a href="/admin/customers" class="w-full text-center bg-gray-200 hover:bg-gray-300 text-gray-800 py-2.5 px-4 rounded-lg font-medium transition-colors duration-300">
+                            Đặt lại
+                        </a>
                     </div>
-
-
                 </div>
-            </div>
+            </form>
 
 
-            <!-- Thay thế phần Customers Table bằng đoạn code này -->
             <!-- Customers Grid -->
-            <div class="bg-white rounded-xl shadow-sm p-6">
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4" id="customersGrid">
-                    <!-- Empty State -->
-                    <div class="col-span-full hidden empty-state rounded-xl p-8 text-center bg-gray-50">
-                        <div class="mx-auto w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 mb-4">
-                            <i class="fas fa-users text-3xl"></i>
-                        </div>
-                        <h3 class="text-xl font-medium text-gray-900 mb-2">Không có khách hàng nào</h3>
-                        <p class="text-gray-500 max-w-md mx-auto">Không tìm thấy khách hàng nào phù hợp với tiêu chí lọc của bạn</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="customersGrid">
+                <!-- Empty State -->
+                <div th:if="${customers.isEmpty()}" class="col-span-full rounded-xl p-8 text-center bg-gray-50">
+                    <div class="mx-auto w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 mb-4">
+                        <i class="fas fa-users text-3xl"></i>
                     </div>
+                    <h3 class="text-xl font-medium text-gray-900 mb-2">Không có khách hàng nào</h3>
+                    <p class="text-gray-500 max-w-md mx-auto">Không tìm thấy khách hàng nào phù hợp với tiêu chí lọc của bạn.</p>
+                </div>
 
-                    <!-- Customer Cards -->
-                    <a th:href="@{'/admin/customers/customer_detail/' + ${customer.user_id}}"
-                       th:each="customer : ${customers}"
-                       class="customer-card bg-white rounded-lg shadow-sm p-4 flex flex-col items-center text-center hover:shadow-md transition-shadow duration-300 cursor-pointer relative"
-                       th:data-name="${customer.full_name.toLowerCase() + ' ' + customer.username.toLowerCase()}"
-                       th:data-email="${customer.email}"
-                       th:data-phone="${customer.phone_number}"
-                       th:data-gender="${customer.gender}"
-                       th:data-age="${customer.date_of_birth != null ? #dates.year(#dates.createNow()) - customer.date_of_birth.getYear() : 'N/A'}"
-                       th:data-registration-date="${#temporals.format(customer.created_at, 'yyyy-MM-dd')}">
+                <!-- Customer Cards -->
+                <div th:each="customer : ${customers}"
+                     class="customer-card bg-white rounded-2xl flex flex-col overflow-hidden shadow-card hover:shadow-card-hover">
 
-                        <!-- Avatar -->
-                        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-600 to-teal-500 flex items-center justify-center text-white font-bold text-xl shadow-sm mb-3"
-                             th:text="${#strings.substring(customer.full_name, 0, 1).toUpperCase()}"></div>
-
-                        <!-- Customer Info -->
-                        <div class="w-full">
-                            <h3 class="text-sm font-medium text-gray-900 truncate" th:text="${customer.full_name}"></h3>
-                            <p class="text-xs text-gray-500 mt-1 truncate" th:text="${customer.email}"></p>
-
-                            <!-- Additional Info (hover to show) -->
-                            <div class="group-hover:block mt-2 text-xs">
-                                <!-- Xử lý phone_number có thể null -->
-                                <p th:text="${customer.phone_number ?: 'Chưa có số điện thoại'}"></p>
-
-                                <!-- Xử lý date_of_birth có thể null -->
-                                <p th:if="${customer.date_of_birth != null}"
-                                   th:text="${#temporals.format(customer.date_of_birth, 'dd/MM/yyyy') + ' (' + (#dates.year(#dates.createNow()) - customer.date_of_birth.getYear()) + ' tuổi)'}">
-                                </p>
-                                <p th:unless="${customer.date_of_birth != null}" class="text-gray-500">
-                                    Chưa có thông tin ngày sinh
-                                </p>
+                    <!-- Card Body -->
+                    <div class="p-6 flex flex-col flex-1">
+                        <div class="flex items-center mb-4">
+                             <div class="relative flex-shrink-0">
+                                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl shadow-md"
+                                     th:text="${#strings.substring(customer.full_name, 0, 1).toUpperCase()}"></div>
+                                <div class="absolute bottom-0 right-0 status-dot status-active" title="Hoạt động"></div>
                             </div>
-
-                            <!-- Gender Badge -->
-                            <div class="mt-2">
-                                <span th:switch="${customer.gender}" class="px-2 py-1 text-xs rounded-full">
-                                    <span th:case="'Nam'" class="bg-blue-100 text-blue-800">Nam</span>
-                                    <span th:case="'Nữ'" class="bg-pink-100 text-pink-800">Nữ</span>
-                                    <span th:case="*" class="bg-gray-100 text-gray-800">Khác</span>
-                                </span>
+                            <div class="ml-4 flex-1">
+                                <h3 class="text-lg font-bold text-gray-900" th:text="${customer.full_name}"></h3>
+                                <p class="text-sm text-gray-500" th:text="${customer.email}"></p>
                             </div>
                         </div>
-                    </a>
+
+                        <!-- Rank Info -->
+                        <div class="bg-gray-50 rounded-xl p-4 mb-5">
+                             <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-xs text-gray-500 font-medium">Hạng thành viên</p>
+                                    <p class="text-base font-bold text-gray-800" th:text="${customer.rank != null ? customer.rank.rank : 'Chưa có'}"></p>
+                                </div>
+                                <div th:with="rankName=${customer.rank != null ? customer.rank.rank : ''}">
+                                    <i th:if="${#strings.contains(rankName, 'Đồng')}" class="fas fa-medal text-yellow-600 text-2xl opacity-70"></i>
+                                    <i th:if="${#strings.contains(rankName, 'Bạc')}" class="fas fa-medal text-gray-400 text-2xl"></i>
+                                    <i th:if="${#strings.contains(rankName, 'Vàng')}" class="fas fa-medal text-yellow-400 text-2xl"></i>
+                                    <i th:if="${rankName == '' or #strings.contains(rankName, 'Chưa có')}" class="fas fa-question-circle text-gray-400 text-2xl"></i>
+                                </div>
+                            </div>
+                            <p class="text-right text-sm text-gray-600 mt-2">
+                                <span class="font-bold" th:text="${customer.rank != null ? customer.rank.points : 0}"></span>
+                                <span>điểm</span>
+                            </p>
+                        </div>
+                        
+                        <!-- Details -->
+                        <div class="text-sm space-y-3 text-gray-600">
+                             <div class="flex items-center">
+                                <i class="fas fa-phone-alt w-5 text-center mr-3 text-gray-400"></i>
+                                <span th:text="${customer.phone_number ?: 'Chưa có SĐT'}"></span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-birthday-cake w-5 text-center mr-3 text-gray-400"></i>
+                                <span th:if="${customer.date_of_birth != null}"
+                                      th:text="${#temporals.format(customer.date_of_birth, 'dd/MM/yyyy')}"></span>
+                                <span th:unless="${customer.date_of_birth != null}">Chưa có ngày sinh</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-calendar-alt w-5 text-center mr-3 text-gray-400"></i>
+                                <span>Tham gia ngày <span th:text="${#temporals.format(customer.created_at, 'dd/MM/yyyy')}"></span></span>
+                            </div>
+                        </div>
+
+                    </div>
+                    
+                    <!-- Card Footer -->
+                    <div class="bg-gray-50/70 p-4 mt-auto">
+                        <a th:href="@{'/admin/customers/customer_detail/' + ${customer.user_id}}"
+                           class="w-full text-center block bg-primary hover:bg-primary-dark text-white font-bold py-2.5 px-4 rounded-lg transition-colors duration-300 flex items-center justify-center shadow-lg shadow-primary-light/50">
+                            <span>Xem Chi Tiết</span>
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div id="deleteModal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div class="sm:flex sm:items-start">
-                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-                        <i class="fas fa-exclamation-triangle text-red-600"></i>
-                    </div>
-                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Xác nhận xóa</h3>
-                        <div class="mt-2">
-                            <p class="text-sm text-gray-500">Bạn có chắc chắn muốn xóa khách hàng này? Tất cả dữ liệu liên quan sẽ bị xóa vĩnh viễn.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <button type="button" id="confirmDelete" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
-                    Xóa
-                </button>
-                <button type="button" id="cancelDelete" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-light sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                    Hủy
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // 1. Chức năng chọn tất cả khách hàng
-        const selectAll = document.getElementById('selectAllCustomers');
-        if (selectAll) {
-            selectAll.addEventListener('change', function() {
-                const checkboxes = document.querySelectorAll('.customer-checkbox');
-                checkboxes.forEach(checkbox => {
-                    checkbox.checked = this.checked;
-                });
-            });
-        }
-
-        // 2. Xử lý hiển thị date picker khi chọn tùy chọn custom
-        const regDateFilter = document.getElementById('filterRegistrationDate');
-        const customDateRangeContainer = document.getElementById('customDateRangeContainer');
-
-        if (regDateFilter && customDateRangeContainer) {
-            regDateFilter.addEventListener('change', function() {
-                if (this.value === 'custom') {
-                    customDateRangeContainer.classList.remove('hidden');
-                } else {
-                    customDateRangeContainer.classList.add('hidden');
-                }
-            });
-        }
-
-        // 3. Chức năng xóa khách hàng với modal xác nhận
-        let customerIdToDelete = null;
-        const deleteModal = document.getElementById('deleteModal');
-        const confirmDeleteBtn = document.getElementById('confirmDelete');
-        const cancelDeleteBtn = document.getElementById('cancelDelete');
-
-        // Hàm mở modal xác nhận xóa
-        window.confirmDeleteModal = function(event, id) {
-            event.preventDefault();
-            customerIdToDelete = id;
-            if (deleteModal) deleteModal.classList.remove('hidden');
-        };
-
-        // Xác nhận xóa
-        if (confirmDeleteBtn) {
-            confirmDeleteBtn.addEventListener('click', function() {
-                if (customerIdToDelete) {
-                    fetch('/admin/customers/delete/' + customerIdToDelete, {
-                        method: 'DELETE',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
-                        }
-                    })
-                        .then(response => {
-                            if (response.ok) {
-                                window.location.reload();
-                            } else {
-                                alert('Có lỗi xảy ra khi xóa khách hàng');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            alert('Có lỗi xảy ra khi xóa khách hàng');
-                        });
-                }
-                if (deleteModal) deleteModal.classList.add('hidden');
-            });
-        }
-
-        // Hủy xóa
-        if (cancelDeleteBtn) {
-            cancelDeleteBtn.addEventListener('click', function() {
-                customerIdToDelete = null;
-                if (deleteModal) deleteModal.classList.add('hidden');
-            });
-        }
-
-        // Đóng modal khi click bên ngoài
-        if (deleteModal) {
-            deleteModal.addEventListener('click', function(e) {
-                if (e.target === deleteModal) {
-                    customerIdToDelete = null;
-                    deleteModal.classList.add('hidden');
-                }
-            });
-        }
-
-        // 4. Reset bộ lọc
-        const resetBtn = document.getElementById('resetFilters');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', function() {
-                const searchInput = document.getElementById('searchCustomer');
-                const typeFilter = document.getElementById('filterCustomerType');
-                const genderFilter = document.getElementById('filterGender');
-                const ageFilter = document.getElementById('filterAgeRange');
-                const regDateFilter = document.getElementById('filterRegistrationDate');
-                const customDateStart = document.getElementById('customDateStart');
-                const customDateEnd = document.getElementById('customDateEnd');
-
-                if (searchInput) searchInput.value = '';
-                if (typeFilter) typeFilter.value = '';
-                if (genderFilter) genderFilter.value = '';
-                if (ageFilter) ageFilter.value = '';
-                if (regDateFilter) regDateFilter.value = '';
-                if (customDateStart) customDateStart.value = '';
-                if (customDateEnd) customDateEnd.value = '';
-                if (customDateRangeContainer) customDateRangeContainer.classList.add('hidden');
-            });
-        }
-
-        // 5. Filter khách hàng (đã cập nhật)
-        function filterCustomers() {
-            const searchQuery = document.getElementById('searchCustomer').value.toLowerCase();
-            const selectedGender = document.getElementById('filterGender').value;
-            const ageRange = document.getElementById('filterAgeRange').value;
-            const regDate = document.getElementById('filterRegistrationDate').value;
-            const customDateStart = document.getElementById('customDateStart').value;
-            const customDateEnd = document.getElementById('customDateEnd').value;
-
-            const customerCards = document.querySelectorAll('.customer-card');
-            let visibleCount = 0;
-
-            customerCards.forEach(card => {
-                const name = card.getAttribute('data-name');
-                const email = card.getAttribute('data-email');
-                const phone = card.getAttribute('data-phone');
-                const gender = card.getAttribute('data-gender');
-                const age = parseInt(card.getAttribute('data-age'));
-                const regDateStr = card.getAttribute('data-registration-date');
-
-                // Kiểm tra điều kiện filter
-                const matchesSearch = name.includes(searchQuery) ||
-                    email.includes(searchQuery) ||
-                    phone.includes(searchQuery);
-                const matchesGender = !selectedGender || gender === selectedGender;
-                const matchesAge = !ageRange || checkAgeRange(age, ageRange);
-                const matchesRegDate = !regDate || checkRegistrationDate(regDateStr, regDate, customDateStart, customDateEnd);
-
-                if (matchesSearch && matchesGender && matchesAge && matchesRegDate) {
-                    card.style.display = 'flex';
-                    visibleCount++;
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-
-            // Hiển thị empty state nếu không có card nào
-            const emptyState = document.querySelector('.empty-state');
-            if (emptyState) {
-                emptyState.classList.toggle('hidden', visibleCount > 0);
-            }
-        }
-
-        // Hàm kiểm tra khoảng tuổi
-        function checkAgeRange(age, range) {
-            if (!range) return true;
-            const [min, max] = range.split('-').map(Number);
-            return age >= min && age <= max;
-        }
-
-        // Hàm kiểm tra ngày đăng ký
-        function checkRegistrationDate(dateStr, range, startDate, endDate) {
-            if (!range) return true;
-
-            const date = new Date(dateStr);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            if (range === 'custom') {
-                if (!startDate || !endDate) return true;
-
-                const start = new Date(startDate);
-                const end = new Date(endDate);
-                end.setHours(23, 59, 59, 999);
-
-                return date >= start && date <= end;
-            }
-
-            switch(range) {
-                case 'today':
-                    const todayStart = new Date(today);
-                    return date >= todayStart;
-                case 'week':
-                    const weekStart = new Date(today);
-                    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-                    return date >= weekStart;
-                case 'month':
-                    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-                    return date >= monthStart;
-                case 'year':
-                    const yearStart = new Date(today.getFullYear(), 0, 1);
-                    return date >= yearStart;
-                default:
-                    return true;
-            }
-        }
-
-        // Thêm sự kiện filter khi thay đổi các điều kiện
-        const filterInputs = [
-            document.getElementById('searchCustomer'),
-            document.getElementById('filterCustomerType'),
-            document.getElementById('filterGender'),
-            document.getElementById('filterAgeRange'),
-            document.getElementById('filterRegistrationDate'),
-            document.getElementById('customDateStart'),
-            document.getElementById('customDateEnd')
-        ];
-
-        filterInputs.forEach(input => {
-            if (input) {
-                input.addEventListener('change', filterCustomers);
-                input.addEventListener('input', filterCustomers);
-            }
-        });
-
-        // Gọi filter lần đầu khi trang tải
-        filterCustomers();
-    });
+    // Minimal script, if any, can go here. For example, the custom date range picker if re-added.
 </script>
 </body>
 </html>

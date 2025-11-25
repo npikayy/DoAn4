@@ -23,7 +23,8 @@ public class TourSpecifications {
             String promotionStatus,
             String startDate,
             String departureStatus,
-            String sortBy) {
+            String rating,
+            Boolean redeemableWithPoints) {
 
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -89,6 +90,16 @@ public class TourSpecifications {
                 predicates.add(criteriaBuilder.equal(root.get("tour_end_location"), location));
             }
 
+            // Rating filter
+            if (rating != null && !rating.isEmpty()) {
+                try {
+                    float minRating = Float.parseFloat(rating);
+                    predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("tour_rating"), minRating));
+                } catch (NumberFormatException e) {
+                    // Ignore invalid rating format
+                }
+            }
+
 
             // Promotion filter (from client)
             if (hasPromotion != null && hasPromotion) {
@@ -99,10 +110,32 @@ public class TourSpecifications {
 
             // Promotion status filter (from admin)
             if (promotionStatus != null && !promotionStatus.isEmpty()) {
-                if (promotionStatus.equals("HAS_DISCOUNT")) {
-                    predicates.add(criteriaBuilder.isNotNull(root.get("discount_promotion")));
-                } else if (promotionStatus.equals("NO_DISCOUNT")) {
-                    predicates.add(criteriaBuilder.isNull(root.get("discount_promotion")));
+                Join<tours, KhuyenMai> promotionJoin = root.join("discount_promotion", jakarta.persistence.criteria.JoinType.LEFT);
+                jakarta.persistence.criteria.Expression<java.util.Date> ngayBatDau = promotionJoin.get("ngayBatDau");
+                jakarta.persistence.criteria.Expression<java.util.Date> ngayKetThuc = promotionJoin.get("ngayKetThuc");
+                java.util.Date today = new java.util.Date(); // Use java.util.Date for comparison
+
+                switch (promotionStatus) {
+                    case "ACTIVE_PROMOTION":
+                        // For active promotions, ensure a promotion exists and its dates are valid
+                        predicates.add(criteriaBuilder.isNotNull(promotionJoin));
+                        predicates.add(criteriaBuilder.lessThanOrEqualTo(ngayBatDau, today));
+                        predicates.add(criteriaBuilder.greaterThanOrEqualTo(ngayKetThuc, today));
+                        break;
+                    case "UPCOMING_PROMOTION":
+                        // For upcoming promotions, ensure a promotion exists and its start date is in the future
+                        predicates.add(criteriaBuilder.isNotNull(promotionJoin));
+                        predicates.add(criteriaBuilder.greaterThan(ngayBatDau, today));
+                        break;
+                    case "EXPIRED_PROMOTION":
+                        // For expired promotions, ensure a promotion exists and its end date is in the past
+                        predicates.add(criteriaBuilder.isNotNull(promotionJoin));
+                        predicates.add(criteriaBuilder.lessThan(ngayKetThuc, today));
+                        break;
+                    case "NO_PROMOTION":
+                        // For no promotion, ensure the discount_promotion is null
+                        predicates.add(criteriaBuilder.isNull(promotionJoin));
+                        break;
                 }
             }
 
@@ -120,24 +153,9 @@ public class TourSpecifications {
                 }
             }
 
-            // Sorting logic
-            if (sortBy != null && !sortBy.isEmpty()) {
-                switch (sortBy) {
-                    case "price_asc":
-                        query.orderBy(criteriaBuilder.asc(root.get("tour_adult_price")));
-                        break;
-                    case "price_desc":
-                        query.orderBy(criteriaBuilder.desc(root.get("tour_adult_price")));
-                        break;
-                    case "rating_desc":
-                        query.orderBy(criteriaBuilder.desc(root.get("tour_rating")));
-                        break;
-                    case "name-asc":
-                        query.orderBy(criteriaBuilder.asc(root.get("tour_name")));
-                        break;
-                    default:
-                        break;
-                }
+            // Redeemable with Points filter
+            if (redeemableWithPoints != null) {
+                predicates.add(criteriaBuilder.equal(root.get("redeemableWithPoints"), redeemableWithPoints));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));

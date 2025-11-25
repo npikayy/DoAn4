@@ -16,7 +16,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -41,6 +43,7 @@ public class ChatbotService {
     @Autowired
     private chatMessageRepo chatMessageRepo;
 
+
     @Value("${ai.chatbot.enabled}")
     private boolean enabled;
 
@@ -49,6 +52,7 @@ public class ChatbotService {
 
     @Value("${promotion.detail.base-url}")
     private String promotionDetailBaseUrl; // New property for promotion links
+
 
     @Transactional
     public ChatResponse chat(ChatRequest request) {
@@ -71,8 +75,12 @@ public class ChatbotService {
             List<KhuyenMai> relevantPromotions = searchPromotionsDirectly(request.getMessage());
             log.info("Found {} relevant promotions from direct DB search", relevantPromotions.size());
 
+            // Step 1.6: RAG - Search for relevant ranks directly from predefined data
+            List<Map<String, Object>> relevantRanks = searchPredefinedRanks(request.getMessage());
+            log.info("Found {} relevant ranks from predefined data", relevantRanks.size());
+
             // Step 2: Build context
-            String context = buildContext(relevantTours, relevantPromotions);
+            String context = buildContext(relevantTours, relevantPromotions, relevantRanks);
 
             // Step 3: Generate response using Gemini
             String aiResponse = generateResponse(request.getMessage(), context, sessionId);
@@ -156,7 +164,28 @@ public class ChatbotService {
         return resultPromotions.stream().distinct().limit(3).collect(Collectors.toList()); // Limit promotions
     }
 
-    private String buildContext(List<tours> tours, List<KhuyenMai> promotions) {
+    private List<Map<String, Object>> searchPredefinedRanks(String query) {
+        List<String> keywords = extractKeywords(query);
+        List<Map<String, Object>> resultRanks = new ArrayList<>();
+
+        // Define ranks directly within the method
+        List<Map<String, Object>> allRanks = List.of(
+                Map.of("name", "Đồng", "tourThreshold", 1, "discount", 5),
+                Map.of("name", "Bạc", "tourThreshold", 10, "discount", 15),
+                Map.of("name", "Vàng", "tourThreshold", 20, "discount", 25)
+        );
+
+        for (String keyword : keywords) {
+            for (Map<String, Object> rank : allRanks) {
+                if (((String) rank.get("name")).toLowerCase().contains(keyword.toLowerCase())) {
+                    resultRanks.add(rank);
+                }
+            }
+        }
+        return resultRanks.stream().distinct().collect(Collectors.toList());
+    }
+
+    private String buildContext(List<tours> tours, List<KhuyenMai> promotions, List<Map<String, Object>> ranks) {
         StringBuilder context = new StringBuilder();
 
         if (!tours.isEmpty()) {
@@ -187,7 +216,7 @@ public class ChatbotService {
 
 
                 if (tourPicRepo.findOnePicByTour(tour.getTour_id()) != null) {
-                    context.append("<img src=\"").append(tourPicRepo.findOnePicByTour(tour.getTour_id())).append("\" alt=\"Hình ảnh tour\"\">\n");
+                    context.append("<img src=\"").append(tourPicRepo.findOnePicByTour(tour.getTour_id())).append("\" alt=\"Hình ảnh tour\"\"> ");
                 }
                 context.append("Giá người lớn: ").append(tour.getTour_adult_price()).append(" VNĐ. "); // Assuming price is never null or defaults to 0
                 context.append("Giá trẻ em: ").append(tour.getTour_child_price()).append(" VNĐ. "); // Assuming price is never null or defaults to 0
@@ -224,9 +253,20 @@ public class ChatbotService {
                 context.append("Ngày bắt đầu: ").append(promo.getNgayBatDau() != null ? promo.getNgayBatDau().toString() : "Không rõ").append(". ");
                 context.append("Ngày kết thúc: ").append(promo.getNgayKetThuc() != null ? promo.getNgayKetThuc().toString() : "Không rõ").append(". ");
                 if (promo.getHinhAnh() != null && !promo.getHinhAnh().isEmpty()) {
-                    context.append("<img src=\"").append(promo.getHinhAnh()).append("\" alt=\"Hình ảnh khuyến mãi\">\n");
+                    context.append("<img src=\"").append(promo.getHinhAnh()).append("\" alt=\"Hình ảnh khuyến mãi\"> ");
                 }
                 context.append("<a href=\"").append(promotionDetailBaseUrl).append(promo.getId()).append("\" target=\"_blank\" class=\"detail-button\">Xem chi tiết Khuyến mãi</a>\n\n");
+            }
+        }
+
+        if (!ranks.isEmpty()) {
+            context.append("Thông tin về các hạng thành viên:\n\n");
+            for (int i = 0; i < ranks.size(); i++) {
+                Map<String, Object> rank = ranks.get(i);
+                context.append("Hạng ").append(i + 1).append(":\n");
+                context.append("Tên: ").append(rank.get("name") != null ? rank.get("name") : "Không rõ").append(". ");
+                context.append("Số tour cần hoàn thành: ").append(rank.get("tourThreshold")).append(". ");
+                context.append("Ưu đãi: ").append(rank.get("discount")).append("% giảm giá tour.\n\n");
             }
         }
 
@@ -260,7 +300,7 @@ public class ChatbotService {
         StringBuilder prompt = new StringBuilder();
 
         prompt.append("Bạn là trợ lý tư vấn du lịch thông minh của website tour du lịch Việt Nam.\n");
-        prompt.append("Nhiệm vụ: tư vấn và giới thiệu các tour và chương trình khuyến mãi phù hợp. **Hãy sử dụng thông tin và các link chi tiết, bao gồm cả các thẻ `<img>` được cung cấp dưới đây để trả lời một cách chính xác và hữu ích. Nếu người dùng hỏi về hình ảnh, hãy trả về thẻ `<img>` từ السياق.** Trả lời ngắn gọn, thân thiện.\n\n");
+        prompt.append("Nhiệm vụ: tư vấn và giới thiệu các tour, chương trình khuyến mãi và hệ thống hạng thành viên phù hợp. **Hãy sử dụng thông tin và các link chi tiết, bao gồm cả các thẻ `<img>` được cung cấp dưới đây để trả lời một cách chính xác và hữu ích. Nếu người dùng hỏi về hình ảnh, hãy trả về thẻ `<img>` từ السياق.** Trả lời ngắn gọn, thân thiện.\n\n");
 
         if (!context.isEmpty()) {
             prompt.append("THÔNG TIN LIÊN QUAN:\n").append(context).append("\n");
@@ -292,7 +332,7 @@ public class ChatbotService {
         if (!context.isEmpty()) {
             response.append("Tôi đã tìm thấy một số thông tin phù hợp:\n\n");
             response.append(context);
-            response.append("\nBạn có muốn biết thêm chi tiết không?");
+            response.append("\n Bạn có muốn biết thêm chi tiết không?");
         } else {
             response.append("Tôi có thể giúp bạn tìm tour du lịch hoặc khuyến mãi. ");
             response.append("Bạn muốn tìm gì? (VD: Tour Đà Nẵng, Khuyến mãi hè...)");

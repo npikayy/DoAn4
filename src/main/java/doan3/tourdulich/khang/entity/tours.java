@@ -50,5 +50,6 @@ private Boolean is_abroad;
     private Integer tour_infant_price;
     private Integer tour_max_number_of_people;
     private Float tour_rating;
+    private Boolean redeemableWithPoints;
     LocalDate created_at;
 }

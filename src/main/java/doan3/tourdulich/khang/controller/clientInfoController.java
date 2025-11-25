@@ -1,9 +1,7 @@
 package doan3.tourdulich.khang.controller;
 import doan3.tourdulich.khang.dto.UpdateInfoRequest;
 import doan3.tourdulich.khang.entity.users;
-import doan3.tourdulich.khang.repository.userRepo;
-import doan3.tourdulich.khang.repository.tourBookingRepo;
-import doan3.tourdulich.khang.repository.ratingRepo;
+import doan3.tourdulich.khang.repository.*;
 import doan3.tourdulich.khang.service.VoucherService;
 import doan3.tourdulich.khang.service.userService;
 import lombok.extern.slf4j.Slf4j;
@@ -67,13 +65,11 @@ public class clientInfoController {
     @GetMapping("/Information")
     public ModelAndView clientInfo(ModelAndView modelAndView) {
         getCurrentUser(modelAndView);
-        String userId = (String) modelAndView.getModel().get("user_id");
-        if (userId != null) {
-            modelAndView.addObject("vouchers", voucherService.findByUserId(userId));
-        }
         modelAndView.setViewName("/client_html/client_info");
+        modelAndView.addObject("vouchers", voucherService.findByUserId(modelAndView.getModel().get("user_id").toString()));
         return modelAndView;
     }
+
     @PostMapping("/Information/updateInfo")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> updateInfo(@RequestBody UpdateInfoRequest requestData) {

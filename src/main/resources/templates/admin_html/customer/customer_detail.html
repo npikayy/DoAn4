@@ -5,75 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chi tiết Người dùng - Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            light: '#4F46E5',
+                            DEFAULT: '#4338CA',
+                            dark: '#3730A3'
+                        },
+                        secondary: {
+                            light: '#10B981',
+                            DEFAULT: '#059669',
+                            dark: '#047857'
+                        },
+                        accent: {
+                            light: '#F59E0B',
+                            DEFAULT: '#D97706',
+                            dark: '#B45309'
+                        }
+                    },
+                    boxShadow: {
+                        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        'card-hover': '0 10px 20px -5px rgba(0, 0, 0, 0.07)'
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
         body {
-            font-family: 'Inter', sans-serif;
             background-color: #f8fafc;
         }
-
-        .detail-card {
-            background: white;
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-        }
-
-        .avatar {
-            width: 80px;
-            height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            color: white;
-            font-size: 2rem;
-            background: linear-gradient(135deg, #6366f1, #10b981);
-        }
-
-        .badge {
-            padding: 0.25rem 0.75rem;
+        .status-dot {
+            width: 1.5rem;
+            height: 1.5rem;
             border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
+            border: 4px solid white;
         }
-
-        .badge i {
-            margin-right: 0.25rem;
+        .status-active {
+            background-color: #22c55e; /* green-500 */
         }
-
-        .badge-active {
-            background-color: #d1fae5;
-            color: #065f46;
+        .status-inactive {
+            background-color: #6b7280; /* gray-500 */
         }
-
-        .badge-inactive {
-            background-color: #fee2e2;
-            color: #991b1b;
+        .dropdown-menu {
+            display: none;
         }
-
-        .gender-badge {
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            font-size: 0.75rem;
-        }
-
-        .gender-male {
-            background-color: #dbeafe;
-            color: #1e40af;
-        }
-
-        .gender-female {
-            background-color: #fce7f3;
-            color: #9d174d;
-        }
-
-        .gender-other {
-            background-color: #e5e7eb;
-            color: #4b5563;
+        .dropdown-menu.show {
+            display: block;
         }
     </style>
 </head>
@@ -88,200 +71,299 @@
             <!-- Header Section -->
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-800">Chi tiết Khách hàng</h1>
-                    <div class="flex items-center mt-2">
-                        <span class="text-gray-600">Username:</span>
-                        <span class="font-medium ml-2" th:text="${customer.username}"></span>
-                        <span class="ml-4 badge badge-active">
-                            <i class="fas fa-check-circle"></i>
+                    <h1 class="text-3xl font-bold text-gray-900">Chi tiết Khách hàng</h1>
+                    <div class="flex items-center mt-3 text-lg">
+                        <span class="text-gray-500">Username:</span>
+                        <span class="font-semibold ml-2 text-gray-800" th:text="${customer.username}"></span>
+                        <span th:if="${customer.rank != null && customer.rank.rank == 'Đã chấm dứt'}"
+                              class="ml-4 text-sm inline-flex items-center font-bold leading-sm uppercase px-3 py-1 bg-red-200 text-red-700 rounded-full">
+                            <i class="fas fa-times-circle mr-1"></i>
+                            <span>Đã chấm dứt</span>
+                        </span>
+                        <span th:unless="${customer.rank != null && customer.rank.rank == 'Đã chấm dứt'}"
+                              class="ml-4 text-sm inline-flex items-center font-bold leading-sm uppercase px-3 py-1 bg-green-200 text-green-700 rounded-full">
+                            <i class="fas fa-check-circle mr-1"></i>
                             <span>Đang hoạt động</span>
                         </span>
                     </div>
                 </div>
-                <div class="mt-4 md:mt-0 flex space-x-3">
-                    <a href="/admin/customers" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 flex items-center">
+                <div class="mt-4 md:mt-0">
+                    <a href="/admin/customers" class="px-5 py-2.5 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 flex items-center font-medium transition">
                         <i class="fas fa-arrow-left mr-2"></i> Quay lại
                     </a>
                 </div>
             </div>
 
-            <!-- Main Content -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main Content Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <!-- Left Column -->
-                <div class="lg:col-span-2 space-y-6">
-                    <!-- Personal Information -->
-                    <div class="detail-card p-6">
-                        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-customer-circle text-indigo-500 mr-2"></i> Thông tin cá nhân
-                        </h2>
-                        <div class="flex flex-col md:flex-row items-start md:items-center">
-                            <div class="avatar rounded-full mr-6 mb-4 md:mb-0"
+                <div class="lg:col-span-1 flex flex-col space-y-8">
+                    <!-- Profile Card -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                        <div class="relative w-32 h-32 mx-auto mb-4">
+                            <div class="w-full h-full rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-5xl shadow-md"
                                  th:text="${#strings.substring(customer.full_name, 0, 1).toUpperCase()}"></div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
-                                <div>
-                                    <label class="block text-sm text-gray-500">Họ và tên</label>
-                                    <p class="font-medium" th:text="${customer.full_name}"></p>
-                                </div>
-                                <div>
-                                    <label class="block text-sm text-gray-500">Giới tính</label>
-                                    <p class="font-medium">
-                                        <span th:switch="${customer.gender}" class="gender-badge">
-                                            <span th:case="'Nam'" class="gender-male">
-                                                <i class="fas fa-mars"></i> Nam
-                                            </span>
-                                            <span th:case="'Nữ'" class="gender-female">
-                                                <i class="fas fa-venus"></i> Nữ
-                                            </span>
-                                            <span th:case="*" class="gender-other">
-                                                <i class="fas fa-genderless"></i> chưa cập nhật
-                                            </span>
-                                        </span>
-                                    </p>
-                                </div>
-                                <div>
-                                    <label class="block text-sm text-gray-500">Ngày sinh</label>
-                                    <p class="font-medium" th:text="${#temporals.format(customer.date_of_birth, 'dd/MM/yyyy')}"></p>
-                                </div>
-                                <div>
-                                    <label class="block text-sm text-gray-500">Tuổi</label>
-                                    <p th:if="${customer.date_of_birth != null}"
-                                       th:text="${#temporals.format(customer.date_of_birth, 'dd/MM/yyyy') + ' (' + (#dates.year(#dates.createNow()) - customer.date_of_birth.getYear()) + ' tuổi)'}">
-                                    </p>
-                                    <p th:unless="${customer.date_of_birth != null}" class="text-gray-500">
-                                        Chưa có thông tin ngày sinh
-                                    </p>
-                                </div>
+                            <div class="absolute bottom-1 right-1 w-6 h-6 border-4 border-white rounded-full status-dot"
+                                 th:classappend="${customer.rank != null && customer.rank.rank == 'Đã chấm dứt'} ? 'status-inactive' : 'status-active'"
+                                 th:title="${customer.rank != null && customer.rank.rank == 'Đã chấm dứt'} ? 'Đã chấm dứt' : 'Hoạt động'"></div>
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-900" th:text="${customer.full_name}"></h2>
+                        <p class="text-base text-gray-500 mt-1" th:text="${customer.email}"></p>
+
+                        <div class="mt-6 grid grid-cols-3 gap-4">
+                            <div class="text-center">
+                                <p class="text-2xl font-bold text-indigo-600" th:text="${#lists.size(bookings)}"></p>
+                                <p class="text-sm text-gray-500">Tours đã đi</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-2xl font-bold text-indigo-600" th:text="${customer.rank != null ? customer.rank.points : 0}"></p>
+                                <p class="text-sm text-gray-500">Điểm</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-2xl font-bold text-indigo-600" th:text="${customer.rank != null ? customer.rank.rank : '---'}"></p>
+                                <p class="text-sm text-gray-500">Hạng</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Contact Information -->
-                    <div class="detail-card p-6">
-                        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-address-book text-indigo-500 mr-2"></i> Thông tin liên hệ
-                        </h2>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm text-gray-500">Email</label>
-                                <p class="font-medium" th:text="${customer.email}"></p>
-                            </div>
-                            <div>
-                                <label class="block text-sm text-gray-500">Số điện thoại</label>
-                                <p class="font-medium" th:text="${customer.phone_number}"></p>
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-sm text-gray-500">Địa chỉ</label>
-                                <p class="font-medium" th:text="${customer.address}"></p>
-                            </div>
-                        </div>
+                    <!-- Actions Card -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-cog text-gray-500 mr-3"></i>Hành động
+                        </h3>
+                        <form id="terminateForm" th:action="@{/admin/customers/{id}/terminate(id=${customer.user_id})}" method="post">
+                            <button id="openModalBtn" type="button" class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center font-medium">
+                                <i class="fas fa-user-slash mr-2"></i>
+                                Chấm dứt Tư cách Thành viên
+                            </button>
+                        </form>
                     </div>
 
+                     <!-- Info Card -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                            <i class="fas fa-info-circle text-indigo-500 mr-3"></i>Thông tin Chi tiết
+                        </h3>
+                        <div class="space-y-5 text-base">
+                             <div class="flex items-start">
+                                <i class="fas fa-venus-mars w-6 mt-1 text-center text-gray-400"></i>
+                                <div class="ml-4">
+                                    <p class="text-gray-500">Giới tính</p>
+                                    <p class="font-semibold text-gray-800" th:text="${customer.gender ?: 'Chưa cập nhật'}"></p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-birthday-cake w-6 mt-1 text-center text-gray-400"></i>
+                                <div class="ml-4">
+                                    <p class="text-gray-500">Ngày sinh</p>
+                                    <p class="font-semibold text-gray-800" th:text="${customer.date_of_birth != null ? #temporals.format(customer.date_of_birth, 'dd/MM/yyyy') : 'Chưa cập nhật'}"></p>
+                                </div>
+                            </div>
+                             <div class="flex items-start">
+                                <i class="fas fa-phone-alt w-6 mt-1 text-center text-gray-400"></i>
+                                <div class="ml-4">
+                                    <p class="text-gray-500">Số điện thoại</p>
+                                    <p class="font-semibold text-gray-800" th:text="${customer.phone_number ?: 'Chưa cập nhật'}"></p>
+                                </div>
+                            </div>
+                             <div class="flex items-start">
+                                <i class="fas fa-map-marker-alt w-6 mt-1 text-center text-gray-400"></i>
+                                <div class="ml-4">
+                                    <p class="text-gray-500">Địa chỉ</p>
+                                    <p class="font-semibold text-gray-800" th:text="${customer.address ?: 'Chưa cập nhật'}"></p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-calendar-plus w-6 mt-1 text-center text-gray-400"></i>
+                                <div class="ml-4">
+                                    <p class="text-gray-500">Ngày tham gia</p>
+                                    <p class="font-semibold text-gray-800" th:text="${#temporals.format(customer.created_at, 'dd/MM/yyyy')}"></p>
+                                </div>
+                            </div>
+                        </div>
+                     </div>
                 </div>
 
                 <!-- Right Column -->
-                <div class="space-y-6">
-                    <!-- Account Information -->
-                    <div class="detail-card p-6">
-                        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                            <i class="fas fa-customer-shield text-indigo-500 mr-2"></i> Thông tin tài khoản
-                        </h2>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm text-gray-500">Username</label>
-                                <p class="font-medium" th:text="${customer.username}"></p>
-                            </div>
-                            <div>
-                                <label class="block text-sm text-gray-500">Ngày tạo tài khoản</label>
-                                <p class="font-medium" th:text="${#temporals.format(customer.created_at, 'dd/MM/yyyy')}"></p>
-                            </div>
-                            <div>
-                                <label class="block text-sm text-gray-500">Trạng thái</label>
-                                <p class="font-medium">
-                                    <span class="badge badge-active">
-                                        <i class="fas fa-check-circle"></i> Đang hoạt động
-                                    </span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-gradient-to-br from-white to-indigo-50 rounded-xl shadow-lg p-6 mt-3 md:p-8">
-                <!-- Header with gradient background -->
-                <div class="bg-gradient-to-br from-blue-600 to-teal-500 rounded-lg p-4 mb-6 text-white">
-                    <h2 class="text-2xl font-bold flex items-center">
-                        Đơn hàng gần đây
-                    </h2>
-                </div>
-                <!-- All Bookings Tab -->
-                <div id="all-tab">
-                    <div class="grid gap-5">
-                        <!-- Booking Cards -->
-                        <div th:each="booking : ${bookings}" class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300">
-                            <!-- Status ribbon -->
-                            <div th:classappend="${(booking.status == 'Pending payment') ? 'bg-amber-500' :
-                                          (booking.status == 'Paid') ? 'bg-green-500' :
-                                          (booking.status == 'Cash') ? 'bg-blue-500' :
-                                          (booking.status == 'Cancelled') ? 'bg-red-500' :
-                                          (booking.status == 'Completed') ? 'bg-purple-500' : 'bg-gray-500'}"
-                                 class="h-1 w-full"></div>
-
-                            <div class="p-5">
-                                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                    <div class="flex-1">
-                                        <div class="flex items-start justify-between">
-                                            <h3 class="text-xl font-bold text-gray-800" th:text="${booking.tour_name}"></h3>
-                                            <span th:classappend="${(booking.status == 'Pending payment') ? 'bg-amber-100 text-amber-800' :
-                                          (booking.status == 'Paid') ? 'bg-green-100 text-green-800' :
-                                          (booking.status == 'Cash') ? 'bg-blue-100 text-blue-800' :
-                                          (booking.status == 'Cancelled') ? 'bg-red-100 text-red-800' :
-                                          (booking.status == 'Completed') ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'}"
-                                                  class="px-3 py-1 rounded-full text-xs font-semibold">
-                                        <span th:text="${(booking.status == 'Pending payment') ? 'Chờ thanh toán' :
-                                              (booking.status == 'Paid') ? 'Đã thanh toán' :
-                                              (booking.status == 'Cash') ? 'Tiền mặt' :
-                                              (booking.status == 'Cancelled') ? 'Đã hủy' :
-                                              (booking.status == 'Completed') ? 'Hoàn thành' : 'Hoàn thành'}"></span>
-                                    </span>
-                                        </div>
-
-                                        <div class="mt-3 flex items-center text-sm text-gray-500">
-                                            <i class="fas fa-hashtag text-indigo-500 mr-1"></i>
-                                            <span th:text="'Mã đơn: ' + ${booking.booking_id}"></span>
+                <div class="lg:col-span-2 flex flex-col space-y-8">
+                     <!-- History Sections -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6">Lịch sử Điểm</h2>
+                        <div th:if="${!pointHistory.empty}" class="relative border-l-2 border-gray-200 ml-3">
+                            <div th:each="entry : ${pointHistory}" class="mb-8 ml-6">
+                                <span th:classappend="${entry.type.name() == 'ADDITION' ? 'bg-green-500' : 'bg-red-500'}" class="absolute flex items-center justify-center w-6 h-6 rounded-full -left-3 ring-8 ring-white">
+                                    <i th:if="${entry.type.name() == 'ADDITION'}" class="fas fa-plus text-white text-xs"></i>
+                                    <i th:if="${entry.type.name() == 'REDEMPTION'}" class="fas fa-minus text-white text-xs"></i>
+                                </span>
+                                <div class="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                                    <div class="items-center justify-between sm:flex">
+                                        <time class="mb-1 text-sm font-normal text-gray-500 sm:order-last sm:mb-0" th:text="${#temporals.format(entry.creationDate, 'HH:mm, dd/MM/yyyy')}"></time>
+                                        <div class="text-base font-medium text-gray-700">
+                                            <span class="font-semibold text-gray-900" th:text="${entry.description}"></span>
                                         </div>
                                     </div>
-
-                                    <!-- Price and action buttons -->
-                                    <div class="flex flex-col items-end">
-                                        <div class="text-right">
-                                            <p class="text-sm text-gray-500">Tổng cộng</p>
-                                            <p class="text-2xl font-bold text-indigo-600" th:text="${#numbers.formatInteger(booking.total_price, 3, 'POINT') + '₫'}"></p>
-                                        </div>
-
-                                        <div class="mt-4 flex flex-col sm:flex-row gap-2">
-                                            <a th:href="'/admin/tourBookings/detail/'+ ${booking.getBooking_id()}"
-                                               class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center">
-                                                <i class="fas fa-info-circle mr-2"></i> Chi tiết
-                                            </a>
-                                        </div>
+                                     <div class="mt-2 text-base font-semibold" th:classappend="${entry.type.name() == 'ADDITION' ? 'text-green-600' : 'text-red-600'}">
+                                        <span th:text="${entry.type.name() == 'ADDITION' ? '+' : ''}"></span>
+                                        <span th:text="${entry.pointsChange}"></span>
+                                         điểm
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Empty State -->
-                        <div th:if="${bookings.empty}" class="bg-gradient-to-br from-gray-50 to-indigo-50 border-2 border-dashed border-indigo-200 rounded-xl p-8 text-center">
-                            <div class="inline-block bg-indigo-100 p-4 rounded-full mb-4">
-                                <i class="fas fa-suitcase text-indigo-600 text-4xl"></i>
+                        <div th:if="${pointHistory.empty}" class="bg-yellow-50 border-2 border-dashed border-yellow-200 rounded-xl p-8 text-center">
+                            <div class="inline-block bg-yellow-100 p-4 rounded-full mb-4">
+                                <i class="fas fa-coins text-yellow-600 text-4xl"></i>
                             </div>
-                            <h3 class="text-xl font-bold text-gray-700 mb-2">Khách hàng này chưa có đơn đặt tour nào</h3>
+                            <h3 class="text-xl font-bold text-gray-700 mb-2">Khách hàng này chưa có lịch sử điểm tích lũy nào</h3>
+                        </div>
+                    </div>
+                     <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-6">Lịch sử Xếp hạng</h2>
+                        <div th:if="${!rankHistory.empty}" class="relative border-l-2 border-gray-200 ml-3">
+                             <div th:each="entry : ${rankHistory}" class="mb-8 ml-6">
+                                <span class="absolute flex items-center justify-center w-6 h-6 bg-blue-500 rounded-full -left-3 ring-8 ring-white">
+                                    <i class="fas fa-award text-white text-xs"></i>
+                                </span>
+                                <div class="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                                   <div class="items-center justify-between sm:flex">
+                                        <time class="mb-1 text-sm font-normal text-gray-500 sm:order-last sm:mb-0" th:text="${#temporals.format(entry.promotionDate, 'dd/MM/yyyy')}"></time>
+                                        <div class="text-base font-medium text-gray-700">
+                                             <span class="font-semibold text-gray-900" th:text="${entry.description}"></span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 text-base">
+                                         Hạng cũ: <span class="font-semibold" th:text="${entry.oldRank}"></span> -> Hạng mới: <span class="font-semibold" th:text="${entry.newRank}"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div th:if="${rankHistory.empty}" class="bg-purple-50 border-2 border-dashed border-purple-200 rounded-xl p-8 text-center">
+                            <div class="inline-block bg-purple-100 p-4 rounded-full mb-4">
+                                <i class="fas fa-award text-purple-600 text-4xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-700 mb-2">Khách hàng này chưa có lịch sử xếp hạng nào</h3>
+                        </div>
+                    </div>
+
+                    <!-- Bookings Section -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 mt-8 md:p-8">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                            <h2 class="text-2xl font-bold text-gray-800">Tour đã đi</h2>
+                        </div>
+        
+                        <div id="all-tab">
+                            <div class="flex flex-col gap-4">
+                                <!-- Booking List Item -->
+                                <div th:each="booking : ${bookings}" class="flex flex-col sm:flex-row items-center bg-white p-4 rounded-xl border border-gray-200 hover:border-indigo-500 hover:shadow-lg transition-all duration-300">
+                                    <div class="flex-1 w-full">
+                                        <div class="flex justify-between items-start">
+                                             <a th:href="'/admin/tourBookings/detail/'+ ${booking.getBooking_id()}" class="font-bold text-lg text-gray-800 hover:text-indigo-600" th:text="${booking.tour_name}"></a>
+                                            <span th:classappend="${(booking.status == 'Pending payment') ? 'bg-amber-100 text-amber-800' :
+                                                  (booking.status == 'Paid') ? 'bg-green-100 text-green-800' :
+                                                  (booking.status == 'Cash') ? 'bg-blue-100 text-blue-800' :
+                                                  (booking.status == 'Cancelled') ? 'bg-red-100 text-red-800' :
+                                                  (booking.status == 'Completed') ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'}"
+                                                  class="px-3 py-1 rounded-full text-xs font-semibold uppercase">
+                                                <span th:text="${booking.status.replace('_', ' ')}"></span>
+                                            </span>
+                                        </div>
+                                        <div class="mt-2 flex items-center text-sm text-gray-500">
+                                            <i class="fas fa-hashtag text-gray-400 mr-2"></i>
+                                            <span th:text="'Mã đơn: ' + ${booking.booking_id}"></span>
+                                        </div>
+                                    </div>
+                                    <div class="w-full sm:w-auto flex sm:flex-col items-center justify-between sm:items-end mt-4 sm:mt-0 sm:ml-6 text-right">
+                                        <p class="text-xl font-bold text-indigo-600" th:text="${#numbers.formatInteger(booking.total_price, 3, 'POINT') + '₫'}"></p>
+                                        <a th:href="'/admin/tourBookings/detail/'+ ${booking.getBooking_id()}"
+                                           class="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center text-sm font-medium">
+                                            <i class="fas fa-info-circle mr-2"></i>
+                                            <span>Chi tiết</span>
+                                        </a>
+                                    </div>
+                                </div>
+        
+                                <!-- Empty State -->
+                                <div th:if="${bookings.empty}" class="bg-blue-50 border-2 border-dashed border-blue-200 rounded-xl p-8 text-center">
+                                    <div class="inline-block bg-blue-100 p-4 rounded-full mb-4">
+                                        <i class="fas fa-suitcase text-blue-600 text-4xl"></i>
+                                    </div>
+                                    <h3 class="text-xl font-bold text-gray-700 mb-2">Khách hàng này chưa có đơn đặt tour nào</h3>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-    </div>
-</main>
+        </div>
+
+        <!-- Termination Confirmation Modal -->
+        <div id="terminationModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-lg shadow-xl p-6 md:p-8 w-full max-w-md mx-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="flex-shrink-0 mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <i class="fas fa-exclamation-triangle text-red-600"></i>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                            Xác nhận Chấm dứt Tư cách
+                        </h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-600">
+                                Bạn có chắc chắn muốn chấm dứt tư cách thành viên của khách hàng này không?
+                                <br>
+                                Hành động này <strong>không thể hoàn tác</strong> và sẽ đặt lại điểm của họ về 0.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-5 sm:mt-6 sm:flex sm:flex-row-reverse">
+                    <button id="confirmTerminateBtn" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Xác nhận
+                    </button>
+                    <button id="cancelTerminateBtn" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm">
+                        Hủy bỏ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
 </div>
-</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('terminationModal');
+        const openModalBtn = document.getElementById('openModalBtn');
+        const cancelBtn = document.getElementById('cancelTerminateBtn');
+        const confirmBtn = document.getElementById('confirmTerminateBtn');
+        const terminateForm = document.getElementById('terminateForm');
+
+        if (openModalBtn) {
+            openModalBtn.addEventListener('click', () => {
+                if (modal) modal.classList.remove('hidden');
+            });
+        }
+
+        function closeModal() {
+            if (modal) modal.classList.add('hidden');
+        }
+
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', closeModal);
+        }
+        
+        if (modal) {
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+        }
+
+        if (confirmBtn && terminateForm) {
+            confirmBtn.addEventListener('click', () => {
+                terminateForm.submit();
+            });
+        }
+    });
+</script>
 </body>
 </html>

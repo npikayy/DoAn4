@@ -1,6 +1,9 @@
 package doan3.tourdulich.khang.service;
 
+import doan3.tourdulich.khang.entity.Rank;
+import doan3.tourdulich.khang.entity.users;
 import doan3.tourdulich.khang.entity.vouchers;
+import doan3.tourdulich.khang.repository.RankRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.TemplateEngine;
@@ -10,15 +13,20 @@ import doan3.tourdulich.khang.repository.tourBookingRepo;
 import doan3.tourdulich.khang.repository.tourRepo;
 import doan3.tourdulich.khang.repository.userRepo;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
+import doan3.tourdulich.khang.repository.BookingSpecifications;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -31,12 +39,15 @@ public class bookingService {
     private final userRepo userRepo;
     private final EmailService emailService;
     private final TemplateEngine templateEngine;
+    private final RankService rankService; // Changed from GradeService
+    private final userService userService;
+    private final RankRepository rankRepository; // Changed from GradeRepository
 
     public tour_bookings addBooking(
             String tourId, String userId, String userFullName, String userEmail,
             String userPhoneNumber, String userAddress, String tourName,
             LocalDate startDate, Integer totalPrice, Integer numberOfAdults,
-            Integer numberOfChildren, Integer numberOfInfants, Integer voucherDiscount, String note) {
+            Integer numberOfChildren, Integer numberOfInfants, Integer voucherDiscount, String note, String bookingType) {
 
         Integer duration = tourRepo.findById(tourId).get().getTour_duration();
         LocalDate endDate = startDate.plusDays(duration);
@@ -59,6 +70,7 @@ public class bookingService {
                 .number_of_infants(numberOfInfants)
                 .voucher_discount(voucherDiscount)
                 .note(note)
+                .bookingType(bookingType)
                 .build();
 
 
@@ -67,11 +79,42 @@ public class bookingService {
         return booking;
 
     }
+
+    public Page<tour_bookings> findAllPaginatedAndFiltered(String status, String userId, String searchQuery, Pageable pageable) {
+        Specification<tour_bookings> spec = Specification.where(null);
+
+        if (org.springframework.util.StringUtils.hasText(status) && !"all".equalsIgnoreCase(status)) {
+            spec = spec.and(BookingSpecifications.withStatus(status));
+        }
+
+        if (org.springframework.util.StringUtils.hasText(userId) && !"all".equalsIgnoreCase(userId)) {
+            spec = spec.and(BookingSpecifications.withUserId(userId));
+        }
+
+        if (org.springframework.util.StringUtils.hasText(searchQuery)) {
+            spec = spec.and(BookingSpecifications.withSearchQuery(searchQuery));
+        }
+
+        return tourBookingRepo.findAll(spec, pageable);
+    }
     public void updateBookingStatus(Integer bookingId, String status) {
         tourBookingRepo.findById(bookingId).ifPresent(booking -> {
             booking.setStatus(status);
             tourBookingRepo.save(booking);
         });
+    }
+
+    @Async
+    public void handleTourCompletionTasks(tour_bookings booking) {
+        int pointsAdded = booking.getTotal_price() / 100000;
+        sendThankYouEmail(booking.getUser_email(), booking.getBooking_id(), pointsAdded);
+        users user = userRepo.findById(booking.getUser_id()).get();
+
+        booking.setStatus("Completed");
+        tourBookingRepo.save(booking);
+
+        userService.addPointsForCompletedTour(booking);
+        userService.updateUserRank(user); // Call updateUserRank, which will now calculate completed tours
     }
 
     @Async
@@ -269,7 +312,7 @@ public class bookingService {
 
 
     @Async
-    public void sendThankYouEmail(String email, Integer booking_id) {
+    public void sendThankYouEmail(String email, Integer booking_id, int pointsAdded) {
         tour_bookings booking = tourBookingRepo.findByBooking_id(booking_id);
 
         Context context = new Context();
@@ -277,7 +320,7 @@ public class bookingService {
         context.setVariable("bookingId", "TOD-" + booking.getBooking_id());
         context.setVariable("tourName", booking.getTour().getTour_name());
         context.setVariable("startDate", booking.getStart_date().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-        context.setVariable("couponCode", "CAMON" + booking.getBooking_id());
+        context.setVariable("pointsAdded", pointsAdded);
 
         String htmlContent = templateEngine.process("client_html/thank_you_email", context);
 
@@ -288,6 +331,23 @@ public class bookingService {
                 .build();
 
         log.info("Sending thank you email to: {}", email);
+        emailService.sendHtmlMessage(mailBody);
+    }
+    @Async
+    public void sendRankPromotionEmail(users user, String oldRank, String newRank) {
+        Context context = new Context();
+        context.setVariable("customerName", user.getFull_name());
+        context.setVariable("oldRank", oldRank);
+        context.setVariable("newRank", newRank);
+
+        String htmlContent = templateEngine.process("client_html/rank_promotion_email", context);
+
+        MailBody mailBody = MailBody.builder()
+                .to(user.getEmail())
+                .subject("[Tôi Đi Du Lịch] Chúc mừng bạn đã được thăng hạng thành viên!")
+                .text(htmlContent)
+                .build();
+
         emailService.sendHtmlMessage(mailBody);
     }
 }

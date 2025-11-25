@@ -1,9 +1,14 @@
 package doan3.tourdulich.khang.controller;
+import doan3.tourdulich.khang.entity.PointVoucher; // New
+import doan3.tourdulich.khang.entity.RedeemableVoucherType; // New
+import doan3.tourdulich.khang.entity.tours; // New
 import doan3.tourdulich.khang.entity.users;
 import doan3.tourdulich.khang.entity.vouchers;
 import doan3.tourdulich.khang.service.AsyncVoucherService;
+import doan3.tourdulich.khang.service.PointVoucherService; // New
 import doan3.tourdulich.khang.service.VoucherService;
 import doan3.tourdulich.khang.service.bookingService;
+import doan3.tourdulich.khang.repository.tourRepo; // New
 import doan3.tourdulich.khang.service.userService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +29,8 @@ public class vouchersController {
     private final userService userService;
     private final bookingService bookingService;
     private final AsyncVoucherService asyncVoucherService;
+    private final PointVoucherService pointVoucherService; // New
+    private final tourRepo tourRepo; // New
 
     @GetMapping("")
     public ModelAndView index(@RequestParam(required = false) String voucherType,
@@ -34,9 +41,13 @@ public class vouchersController {
         ModelAndView modelAndView = new ModelAndView("admin_html/voucher/voucher_management");
         List<vouchers> voucherList = voucherService.searchVouchers(voucherType, status, userId, expiryDateStart, expiryDateEnd);
         List<users> userList = userService.getAllUsersExceptAdmin();
+        List<tours> tourList = tourRepo.findAll(); // New
+        List<PointVoucher> pointVouchers = pointVoucherService.getAllPointVouchers(); // New
         log.info("Searching vouchers with params: voucherType={}, status={}, userId={}, expiryDateStart={}, expiryDateEnd={}", voucherType, status, userId, expiryDateStart, expiryDateEnd);
         modelAndView.addObject("vouchers", voucherList);
         modelAndView.addObject("userList", userList);
+        modelAndView.addObject("tourList", tourList); // New
+        modelAndView.addObject("pointVouchers", pointVouchers); // New
         modelAndView.addObject("voucherType", voucherType);
         modelAndView.addObject("status", status);
         modelAndView.addObject("userId", userId);
@@ -89,6 +100,36 @@ public class vouchersController {
         } catch (Exception e) {
             log.error("Error creating voucher: {}", e.getMessage());
         }
+        return new ModelAndView("redirect:/admin/vouchers");
+    }
+
+    @PostMapping("/addPointVoucher")
+    public ModelAndView addPointVoucher(@RequestParam("name") String name,
+                                        @RequestParam("pointsCost") Integer pointsCost,
+                                        @RequestParam("quantity") Integer quantity, // New
+                                        @RequestParam(value = "voucherType", required = false) String voucherType, // PERCENTAGE or AMOUNT
+                                        @RequestParam(value = "giaTriGiam", required = false) String giaTriGiamStr) { // Discount value
+        try {
+            PointVoucher newPointVoucher = new PointVoucher();
+            newPointVoucher.setName(name);
+            newPointVoucher.setPointsCost(pointsCost);
+            newPointVoucher.setQuantity(quantity); // New
+            newPointVoucher.setRedeemableVoucherType(RedeemableVoucherType.DISCOUNT); // Always DISCOUNT
+
+            newPointVoucher.setVoucherType(voucherType);
+            if (giaTriGiamStr != null && !giaTriGiamStr.isEmpty()) {
+                newPointVoucher.setGiaTriGiam(Integer.parseInt(giaTriGiamStr.replace(".", "")));
+            }
+            pointVoucherService.savePointVoucher(newPointVoucher);
+        } catch (Exception e) {
+            log.error("Error creating point voucher: {}", e.getMessage());
+        }
+        return new ModelAndView("redirect:/admin/vouchers");
+    }
+
+    @GetMapping("/deletePointVoucher/{id}")
+    public ModelAndView deletePointVoucher(@PathVariable("id") int id) {
+        pointVoucherService.deletePointVoucher(id);
         return new ModelAndView("redirect:/admin/vouchers");
     }
 

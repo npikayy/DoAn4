@@ -1,10 +1,17 @@
 package doan3.tourdulich.khang.controller;
+
+import org.springframework.util.StringUtils;
+import doan3.tourdulich.khang.entity.tour_bookings;
 import doan3.tourdulich.khang.entity.users;
 import doan3.tourdulich.khang.service.bookingService;
 import doan3.tourdulich.khang.service.userService;
 import doan3.tourdulich.khang.repository.tourBookingRepo;
 import doan3.tourdulich.khang.repository.userRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
@@ -24,12 +31,30 @@ public class bookingController {
     private userRepo userRepo;
 
     @GetMapping
-    public ModelAndView getAllBookings(ModelAndView modelAndView) {
+    public ModelAndView getAllBookings(@RequestParam(name = "status", defaultValue = "Pending payment") String status,
+                                       @RequestParam(name = "userId", required = false) String userId,
+                                       @RequestParam(name = "searchQuery", required = false) String searchQuery,
+                                       @RequestParam(defaultValue = "0") int page,
+                                       @RequestParam(defaultValue = "9") int size) {
+        ModelAndView modelAndView = new ModelAndView();
+        // Sort.by("booking_date").descending() was causing an error, so it's removed for now.
+        Pageable pageable = PageRequest.of(page, size);
+        Page<tour_bookings> bookingPage = bookingService.findAllPaginatedAndFiltered(status, userId, searchQuery, pageable);
+
         modelAndView.setViewName("admin_html/booking/booking_management");
-        // Lấy danh sách người dùng riêng biệt cho dropdown
+        modelAndView.addObject("bookingPage", bookingPage);
+
+        // Add filter and pagination info to the model
+        modelAndView.addObject("status", status);
+        modelAndView.addObject("userId", userId);
+        modelAndView.addObject("searchQuery", searchQuery);
+        modelAndView.addObject("currentPage", page);
+        modelAndView.addObject("totalPages", bookingPage.getTotalPages());
+
+        // For the user filter dropdown
         List<String> distinctUsers = tourBookingRepo.findDistinctUsers();
         modelAndView.addObject("distinctUsers", userRepo.findAllById(distinctUsers));
-        modelAndView.addObject("bookings", tourBookingRepo.findAll());
+
         return modelAndView;
     }
     @GetMapping("/detail/{booking_id}")
@@ -44,7 +69,6 @@ public class bookingController {
         tourBookingRepo.findById(booking_id).ifPresent(booking -> {
             booking.setStatus("Completed");
             tourBookingRepo.save(booking);
-            bookingService.sendThankYouEmail(booking.getUser_email(), booking_id);
         });
         response.put("success", true);
         response.put("booking_id", booking_id);

@@ -112,6 +112,13 @@ public class VoucherService {
             response.put("message", "Voucher đã hết hạn.");
             return response;
         }
+        if (voucher.getTour() != null) {
+            if (!voucher.getTour().getTour_id().equals(tourId)) {
+                response.put("success", false);
+                response.put("message", "Voucher này chỉ được áp dụng cho tour: " + voucher.getTour().getTour_name() + ".");
+                return response;
+            }
+        }
 
         // All checks passed
         response.put("success", true);

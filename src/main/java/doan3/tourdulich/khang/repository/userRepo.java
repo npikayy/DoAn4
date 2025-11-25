@@ -6,9 +6,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
 import java.util.List;
 
-public interface userRepo extends JpaRepository<users, String> {
+public interface userRepo extends JpaRepository<users, String>, JpaSpecificationExecutor<users> {
 
     users findByUsername(String username);
 
@@ -19,8 +21,11 @@ public interface userRepo extends JpaRepository<users, String> {
     @Query("SELECT u FROM users u WHERE u.role = 'ROLE_USER' AND u.email <> 'admin@gmail.com'")
     Page<users> findAllUsersExceptAdmin(Pageable pageable);
 
-    @Query("SELECT u FROM users u WHERE u.role = 'ROLE_USER'")
+    @Query("SELECT u FROM users u LEFT JOIN FETCH u.rank WHERE u.role = 'ROLE_USER'")
     List<users> findAllUsers();
+
+    @Query("SELECT u FROM users u LEFT JOIN FETCH u.rank WHERE u.user_id = :userId")
+    users findByIdWithRank(String userId);
 
     @Query(value = "SELECT EXTRACT(YEAR FROM created_at) as year, " +
             "EXTRACT(MONTH FROM created_at) as month, " +

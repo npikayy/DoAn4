@@ -42,7 +42,6 @@ public class tourService {
 
     public List<tours> findTours(
             String keyword,
-            String sortBy,
             Boolean isAbroad,
             String tourType,
             String duration,
@@ -53,29 +52,15 @@ public class tourService {
             Boolean hasPromotion,
             String promotionStatus,
             String startDate,
-            String departureStatus) {
+            String departureStatus,
+            String rating,
+            Boolean redeemableWithPoints) {
 
-        Specification<tours> spec = TourSpecifications.withFilters(keyword, isAbroad, tourType, duration, transportation, priceRange, location, region, hasPromotion, promotionStatus, startDate, departureStatus, sortBy);
+        Specification<tours> spec = TourSpecifications.withFilters(keyword, isAbroad, tourType, duration, transportation, priceRange, location, region, hasPromotion, promotionStatus, startDate, departureStatus, rating, redeemableWithPoints);
 
-        Sort sort = Sort.unsorted();
-        if (sortBy != null && !sortBy.isEmpty()) {
-            switch (sortBy) {
-                case "price-asc":
-                    sort = Sort.by("tour_adult_price").ascending();
-                    break;
-                case "price-desc":
-                    sort = Sort.by("tour_adult_price").descending();
-                    break;
-                case "name-asc":
-                    sort = Sort.by("tour_name").ascending();
-                    break;
-                case "rating_desc":
-                    sort = Sort.by("tour_rating").descending();
-                    break;
-            }
-        }
-
-        return tourRepo.findAll(spec, sort);
+        List<tours> tours = tourRepo.findAll(spec);
+        log.info("Found {} tours", tours.size());
+        return tours;
     }
 
     public List<tours> getAllTours() {
@@ -349,5 +334,9 @@ public class tourService {
             schedule.setImage_url(null);
             scheduleRepo.save(schedule);
         }
+    }
+
+    public List<tours> getRedeemableTours() {
+        return tourRepo.findByRedeemableWithPoints(true);
     }
 }
