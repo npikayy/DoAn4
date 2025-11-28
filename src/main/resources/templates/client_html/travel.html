@@ -85,15 +85,73 @@
             height: 50%;
             background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
         }
+        /* Custom carousel styles */
         .carousel-slide {
-            transition: opacity 1s ease-in-out;
-        }
-        .carousel-slide:not(.active) {
+            transition: opacity 1s ease-in-out, transform 1s ease-in-out; /* Added transform for potential future effects */
             opacity: 0;
-            position: absolute;
+            position: absolute; /* Changed from not(.active) to absolute */
             top: 0;
             left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0; /* Ensure non-active slides are behind */
         }
+        .carousel-slide.active {
+            opacity: 1;
+            z-index: 1; /* Bring active slide to front */
+        }
+        .carousel-slide .slide-content {
+            transition: transform 0.7s ease-out, opacity 0.7s ease-out;
+            opacity: 0;
+            transform: translateY(20px); /* Initial state for animation */
+        }
+        .carousel-slide.active .slide-content {
+            opacity: 1;
+            transform: translateY(0); /* Final state for animation */
+            transition-delay: 0.3s; /* Delay content animation slightly */
+        }
+
+        /* Custom styles for navigation arrows */
+        .carousel-nav-btn {
+            background-color: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px); /* Frosty glass effect */
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.75rem; /* Equivalent to p-3 */
+            border-radius: 9999px; /* Equivalent to rounded-full */
+            z-index: 10; /* Above slides */
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            cursor: pointer;
+        }
+        .carousel-nav-btn:hover {
+            background-color: rgba(255, 255, 255, 0.4);
+            transform: scale(1.1);
+        }
+
+        /* Custom styles for indicators */
+        .indicator-dot {
+            width: 2.5rem; /* w-10 */
+            height: 0.25rem; /* h-1 */
+            background-color: rgba(255, 255, 255, 0.4);
+            border-radius: 9999px;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+        }
+        .indicator-dot.active {
+            background-color: rgba(255, 255, 255, 0.8);
+            transform: scaleY(1.5); /* Slightly bigger when active */
+        }
+        .indicator-dot .indicator-progress {
+            background-color: white;
+            height: 100%;
+            transform: scaleX(0);
+            transform-origin: left center;
+            transition: transform 0.3s ease-out; /* For manual click responsiveness */
+        }
+        /* No need for active .indicator-progress here, handled by JS with transitionDuration */
     </style>
 </head>
 <body>
@@ -137,11 +195,11 @@
                 <!-- Dynamic Slides -->
                 <div th:each="banner, iter : ${banners}"
                      th:if="${banner.is_showed}"
-                     th:classappend="${iter.index == 0} ? 'active opacity-100' : 'opacity-0'"
-                     class="carousel-slide h-full w-full flex items-center justify-center bg-cover bg-center absolute inset-0 transition-all duration-1000 ease-[cubic-bezier(0.65,0.05,0.36,1)]"
+                     th:classappend="${iter.index == 0} ? 'active' : ''"
+                     class="carousel-slide h-full w-full flex items-center justify-center bg-cover bg-center absolute inset-0"
                      th:style="'background-image: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), url(' + ${banner.banner_url} + ')'">
 
-                    <div class="text-center text-white px-6 transform transition-all duration-700 ease-out group-hover:scale-105">
+                    <div class="text-center text-white px-6 slide-content">
                         <h2 class="text-5xl font-bold mb-6 drop-shadow-2xl">TOUR ƯU ĐÃI 2024</h2>
                         <p class="text-2xl mb-8 max-w-2xl mx-auto drop-shadow-lg">Khám phá những điểm đến tuyệt vời</p>
                     </div>
@@ -150,7 +208,7 @@
                 <!-- Default Slide -->
                 <div th:if="${#lists.isEmpty(banners.?[is_showed == true])}"
                      class="carousel-slide active h-full w-full flex items-center justify-center bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500">
-                    <div class="text-center text-white px-6 transform transition-all duration-700 ease-out group-hover:scale-105">
+                    <div class="text-center text-white px-6 slide-content">
                         <h2 class="text-5xl font-bold mb-6 drop-shadow-2xl">TOUR ƯU ĐÃI 2024</h2>
                         <p class="text-2xl mb-8 max-w-2xl mx-auto drop-shadow-lg">Khám phá những điểm đến tuyệt vời</p>
                     </div>
@@ -159,15 +217,15 @@
 
             <!-- Navigation Arrows (Floating) -->
             <button th:if="${#lists.size(banners.?[is_showed == true]) > 1}"
-                    class="absolute left-6 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/30 text-white rounded-full p-3 z-10 transition-all backdrop-blur-sm border border-white/20 hover:scale-110 shadow-lg"
-                    id="prevBtn">
+                    class="absolute left-6 top-1/2 -translate-y-1/2 carousel-nav-btn"
+                    id="prevBtn" aria-label="Previous Slide">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
             </button>
             <button th:if="${#lists.size(banners.?[is_showed == true]) > 1}"
-                    class="absolute right-6 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/30 text-white rounded-full p-3 z-10 transition-all backdrop-blur-sm border border-white/20 hover:scale-110 shadow-lg"
-                    id="nextBtn">
+                    class="absolute right-6 top-1/2 -translate-y-1/2 carousel-nav-btn"
+                    id="nextBtn" aria-label="Next Slide">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
@@ -178,10 +236,10 @@
                  class="absolute bottom-8 left-0 right-0 flex justify-center gap-3 z-10">
                 <button th:each="banner, iter : ${banners}"
                         th:if="${banner.is_showed}"
-                        class="w-16 h-1.5 rounded-full bg-white/30 hover:bg-white/70 indicator-dot transition-all duration-300 overflow-hidden"
+                        class="indicator-dot"
                         th:classappend="${iter.index == 0} ? 'active' : ''"
-                        th:attr="data-slide=${iter.index}">
-                    <div class="h-full bg-white origin-left scale-x-0 transition-transform duration-300 ease-out indicator-progress"></div>
+                        th:attr="data-slide=${iter.index}" aria-label="Go to slide">
+                    <div class="indicator-progress"></div>
                 </button>
             </div>
         </div>
@@ -546,6 +604,9 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         const slides = document.querySelectorAll('.carousel-slide');
+        // Only proceed if there are slides
+        if (slides.length === 0) return; // Exit if no slides to prevent errors
+
         const dots = document.querySelectorAll('.indicator-dot');
         const progressBars = document.querySelectorAll('.indicator-progress');
         let currentIndex = 0;
@@ -553,20 +614,31 @@
         const slideInterval = 5000; // 5 seconds
 
         function showSlide(index) {
+            // Ensure index is within bounds
+            index = (index + slides.length) % slides.length;
+
             // Reset all slides and indicators
-            slides.forEach(slide => slide.classList.remove('active', 'opacity-100'));
-            slides.forEach(slide => slide.classList.add('opacity-0'));
-            dots.forEach(dot => dot.classList.remove('active'));
-            progressBars.forEach(bar => {
-                bar.style.transform = 'scaleX(0)';
-                bar.style.transitionDuration = '0ms';
+            slides.forEach(slide => {
+                slide.classList.remove('active');
+                // Also remove active class from content
+                slide.querySelector('.slide-content')?.classList.remove('active');
+            });
+            dots.forEach(dot => {
+                dot.classList.remove('active');
+                dot.querySelector('.indicator-progress').style.transform = 'scaleX(0)';
+                dot.querySelector('.indicator-progress').style.transitionDuration = '0ms';
             });
 
             // Show current slide
-            slides[index].classList.add('active', 'opacity-100');
-            dots[index].classList.add('active');
-            progressBars[index].style.transitionDuration = slideInterval + 'ms';
-            progressBars[index].style.transform = 'scaleX(1)';
+            const currentSlide = slides[index];
+            currentSlide.classList.add('active');
+            currentSlide.querySelector('.slide-content')?.classList.add('active');
+
+            const currentDot = dots[index];
+            currentDot.classList.add('active');
+            currentDot.querySelector('.indicator-progress').style.transitionDuration = slideInterval + 'ms';
+            currentDot.querySelector('.indicator-progress').style.transform = 'scaleX(1)';
+
 
             currentIndex = index;
         }
@@ -577,7 +649,9 @@
         }
 
         function startCarousel() {
-            intervalId = setInterval(nextSlide, slideInterval);
+            if (slides.length > 1) { // Only start carousel if there's more than one slide
+                intervalId = setInterval(nextSlide, slideInterval);
+            }
         }
 
         function resetCarousel() {
@@ -586,7 +660,9 @@
         }
 
         // Initialize
-        if (slides.length > 1) {
+        if (slides.length > 1) { // Only attach listeners and start if more than one slide
+            showSlide(0); // Show the first slide initially
+
             dots.forEach((dot, index) => {
                 dot.addEventListener('click', () => {
                     showSlide(index);
@@ -605,12 +681,16 @@
                 resetCarousel();
             });
 
-            // Progress bar animation
+            // Progress bar animation (ensure transform-origin is set once)
             progressBars.forEach(bar => {
                 bar.style.transformOrigin = 'left center';
             });
 
             startCarousel();
+        } else if (slides.length === 1) {
+            // If only one slide, just show it
+            slides[0].classList.add('active');
+            slides[0].querySelector('.slide-content')?.classList.add('active');
         }
     });
     document.addEventListener('DOMContentLoaded', function() {
