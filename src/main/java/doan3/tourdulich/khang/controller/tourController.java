@@ -64,14 +64,17 @@ public class tourController {
                                  @RequestParam(required = false) String departureStatus,
                                  @RequestParam(required = false) String promotionStatus,
                                  @RequestParam(required = false) String rating,
-                                 @RequestParam(required = false) Boolean redeemableWithPoints) {
+                                 @RequestParam(required = false) Boolean redeemableWithPoints,
+                                 @RequestParam(defaultValue = "0") int page,
+                                 @RequestParam(defaultValue = "8") int size) {
 
-        List<tours> tours = tourService.findTours(keyword, null, tourType, null, null, priceRange, location, region, null, promotionStatus, null, departureStatus, rating, redeemableWithPoints);
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        org.springframework.data.domain.Page<tours> tourPage = tourService.findToursPaginated(keyword, null, tourType, null, null, priceRange, location, region, null, promotionStatus, null, departureStatus, rating, redeemableWithPoints, pageable);
 
         Map<String, String> tourThumbnails = new HashMap<>();
         Map<String, List<tour_start_date>> tourStartDates = new HashMap<>();
 
-        for (tours tour : tours) {
+        for (tours tour : tourPage.getContent()) {
             String tourId = tour.getTour_id();
             String thumbnail = tourPicRepo.findOnePicByTour(tourId);
             tourThumbnails.put(tourId, thumbnail != null ? thumbnail : "");
@@ -81,7 +84,7 @@ public class tourController {
 
         List<String> uniqueLocations = tourRepo.findDistinctEndLocations();
 
-        modelAndView.addObject("tours", tours);
+        modelAndView.addObject("tourPage", tourPage);
         modelAndView.addObject("tourThumbnails", tourThumbnails);
         modelAndView.addObject("tourStartDates", tourStartDates);
         modelAndView.addObject("uniqueLocations", uniqueLocations);
@@ -96,6 +99,10 @@ public class tourController {
         modelAndView.addObject("promotionStatus", promotionStatus);
         modelAndView.addObject("rating", rating);
         modelAndView.addObject("redeemableWithPoints", redeemableWithPoints);
+
+        // Add pagination data
+        modelAndView.addObject("currentPage", page);
+        modelAndView.addObject("totalPages", tourPage.getTotalPages());
 
         modelAndView.setViewName("admin_html/tour/tour_management");
         return modelAndView;

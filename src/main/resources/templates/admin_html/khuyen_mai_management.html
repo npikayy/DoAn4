@@ -53,11 +53,14 @@
                             class="w-full flex justify-center items-center bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-300 ease-in-out">
                         <i class="fas fa-filter mr-2"></i> Lọc
                     </button>
-                    <a th:href="@{/admin/khuyen-mai}"
+                    <a th:href="@{/admin/khuyen-mai(page=0, size=3)}"
                        class="w-full flex justify-center items-center bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg shadow-md transition-all duration-300 ease-in-out">
                         <i class="fas fa-sync-alt mr-2"></i> Đặt lại
                     </a>
                 </div>
+                <!-- Hidden fields for page and size -->
+                <input type="hidden" name="page" th:value="${currentPage}" />
+                <input type="hidden" name="size" th:value="${khuyenMaiPage.size}" />
             </form>
         </div>
 
@@ -65,10 +68,10 @@
         <div class="bg-white p-6 rounded-lg shadow-sm">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-semibold">Danh sách Chương trình Khuyến mãi</h2>
-                <div class="text-sm text-gray-500" th:text="'Tổng số: ' + ${khuyenMaiList.size()}"></div>
+                <div class="text-sm text-gray-500" th:text="'Tổng số: ' + ${khuyenMaiPage.totalElements}"></div>
             </div>
 
-            <div th:if="${khuyenMaiList.isEmpty()}" class="text-center py-20">
+            <div th:if="${khuyenMaiPage.empty}" class="text-center py-20">
                 <div class="flex flex-col items-center justify-center text-gray-500">
                     <i class="fas fa-gift text-6xl mb-4 text-gray-400"></i>
                     <h3 class="text-2xl font-semibold text-gray-700 mb-2">Chưa có chương trình khuyến mãi nào</h3>
@@ -80,9 +83,9 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8" th:unless="${khuyenMaiList.isEmpty()}">
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8" th:unless="${khuyenMaiPage.empty}">
                 <!-- Promotion Card -->
-                <div th:each="km : ${khuyenMaiList}"
+                <div th:each="km : ${khuyenMaiPage.content}"
                      class="bg-white rounded-xl shadow-lg overflow-hidden group transform hover:shadow-xl hover:-translate-y-2 transition-all duration-300 ease-in-out">
                     <a th:href="@{/admin/khuyen-mai/edit/{id}(id=${km.id})}" class="block">
                         <div class="relative">
@@ -134,8 +137,61 @@
                     </a>
                 </div>
             </div>
+
+            <!-- Pagination -->
+            <div th:if="${khuyenMaiPage.totalPages > 1}" class="flex justify-center mt-8">
+                <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <a th:href="@{/admin/khuyen-mai(page=${currentPage - 1}, size=${khuyenMaiPage.size}, name=${name}, status=${status}, startDate=${startDate}, endDate=${endDate})}"
+                       th:classappend="${khuyenMaiPage.first ? 'pointer-events-none text-gray-300 bg-gray-100' : 'text-gray-500 hover:bg-gray-50'}"
+                       class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    <a th:each="i : ${#numbers.sequence(0, khuyenMaiPage.totalPages - 1)}"
+                       th:href="@{/admin/khuyen-mai(page=${i}, size=${khuyenMaiPage.size}, name=${name}, status=${status}, startDate=${startDate}, endDate=${endDate})}"
+                       th:classappend="${i == currentPage ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'}"
+                       class="relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                       th:text="${i + 1}">
+                    </a>
+                    <a th:href="@{/admin/khuyen-mai(page=${currentPage + 1}, size=${khuyenMaiPage.size}, name=${name}, status=${status}, startDate=${startDate}, endDate=${endDate})}"
+                       th:classappend="${khuyenMaiPage.last ? 'pointer-events-none text-gray-300 bg-gray-100' : 'text-gray-500 hover:bg-gray-50'}"
+                       class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </nav>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Function to set filter values based on URL parameters
+        function setFilterValuesFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            document.getElementById('name').value = params.get('name') || '';
+            document.getElementById('status').value = params.get('status') || '';
+            document.getElementById('startDate').value = params.get('startDate') || '';
+            document.getElementById('endDate').value = params.get('endDate') || '';
+        }
+
+        // Handle form submission for filtering
+        document.querySelector('form[th\:action="@{/admin/khuyen-mai}"]').addEventListener('submit', function(event) {
+            // event.preventDefault(); // Prevent default form submission as it is already a GET form
+            const params = new URLSearchParams(new FormData(this));
+            params.set('page', '0'); // Reset to first page on new filter
+            params.set('size', '3'); // Ensure size is always present
+            window.location.href = window.location.pathname + '?' + params.toString();
+        });
+
+        // Handle Reset button
+        document.querySelector('a[th\:href="@{/admin/khuyen-mai(page=0, size=3)}"]').addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default anchor behavior
+            window.location.href = this.href; // Navigate to the reset URL
+        });
+
+        // Initialize filter form fields from URL on page load
+        setFilterValuesFromURL();
+    });
+</script>
 </body>
 </html>

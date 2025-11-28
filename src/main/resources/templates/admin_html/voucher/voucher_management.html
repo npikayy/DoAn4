@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý Voucher</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/styles.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 </head>
@@ -130,7 +131,6 @@
                     </div>
                     
 
-
                     <div class="mt-6 text-right">
                         <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition">
                             <i class="fas fa-plus-circle mr-2"></i>Tạo Voucher Đổi Điểm
@@ -153,7 +153,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
                             <label for="voucherTypeFilter" class="block text-sm font-medium text-gray-700">Loại Voucher</label>
-                            <select id="voucherTypeFilter" name="voucherType" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            <select id="voucherTypeFilter" name="voucherType" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" th:value="${voucherType}">
                                 <option value="">Tất cả</option>
                                 <option value="PERCENTAGE" th:selected="${voucherType == 'PERCENTAGE'}">Giảm theo %</option>
                                 <option value="AMOUNT" th:selected="${voucherType == 'AMOUNT'}">Giảm số tiền</option>
@@ -161,7 +161,7 @@
                         </div>
                         <div>
                             <label for="statusFilter" class="block text-sm font-medium text-gray-700">Trạng thái</label>
-                            <select id="statusFilter" name="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            <select id="statusFilter" name="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" th:value="${status}">
                                 <option value="">Tất cả</option>
                                 <option value="ACTIVE" th:selected="${status == 'ACTIVE'}">Active</option>
                                 <option value="USED" th:selected="${status == 'USED'}">Used</option>
@@ -170,7 +170,7 @@
                         </div>
                         <div>
                             <label for="userFilter" class="block text-sm font-medium text-gray-700">Người dùng</label>
-                            <select id="userFilter" name="userId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            <select id="userFilter" name="userId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" th:value="${userId}">
                                 <option value="">Tất cả</option>
                                 <option th:each="user : ${userList}" th:value="${user.user_id}" th:text="${user.email}" th:selected="${user.user_id == userId}"></option>
                             </select>
@@ -190,10 +190,13 @@
                         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
                             <i class="fas fa-filter mr-2"></i> Lọc
                         </button>
-                        <a th:href="@{/admin/vouchers}" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">
+                        <a th:href="@{/admin/vouchers(page=0, size=9)}" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">
                             <i class="fas fa-sync-alt mr-2"></i> Đặt lại
                         </a>
                     </div>
+                    <!-- Hidden fields for page and size -->
+                    <input type="hidden" name="page" th:value="${currentPage}" />
+                    <input type="hidden" name="size" th:value="${voucherPage.size}" />
                 </form>
             </div>
         </div>
@@ -201,19 +204,19 @@
         <div class="bg-white p-6 rounded-lg shadow-sm">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-semibold">Danh sách Voucher</h2>
-                <div class="text-sm text-gray-500" th:text="'Tổng số: ' + ${vouchers.size()}"></div>
+                <div class="text-sm text-gray-500" th:text="'Tổng số: ' + ${voucherPage.totalElements}"></div>
             </div>
 
-            <div th:if="${vouchers.isEmpty()}" class="text-center py-12">
+            <div th:if="${voucherPage.empty}" class="text-center py-12">
                 <div class="flex flex-col items-center justify-center text-gray-400">
                     <i class="fas fa-ticket-alt text-4xl mb-3"></i>
                     <p class="text-lg">Chưa có voucher nào</p>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" th:unless="${vouchers.isEmpty()}">
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" th:unless="${voucherPage.empty}">
                 <!-- Voucher Card -->
-                <div th:each="v : ${vouchers}" class="relative bg-white p-5 rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div th:each="v : ${voucherPage.content}" class="relative bg-white p-5 rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="flex justify-between items-start">
                         <div>
                             <div class="text-xs font-bold uppercase text-indigo-600" th:text="${v.voucherType == 'PERCENTAGE' ? 'Voucher Giảm giá %' : 'Voucher Giảm tiền'}"></div>
@@ -256,6 +259,28 @@
                     </div>
                     <div class="absolute -bottom-4 -right-4 w-16 h-16 bg-indigo-100 rounded-full opacity-50"></div>
                 </div>
+            </div>
+
+            <!-- Pagination -->
+            <div th:if="${voucherPage.totalPages > 1}" class="flex justify-center mt-8">
+                <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <a th:href="@{/admin/vouchers(page=${currentPage - 1}, size=${voucherPage.size}, voucherType=${voucherType}, status=${status}, userId=${userId}, expiryDateStart=${expiryDateStart}, expiryDateEnd=${expiryDateEnd})}"
+                       th:classappend="${voucherPage.first ? 'pointer-events-none text-gray-300 bg-gray-100' : 'text-gray-500 hover:bg-gray-50'}"
+                       class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    <a th:each="i : ${#numbers.sequence(0, voucherPage.totalPages - 1)}"
+                       th:href="@{/admin/vouchers(page=${i}, size=${voucherPage.size}, voucherType=${voucherType}, status=${status}, userId=${userId}, expiryDateStart=${expiryDateStart}, expiryDateEnd=${expiryDateEnd})}"
+                       th:classappend="${i == currentPage ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'}"
+                       class="relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                       th:text="${i + 1}">
+                    </a>
+                    <a th:href="@{/admin/vouchers(page=${currentPage + 1}, size=${voucherPage.size}, voucherType=${voucherType}, status=${status}, userId=${userId}, expiryDateStart=${expiryDateStart}, expiryDateEnd=${expiryDateEnd})}"
+                       th:classappend="${voucherPage.last ? 'pointer-events-none text-gray-300 bg-gray-100' : 'text-gray-500 hover:bg-gray-50'}"
+                       class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </nav>
             </div>
         </div>
 
@@ -308,6 +333,16 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     $(document).ready(function() {
+        // Function to get current URL parameters
+        function getFilterParams() {
+            const params = new URLSearchParams(window.location.search);
+            const filterParams = {};
+            for (const [key, value] of params.entries()) {
+                filterParams[key] = value;
+            }
+            return filterParams;
+        }
+
         // Set min date for expiry date input
         var today = new Date().toISOString().split('T')[0];
         $('#ngayHetHan').attr('min', today);
@@ -322,23 +357,22 @@
             var giaTriGiamInput = $('#giaTriGiam');
             var discountUnit = $('#discount-unit');
 
-            // Clear previous input value and event listeners
             giaTriGiamInput.val('');
             giaTriGiamInput.off('input');
 
             if (voucherType === 'PERCENTAGE') {
                 discountUnit.text('%');
                 giaTriGiamInput.on('input', function(e) {
-                    var value = e.target.value.replace(/[^0-9]/g, ''); // Allow only numbers
+                    var value = e.target.value.replace(/[^0-9]/g, '');
                     if (parseInt(value, 10) > 100) {
-                        value = '100'; // Cap at 100
+                        value = '100';
                     }
                     e.target.value = value;
                 });
             } else { // AMOUNT
                 discountUnit.text('VNĐ');
                 giaTriGiamInput.on('input', function(e) {
-                    var value = e.target.value.replace(/[^0-9]/g, ''); // Allow only numbers
+                    var value = e.target.value.replace(/[^0-9]/g, '');
                     if (value) {
                         e.target.value = parseInt(value, 10).toLocaleString('vi-VN');
                     } else {
@@ -348,30 +382,32 @@
             }
         }
 
-        // Initial setup
+        // Initial setup for add voucher form
         updateDiscountInput();
-
-        // Update on change
         $('#voucherType').on('change', function() {
             updateDiscountInput();
         });
 
+        // Toggle filter section
         $('#toggle-filter-btn').on('click', function() {
             $('#filter-section').toggleClass('hidden');
             $(this).find('i').toggleClass('fa-chevron-down fa-chevron-up');
         });
 
+        // Toggle add voucher section
         $('#toggle-add-voucher-btn').on('click', function() {
             $('#add-voucher-section').toggleClass('hidden');
             $(this).find('i').toggleClass('fa-chevron-down fa-chevron-up');
         });
 
+        // Update status button
         $('#update-status-btn').on('click', function() {
             var btn = $(this);
             btn.addClass('disabled opacity-75 cursor-not-allowed');
             btn.html('<i class="fas fa-spinner fa-spin mr-2"></i> Đang xử lý...');
         });
 
+        // Toggle add point voucher section
         $('#toggle-add-point-voucher-btn').on('click', function() {
             $('#add-point-voucher-section').toggleClass('hidden');
             $(this).find('i').toggleClass('fa-chevron-down fa-chevron-up');
@@ -382,23 +418,22 @@
             var giaTriGiamInput = $('#pointVoucherGiaTriGiam');
             var discountUnit = $('#point-discount-unit');
 
-            // Clear previous input value and event listeners
             giaTriGiamInput.val('');
             giaTriGiamInput.off('input');
 
             if (voucherType === 'PERCENTAGE') {
                 discountUnit.text('%');
                 giaTriGiamInput.on('input', function(e) {
-                    var value = e.target.value.replace(/[^0-9]/g, ''); // Allow only numbers
+                    var value = e.target.value.replace(/[^0-9]/g, '');
                     if (parseInt(value, 10) > 100) {
-                        value = '100'; // Cap at 100
+                        value = '100';
                     }
                     e.target.value = value;
                 });
             } else { // AMOUNT
                 discountUnit.text('VNĐ');
                 giaTriGiamInput.on('input', function(e) {
-                    var value = e.target.value.replace(/[^0-9]/g, ''); // Allow only numbers
+                    var value = e.target.value.replace(/[^0-9]/g, '');
                     if (value) {
                         e.target.value = parseInt(value, 10).toLocaleString('vi-VN');
                     } else {
@@ -413,6 +448,30 @@
         $('#pointVoucherType').on('change', function() {
             updatePointDiscountInput();
         });
+
+        // Handle filter form submission
+        $('form[th\:action="@{/admin/vouchers}"]').on('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+            const params = new URLSearchParams(new FormData(this));
+            // Reset page to 0 when applying new filters
+            params.set('page', '0');
+            params.set('size', '9'); // Set default size for vouchers
+            window.location.href = window.location.pathname + '?' + params.toString();
+        });
+
+        // Initialize filter form fields from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        $('#voucherTypeFilter').val(urlParams.get('voucherType') || '');
+        $('#statusFilter').val(urlParams.get('status') || '');
+        $('#userFilter').val(urlParams.get('userId') || '');
+        $('#expiryDateStart').val(urlParams.get('expiryDateStart') || '');
+        $('#expiryDateEnd').val(urlParams.get('expiryDateEnd') || '');
+
+        // Open filter section if any filters are applied
+        if (urlParams.toString().length > 0 && !urlParams.get('page')) {
+            $('#filter-section').removeClass('hidden');
+            $('#toggle-filter-btn').find('i').removeClass('fa-chevron-down').addClass('fa-chevron-up');
+        }
     });
 </script>
 </body>

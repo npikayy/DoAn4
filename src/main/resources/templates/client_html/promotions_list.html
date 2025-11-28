@@ -16,7 +16,7 @@
 <section class="relative h-96 flex items-center justify-center text-white">
     <div class="absolute inset-0">
         <img src="/img/banner.jpg" alt="Scenic landscape" class="w-full h-full object-cover"/>
-        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+        <div class="absolute inset-0 bg-black/20"></div>
     </div>
     <div class="relative z-10 text-center p-4">
         <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight leading-tight">Ưu Đãi Đặc Biệt</h1>
@@ -32,10 +32,26 @@
         <span class="font-semibold text-gray-700">Khuyến mãi</span>
     </nav>
 
+    <!-- Status Filter Navbar -->
+    <div class="flex justify-center space-x-4 mb-12">
+        <a th:href="@{/Client/khuyen-mai(page=0, size=4, status='')}"
+           th:classappend="${status == null || status == '' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}"
+           class="px-5 py-2 rounded-lg font-semibold transition-colors duration-200 hover:bg-indigo-500 hover:text-white">Tất cả</a>
+        <a th:href="@{/Client/khuyen-mai(page=0, size=4, status='upcoming')}"
+           th:classappend="${status == 'upcoming' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}"
+           class="px-5 py-2 rounded-lg font-semibold transition-colors duration-200 hover:bg-indigo-500 hover:text-white">Sắp diễn ra</a>
+        <a th:href="@{/Client/khuyen-mai(page=0, size=4, status='ongoing')}"
+           th:classappend="${status == 'ongoing' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}"
+           class="px-5 py-2 rounded-lg font-semibold transition-colors duration-200 hover:bg-indigo-500 hover:text-white">Đang diễn ra</a>
+        <a th:href="@{/Client/khuyen-mai(page=0, size=4, status='finished')}"
+           th:classappend="${status == 'finished' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}"
+           class="px-5 py-2 rounded-lg font-semibold transition-colors duration-200 hover:bg-indigo-500 hover:text-white">Đã kết thúc</a>
+    </div>
+
     <!-- Promotions List -->
-    <div th:if="${promotions != null and !promotions.isEmpty()}" class="space-y-12">
+    <div th:if="${!promotionPage.empty}" class="space-y-12">
         <!-- Horizontal Promotion Card -->
-        <div th:each="promo : ${promotions}"
+        <div th:each="promo : ${promotionPage.content}"
              class="group relative grid grid-cols-1 md:grid-cols-3 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 ease-in-out bg-white overflow-hidden">
             <!-- Image Section -->
             <div class="relative md:col-span-1 h-64 md:h-auto">
@@ -87,12 +103,34 @@
     </div>
 
     <!-- No Promotions Message -->
-    <div th:if="${promotions == null or promotions.isEmpty()}" class="text-center py-24">
+    <div th:if="${promotionPage.empty}" class="text-center py-24">
         <div class="flex flex-col items-center justify-center">
             <i class="far fa-paper-plane text-7xl mb-6 text-indigo-400"></i>
             <h3 class="text-3xl font-semibold text-gray-800 mb-3">Chưa có chuyến phiêu lưu nào!</h3>
             <p class="text-lg text-gray-500">Các ưu đãi mới đang được chuẩn bị. Vui lòng quay lại sau nhé!</p>
         </div>
+    </div>
+
+    <!-- Pagination -->
+    <div th:if="${promotionPage.totalPages > 1}" class="flex justify-center mt-8">
+        <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+            <a th:href="@{/Client/khuyen-mai(page=${currentPage - 1}, size=${promotionPage.size}, status=${status})}"
+               th:classappend="${promotionPage.first ? 'pointer-events-none text-gray-300 bg-gray-100' : 'text-gray-500 hover:bg-gray-50'}"
+               class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            <a th:each="i : ${#numbers.sequence(0, promotionPage.totalPages - 1)}"
+               th:href="@{/Client/khuyen-mai(page=${i}, size=${promotionPage.size}, status=${status})}"
+               th:classappend="${i == currentPage ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'}"
+               class="relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+               th:text="${i + 1}">
+            </a>
+            <a th:href="@{/Client/khuyen-mai(page=${currentPage + 1}, size=${promotionPage.size}, status=${status})}"
+               th:classappend="${promotionPage.last ? 'pointer-events-none text-gray-300 bg-gray-100' : 'text-gray-500 hover:bg-gray-50'}"
+               class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </nav>
     </div>
 </main>
 

@@ -16,7 +16,7 @@ public class VoucherService {
     private final VoucherRepository voucherRepository;
 
 
-    public List<vouchers> searchVouchers(String voucherType, String status, String userId, Date expiryDateStart, Date expiryDateEnd) {
+    public org.springframework.data.domain.Page<vouchers> searchVouchers(String voucherType, String status, String userId, Date expiryDateStart, Date expiryDateEnd, org.springframework.data.domain.Pageable pageable) {
         Specification<vouchers> spec = Specification.where(null);
 
         if (voucherType != null && !voucherType.isEmpty()) {
@@ -39,7 +39,7 @@ public class VoucherService {
             spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("ngayHetHan"), expiryDateEnd));
         }
 
-        return voucherRepository.findAll(spec);
+        return voucherRepository.findAll(spec, pageable);
     }
 
     public List<vouchers> getAllVouchers() {

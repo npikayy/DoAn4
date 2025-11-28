@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản Lý Tour - Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/css/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
@@ -44,16 +43,18 @@
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-3">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-800">Quản Lý Tour Du Lịch</h1>
-                    <p class="text-gray-600 mt-1">Danh sách các tour du lịch hiện có trong hệ thống</p>
+                    <p class="text-gray-600 mt-1">
+                        <span th:text="${tourPage.totalElements}"></span> tour được tìm thấy
+                    </p>
                 </div>
                 <div class="mt-4 md:mt-0 flex gap-3">
                     <a href="/admin/tours/addTourDomestic" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors duration-300 shadow-sm flex items-center">
                         <i class="fas fa-map-marked-alt mr-2"></i>
-                        Tour Trong Nước
+                        Thêm Tour Trong Nước
                     </a>
                     <a href="/admin/tours/addTourInternational" class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors duration-300 shadow-sm flex items-center">
                         <i class="fas fa-globe-americas mr-2"></i>
-                        Tour Nước Ngoài
+                        Thêm Tour Nước Ngoài
                     </a>
                 </div>
             </div>
@@ -148,9 +149,9 @@
                         <div class="relative">
                             <select id="filterLocation" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 filter-input appearance-none">
                                 <option value="">Tất cả địa điểm</option>
-                                <option th:each="location : ${uniqueLocations}"
-                                        th:value="${location}"
-                                        th:text="${location}"></option>
+                                <option th:each="loc : ${uniqueLocations}"
+                                        th:value="${loc}"
+                                        th:text="${loc}"></option>
                             </select>
                             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                 <i class="fas fa-chevron-down text-gray-400"></i>
@@ -218,9 +219,9 @@
             </div>
 
             <!-- Tours Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" th:if="${tours != null}">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" th:if="${!tourPage.empty}">
                 <!-- Tour Card -->
-                <div th:each="tour : ${tours}"
+                <div th:each="tour : ${tourPage.content}"
                      th:with="promotion=${tour.getDiscount_promotion()},
                               isPromotionActive=${promotion != null and #dates.createNow().after(promotion.ngayBatDau) and #dates.createNow().before(promotion.ngayKetThuc)},
                               isPromotionUpcoming=${promotion != null and #dates.createNow().before(promotion.ngayBatDau)}"
@@ -358,9 +359,9 @@
                         </div>
                 </div>
             </div>
-    </main>
+            
             <!-- Empty State -->
-            <div id="noResultsMessage" class="hidden bg-white rounded-xl shadow-sm p-12 text-center">
+            <div id="noResultsMessage" th:if="${tourPage.empty}" class="bg-white rounded-xl shadow-sm p-12 text-center">
                 <div class="max-w-md mx-auto">
                     <i class="fas fa-compass text-5xl text-gray-300 mb-4"></i>
                     <h3 class="text-lg font-medium text-gray-700 mb-2">Không có tour nào được tìm thấy</h3>
@@ -371,15 +372,34 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Pagination -->
+            <div th:if="${tourPage.totalPages > 1}" class="flex justify-center mt-8">
+                <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <a th:href="@{/admin/tours(page=${currentPage - 1}, size=${tourPage.size}, keyword=${keyword}, tourType=${tourType}, region=${region}, priceRange=${priceRange}, location=${location}, departureStatus=${departureStatus}, promotionStatus=${promotionStatus}, rating=${rating}, redeemableWithPoints=${redeemableWithPoints})}"
+                       th:classappend="${tourPage.first ? 'pointer-events-none text-gray-300 bg-gray-100' : 'text-gray-500 hover:bg-gray-50'}"
+                       class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    <a th:each="i : ${#numbers.sequence(0, tourPage.totalPages - 1)}"
+                       th:href="@{/admin/tours(page=${i}, size=${tourPage.size}, keyword=${keyword}, tourType=${tourType}, region=${region}, priceRange=${priceRange}, location=${location}, departureStatus=${departureStatus}, promotionStatus=${promotionStatus}, rating=${rating}, redeemableWithPoints=${redeemableWithPoints})}"
+                       th:classappend="${i == currentPage ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'}"
+                       class="relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                       th:text="${i + 1}">
+                    </a>
+                    <a th:href="@{/admin/tours(page=${currentPage + 1}, size=${tourPage.size}, keyword=${keyword}, tourType=${tourType}, region=${region}, priceRange=${priceRange}, location=${location}, departureStatus=${departureStatus}, promotionStatus=${promotionStatus}, rating=${rating}, redeemableWithPoints=${redeemableWithPoints})}"
+                       th:classappend="${tourPage.last ? 'pointer-events-none text-gray-300 bg-gray-100' : 'text-gray-500 hover:bg-gray-50'}"
+                       class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </nav>
+            </div>
         </div>
     </main>
 </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const applyBtn = document.getElementById('applyFilters');
-        const resetBtn = document.getElementById('resetFilters');
-
         // Function to set filter values based on URL parameters
         function setFiltersFromURL() {
             const params = new URLSearchParams(window.location.search);
@@ -395,7 +415,7 @@
         }
 
         // Apply filters when the button is clicked
-        applyBtn.addEventListener('click', function() {
+        document.getElementById('applyFilters').addEventListener('click', function() {
             const params = new URLSearchParams();
 
             const keyword = document.getElementById('searchTourName').value;
@@ -425,12 +445,17 @@
             const redeemableWithPoints = document.getElementById('filterRedeemableWithPoints').value;
             if (redeemableWithPoints) params.append('redeemableWithPoints', redeemableWithPoints);
 
+            // Always reset page to 0 and ensure size is present when applying new filters
+            params.append('page', '0'); 
+            params.append('size', '8'); 
+
             window.location.href = window.location.pathname + '?' + params.toString();
         });
 
         // Reset filters
-        resetBtn.addEventListener('click', function() {
-            window.location.href = window.location.pathname;
+        document.getElementById('resetFilters').addEventListener('click', function() {
+            // Reset filters and navigate to the first page with default size
+            window.location.href = window.location.pathname + '?page=0&size=8';
         });
 
         // Set initial state on page load

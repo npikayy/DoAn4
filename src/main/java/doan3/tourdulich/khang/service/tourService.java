@@ -63,6 +63,28 @@ public class tourService {
         return tours;
     }
 
+    public org.springframework.data.domain.Page<tours> findToursPaginated(
+            String keyword,
+            Boolean isAbroad,
+            String tourType,
+            String duration,
+            String transportation,
+            String priceRange,
+            String location,
+            String region,
+            Boolean hasPromotion,
+            String promotionStatus,
+            String startDate,
+            String departureStatus,
+            String rating,
+            Boolean redeemableWithPoints,
+            org.springframework.data.domain.Pageable pageable) {
+
+        Specification<tours> spec = TourSpecifications.withFilters(keyword, isAbroad, tourType, duration, transportation, priceRange, location, region, hasPromotion, promotionStatus, startDate, departureStatus, rating, redeemableWithPoints);
+
+        return tourRepo.findAll(spec, pageable);
+    }
+
     public List<tours> getAllTours() {
         return tourRepo.findAll();
     }

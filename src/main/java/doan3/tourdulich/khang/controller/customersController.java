@@ -27,15 +27,23 @@ public class customersController {
                                   @RequestParam(required = false) String searchQuery,
                                   @RequestParam(required = false) String gender,
                                   @RequestParam(required = false) String ageRange,
-                                  @RequestParam(required = false) String registrationDate) {
+                                  @RequestParam(required = false) String registrationDate,
+                                  @RequestParam(defaultValue = "0") int page,
+                                  @RequestParam(defaultValue = "4") int size) {
         modelAndView.setViewName("admin_html/customer/customers_management");
-        modelAndView.addObject("customers", userService.findFilteredUsers(searchQuery, gender, ageRange, registrationDate));
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        org.springframework.data.domain.Page customerPage = userService.findFilteredUsers(searchQuery, gender, ageRange, registrationDate, pageable);
+        modelAndView.addObject("customerPage", customerPage);
         
         // Add filter params to model to set the state of the inputs on the frontend
         modelAndView.addObject("searchQuery", searchQuery);
         modelAndView.addObject("gender", gender);
         modelAndView.addObject("ageRange", ageRange);
         modelAndView.addObject("registrationDate", registrationDate);
+
+        // Add pagination data
+        modelAndView.addObject("currentPage", page);
+        modelAndView.addObject("totalPages", customerPage.getTotalPages());
         
         return modelAndView;
     }

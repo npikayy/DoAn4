@@ -28,7 +28,7 @@ public class KhuyenMaiService {
 
 
 
-    public List<KhuyenMai> searchKhuyenMai(String name, String status, Date startDate, Date endDate) {
+    public org.springframework.data.domain.Page<KhuyenMai> searchKhuyenMai(String name, String status, Date startDate, Date endDate, org.springframework.data.domain.Pageable pageable) {
         Specification<KhuyenMai> spec = Specification.where(null);
 
         if (name != null && !name.isEmpty()) {
@@ -54,7 +54,18 @@ public class KhuyenMaiService {
             }
         }
 
-        return khuyenMaiRepository.findAll(spec);
+        return khuyenMaiRepository.findAll(spec, pageable);
+    }
+
+    public org.springframework.data.domain.Page<KhuyenMai> findActivePromotionsPaginated(org.springframework.data.domain.Pageable pageable) {
+        Date now = new Date();
+        Specification<KhuyenMai> spec = Specification.where((root, query, cb) ->
+            cb.and(
+                cb.lessThanOrEqualTo(root.get("ngayBatDau"), now),
+                cb.greaterThanOrEqualTo(root.get("ngayKetThuc"), now)
+            )
+        );
+        return khuyenMaiRepository.findAll(spec, pageable);
     }
 
     public List<KhuyenMai> getAllKhuyenMai() {

@@ -129,9 +129,9 @@ public class userService implements UserDetailsService {
         return userRepository.findAll();
     }
 
-    public List<users> findFilteredUsers(String searchQuery, String gender, String ageRange, String registrationDate) {
+    public Page<users> findFilteredUsers(String searchQuery, String gender, String ageRange, String registrationDate, org.springframework.data.domain.Pageable pageable) {
         Specification<users> spec = UserSpecifications.withFilters(searchQuery, gender, ageRange, registrationDate);
-        return userRepository.findAll(spec);
+        return userRepository.findAll(spec, pageable);
     }
 
     public void updateUserInfo(String user_id,String full_name,String phone_number,String address,String gender,String date_of_birth) {

@@ -39,13 +39,18 @@ public class KhuyenMaiAdminController {
                                           @RequestParam(required = false) String name,
                                           @RequestParam(required = false) String status,
                                           @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
-                                          @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate) {
-        List<KhuyenMai> khuyenMaiList = khuyenMaiService.searchKhuyenMai(name, status, startDate, endDate);
-        model.addAttribute("khuyenMaiList", khuyenMaiList);
+                                          @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate,
+                                          @RequestParam(defaultValue = "0") int page,
+                                          @RequestParam(defaultValue = "3") int size) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        org.springframework.data.domain.Page<KhuyenMai> khuyenMaiPage = khuyenMaiService.searchKhuyenMai(name, status, startDate, endDate, pageable);
+        model.addAttribute("khuyenMaiPage", khuyenMaiPage);
         model.addAttribute("name", name);
         model.addAttribute("status", status);
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", khuyenMaiPage.getTotalPages());
         return "admin_html/khuyen_mai_management";
     }
 

@@ -5,21 +5,15 @@ import doan3.tourdulich.khang.dto.ChatResponse;
 import doan3.tourdulich.khang.entity.chatMessage;
 import doan3.tourdulich.khang.entity.tours;
 import doan3.tourdulich.khang.entity.KhuyenMai; // Import KhuyenMai entity
-import doan3.tourdulich.khang.repository.chatMessageRepo;
-import doan3.tourdulich.khang.repository.tourPicRepo;
-import doan3.tourdulich.khang.repository.tourRepo;
-import doan3.tourdulich.khang.repository.KhuyenMaiRepository; // Import KhuyenMaiRepository
+import doan3.tourdulich.khang.entity.users;
+import doan3.tourdulich.khang.repository.*;
 import doan3.tourdulich.khang.service.GeminiApiService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -43,7 +37,12 @@ public class ChatbotService {
     @Autowired
     private chatMessageRepo chatMessageRepo;
 
-
+    @Autowired
+    private RankRepository rankRepository; // New dependency for ranks
+    @Autowired
+    private tourBookingRepo tourBookingRepo; // New dependency for user tour data
+    @Autowired
+    private userRepo userRepo;
     @Value("${ai.chatbot.enabled}")
     private boolean enabled;
 
@@ -75,8 +74,8 @@ public class ChatbotService {
             List<KhuyenMai> relevantPromotions = searchPromotionsDirectly(request.getMessage());
             log.info("Found {} relevant promotions from direct DB search", relevantPromotions.size());
 
-            // Step 1.6: RAG - Search for relevant ranks directly from predefined data
-            List<Map<String, Object>> relevantRanks = searchPredefinedRanks(request.getMessage());
+            // Step 1.6: RAG - Search for relevant ranks directly from predefined data, potentially personalized
+            List<Map<String, Object>> relevantRanks = searchPredefinedRanks(request.getMessage(), request.getUserId());
             log.info("Found {} relevant ranks from predefined data", relevantRanks.size());
 
             // Step 2: Build context
@@ -164,24 +163,115 @@ public class ChatbotService {
         return resultPromotions.stream().distinct().limit(3).collect(Collectors.toList()); // Limit promotions
     }
 
-    private List<Map<String, Object>> searchPredefinedRanks(String query) {
-        List<String> keywords = extractKeywords(query);
+    private List<Map<String, Object>> searchPredefinedRanks(String query, String userId) {
+        String lowerCaseQuery = query.toLowerCase();
         List<Map<String, Object>> resultRanks = new ArrayList<>();
 
-        // Define ranks directly within the method
+        // Define ranks directly within the method, including more detailed info
         List<Map<String, Object>> allRanks = List.of(
-                Map.of("name", "Đồng", "tourThreshold", 1, "discount", 5),
-                Map.of("name", "Bạc", "tourThreshold", 10, "discount", 15),
-                Map.of("name", "Vàng", "tourThreshold", 20, "discount", 25)
+                Map.of("name", "Đồng", "tourThreshold", 1, "spendThreshold", 0L, "discount", 5, "benefits", "Ưu tiên hỗ trợ khách hàng, thông tin tour mới nhất, đổi 3 voucher/tháng", "description", "Hoàn thành ít nhất 1 tour để đạt hạng Đồng."),
+                Map.of("name", "Bạc", "tourThreshold", 10, "spendThreshold", 35000000L, "discount", 5, "benefits", "Giảm giá 5% cho tất cả các tour, ưu tiên chọn chỗ ngồi, quà tặng sinh nhật, truy cập sớm tour mới, đổi 5 voucher/tháng, đổi 1 tour/tháng", "description", "Hoàn thành ít nhất 10 tour và tổng chi tiêu 35 triệu VNĐ để đạt hạng Bạc."),
+                Map.of("name", "Vàng", "tourThreshold", 20, "spendThreshold", 80000000L, "discount", 15, "benefits", "Giảm giá 15% cho tất cả các tour, hỗ trợ khách hàng 24/7, nâng hạng phòng khách sạn miễn phí, ưu đãi độc quyền từ đối tác, mời tham gia sự kiện VIP, đổi 10 voucher/tháng, đổi 2 tour/tháng", "description", "Hoàn thành ít nhất 20 tour và tổng chi tiêu 80 triệu VNĐ để đạt hạng Vàng.")
         );
 
-        for (String keyword : keywords) {
-            for (Map<String, Object> rank : allRanks) {
-                if (((String) rank.get("name")).toLowerCase().contains(keyword.toLowerCase())) {
-                    resultRanks.add(rank);
+        // Keywords that broadly indicate a question about ranks
+        List<String> generalRankKeywords = List.of(
+            "hạng", "cấp bậc", "rank", "điểm", "lợi ích", "ưu đãi", "quyền lợi", "thành viên", "chương trình", "của tôi", "của bạn"
+        );
+
+        boolean isGeneralRankQuestion = generalRankKeywords.stream()
+            .anyMatch(lowerCaseQuery::contains);
+
+        // --- Personalized Rank Information ---
+        if (userId != null && !userId.isEmpty() && (isGeneralRankQuestion || lowerCaseQuery.contains("của tôi") || lowerCaseQuery.contains("của bạn") || lowerCaseQuery.contains("tôi đang ở hạng nào"))) {
+            Optional<users> userOptional = userRepo.findById(userId); // Need userRepository
+            if (userOptional.isPresent()) {
+                doan3.tourdulich.khang.entity.users user = userOptional.get();
+                doan3.tourdulich.khang.entity.Rank userRank = rankRepository.findByUser_id(user.getUser_id());
+                
+                if (userRank == null) {
+                    // This scenario should ideally be handled during user creation
+                    // For now, if no rank, assume basic and inform
+                    Map<String, Object> noRankInfo = new HashMap<>();
+                    noRankInfo.put("type", "personal_no_rank");
+                    noRankInfo.put("currentRankName", "Chưa có");
+                    noRankInfo.put("currentPoints", 0);
+                    noRankInfo.put("completedTours", 0);
+                    noRankInfo.put("totalSpend", 0L);
+                    noRankInfo.put("message", "Bạn chưa có hạng thành viên. Hãy hoàn thành ít nhất 1 tour để bắt đầu tích lũy hạng.");
+                    resultRanks.add(noRankInfo);
+                } else {
+                    int completedTours = tourBookingRepo.countByUser_idAndStatus(user.getUser_id(), "Completed");
+                    Integer totalSpendObj = tourBookingRepo.findTotalSpendByUserIdAndStatus(user.getUser_id(), "Completed");
+                    long totalSpend = (totalSpendObj != null) ? totalSpendObj : 0L;
+
+                    Map<String, Object> userRankInfo = new HashMap<>();
+                    userRankInfo.put("type", "personal_rank");
+                    userRankInfo.put("currentRankName", userRank.getRank());
+                    userRankInfo.put("currentPoints", userRank.getPoints());
+                    userRankInfo.put("completedTours", completedTours);
+                    userRankInfo.put("totalSpend", totalSpend);
+                    
+                    String nextRankName = null;
+                    int toursNeeded = 0;
+                    long spendNeeded = 0;
+                    double currentDiscount = 0;
+                    String currentBenefits = "";
+                    String currentDescription = "";
+
+                    // Find current rank benefits and next rank requirements
+                    for (Map<String, Object> rankDef : allRanks) {
+                        if (userRank.getRank().equals(rankDef.get("name"))) {
+                            currentDiscount = (Integer) rankDef.get("discount");
+                            currentBenefits = (String) rankDef.get("benefits");
+                            currentDescription = (String) rankDef.get("description");
+                        }
+                    }
+
+                    if (userRank.getRank().equals("Đồng")) {
+                        nextRankName = "Bạc";
+                        Map<String, Object> silverRank = allRanks.stream().filter(r -> r.get("name").equals("Bạc")).findFirst().orElse(null);
+                        if (silverRank != null) {
+                            toursNeeded = Math.max(0, (Integer)silverRank.get("tourThreshold") - completedTours);
+                            spendNeeded = Math.max(0, (Long)silverRank.get("spendThreshold") - totalSpend);
+                        }
+                    } else if (userRank.getRank().equals("Bạc")) {
+                        nextRankName = "Vàng";
+                        Map<String, Object> goldRank = allRanks.stream().filter(r -> r.get("name").equals("Vàng")).findFirst().orElse(null);
+                        if (goldRank != null) {
+                            toursNeeded = Math.max(0, (Integer)goldRank.get("tourThreshold") - completedTours);
+                            spendNeeded = Math.max(0, (Long)goldRank.get("spendThreshold") - totalSpend);
+                        }
+                    } else if (userRank.getRank().equals("Vàng")) {
+                        nextRankName = "Bạn đã đạt hạng cao nhất!";
+                    }
+
+                    userRankInfo.put("currentDiscount", currentDiscount);
+                    userRankInfo.put("currentBenefits", currentBenefits);
+                    userRankInfo.put("currentDescription", currentDescription);
+                    userRankInfo.put("nextRankName", nextRankName);
+                    userRankInfo.put("toursNeededForNextRank", toursNeeded);
+                    userRankInfo.put("spendNeededForNextRank", spendNeeded);
+                    
+                    resultRanks.add(userRankInfo); // Add personalized info
                 }
             }
         }
+        // --- End Personalized Rank Information ---
+
+        // If not a personalized query or userId is null/empty, proceed with general rank definitions search
+        if (userId == null || userId.isEmpty() || resultRanks.isEmpty() || !lowerCaseQuery.contains("của tôi") && !lowerCaseQuery.contains("của bạn")) {
+            if (isGeneralRankQuestion) {
+                resultRanks.addAll(allRanks); // Return all definitions
+            } else {
+                for (Map<String, Object> rank : allRanks) {
+                    if (((String) rank.get("name")).toLowerCase().contains(lowerCaseQuery) || rank.get("description").toString().toLowerCase().contains(lowerCaseQuery)) {
+                        resultRanks.add(rank);
+                    }
+                }
+            }
+        }
+        
         return resultRanks.stream().distinct().collect(Collectors.toList());
     }
 
@@ -261,12 +351,37 @@ public class ChatbotService {
 
         if (!ranks.isEmpty()) {
             context.append("Thông tin về các hạng thành viên:\n\n");
-            for (int i = 0; i < ranks.size(); i++) {
-                Map<String, Object> rank = ranks.get(i);
-                context.append("Hạng ").append(i + 1).append(":\n");
-                context.append("Tên: ").append(rank.get("name") != null ? rank.get("name") : "Không rõ").append(". ");
-                context.append("Số tour cần hoàn thành: ").append(rank.get("tourThreshold")).append(". ");
-                context.append("Ưu đãi: ").append(rank.get("discount")).append("% giảm giá tour.\n\n");
+            for (Map<String, Object> rank : ranks) {
+                if (rank.containsKey("type") && rank.get("type").equals("personal_rank")) {
+                    // Personalized user rank info
+                    context.append("THÔNG TIN HẠNG THÀNH VIÊN CỦA BẠN:\n");
+                    context.append("Hạng hiện tại: ").append(rank.get("currentRankName")).append(". ");
+                    context.append("Điểm tích lũy: ").append(rank.get("currentPoints")).append(" điểm. ");
+                    context.append("Số tour đã hoàn thành: ").append(rank.get("completedTours")).append(". ");
+                    context.append("Tổng chi tiêu: ").append(String.format("%,d", (Long)rank.get("totalSpend"))).append(" VNĐ. ");
+                    context.append("Mô tả hạng hiện tại: ").append(rank.get("currentDescription")).append(". ");
+                    context.append("Quyền lợi bạn đang có: ").append(rank.get("currentBenefits")).append(". ");
+                    context.append("Ưu đãi giảm giá tour hiện tại: ").append(rank.get("currentDiscount")).append("%.\n");
+
+                    if (!rank.get("currentRankName").equals("Vàng")) {
+                        context.append("Để lên hạng ").append(rank.get("nextRankName")).append(" bạn cần hoàn thành thêm ");
+                        context.append(rank.get("toursNeededForNextRank")).append(" tour và chi tiêu thêm ");
+                        context.append(String.format("%,d", (Long)rank.get("spendNeededForNextRank"))).append(" VNĐ.\n\n");
+                    } else {
+                        context.append("Bạn đã đạt hạng cao nhất. Chúc mừng!\n\n");
+                    }
+                } else if (rank.containsKey("type") && rank.get("type").equals("personal_no_rank")) {
+                    context.append("THÔNG TIN HẠNG THÀNH VIÊN CỦA BẠN:\n");
+                    context.append(rank.get("message")).append("\n\n");
+                }
+                else {
+                    // Generic rank definition
+                    context.append("Tên hạng: ").append(rank.get("name")).append(". ");
+                    context.append("Mô tả: ").append(rank.get("description")).append(" ");
+                    context.append("Yêu cầu số tour hoàn thành: ").append(rank.get("tourThreshold")).append(". ");
+                    context.append("Mức ưu đãi giảm giá tour: ").append(rank.get("discount")).append("%.\n");
+                    context.append("Quyền lợi: ").append(rank.get("benefits")).append(".\n\n");
+                }
             }
         }
 
@@ -300,7 +415,8 @@ public class ChatbotService {
         StringBuilder prompt = new StringBuilder();
 
         prompt.append("Bạn là trợ lý tư vấn du lịch thông minh của website tour du lịch Việt Nam.\n");
-        prompt.append("Nhiệm vụ: tư vấn và giới thiệu các tour, chương trình khuyến mãi và hệ thống hạng thành viên phù hợp. **Hãy sử dụng thông tin và các link chi tiết, bao gồm cả các thẻ `<img>` được cung cấp dưới đây để trả lời một cách chính xác và hữu ích. Nếu người dùng hỏi về hình ảnh, hãy trả về thẻ `<img>` từ السياق.** Trả lời ngắn gọn, thân thiện.\n\n");
+        prompt.append("Nhiệm vụ: tư vấn và giới thiệu các tour, chương trình khuyến mãi và hệ thống hạng thành viên phù hợp. **Hãy đặc biệt chú ý đến thông tin về các hạng thành viên được cung cấp trong phần 'THÔNG TIN LIÊN QUAN'. Sử dụng chi tiết về yêu cầu và quyền lợi của từng hạng để trả lời câu hỏi của người dùng một cách chính xác và đầy đủ. ");
+        prompt.append("Sử dụng thông tin và các link chi tiết, bao gồm cả các thẻ `<img>` được cung cấp dưới đây để trả lời một cách chính xác và hữu ích. Nếu người dùng hỏi về hình ảnh, hãy trả về thẻ `<img>` từ السياق.** Trả lời ngắn gọn, thân thiện.\n\n");
 
         if (!context.isEmpty()) {
             prompt.append("THÔNG TIN LIÊN QUAN:\n").append(context).append("\n");

@@ -138,7 +138,7 @@
                     <label for="filterLocation" class="font-semibold text-gray-700 mb-2 block">Địa điểm</label>
                     <select id="filterLocation" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 transition">
                         <option value="">Tất cả</option>
-                        <option th:each="location : ${uniqueLocations}" th:value="${location}" th:text="${location}"></option>
+                        <option th:each="loc : ${uniqueLocations}" th:value="${loc}" th:text="${loc}"></option>
                     </select>
                 </div>
 
@@ -191,18 +191,18 @@
         <div class="lg:w-3/4">
             <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
                 <h2 class="text-2xl font-bold text-gray-800">
-                    <span id="tourCount" th:text="${tours.size()}"></span> tour phù hợp với yêu cầu của bạn
+                    <span id="tourCount" th:text="${tourPage.totalElements}"></span> tour phù hợp với yêu cầu của bạn
                 </h2>
             </div>
 
             <!-- No Results Message (hidden by default) -->
-            <div id="noResultsMessage" class="hidden bg-gray-100 p-6 rounded-lg text-center text-gray-600 mb-6">
+            <div id="noResultsMessage" th:if="${tourPage.empty}" class="bg-gray-100 p-6 rounded-lg text-center text-gray-600 mb-6">
                 <i class="fas fa-exclamation-circle mr-2"></i> Không tìm thấy tour nào phù hợp với tiêu chí của bạn
             </div>
             <!-- Single Column Tour List -->
-            <div class="space-y-6">
+            <div class="space-y-6" th:unless="${tourPage.empty}">
                 <!-- Tour Card - Full Width -->
-                <div th:each="tour : ${tours}"
+                <div th:each="tour : ${tourPage.content}"
                      th:with="promotion=${tour.getDiscount_promotion()},
                               isPromotionActive=${promotion != null and #dates.createNow().after(promotion.ngayBatDau) and #dates.createNow().before(promotion.ngayKetThuc)},
                               isPromotionUpcoming=${promotion != null and #dates.createNow().before(promotion.ngayBatDau)}"
@@ -241,7 +241,7 @@
                             </div>
 
                             <!-- Duration Badge -->
-                            <div class="absolute bottom-4 bg-white left-4 bg-white/90 text-gray-800 px-3 py-1 rounded-full text-sm font-semibold shadow-sm">
+                            <div class="absolute bottom-4 bg-white left-4 bg-white/90 text-gray-800 px-3 py-1 text-sm font-semibold shadow-sm">
                                 <i class="fas fa-clock text-blue-500 mr-1"></i>
                                 <span th:text="${tour.tour_duration} + ' ngày ' + (${tour.tour_duration} - 1) + ' đêm'"></span>
                             </div>
@@ -350,7 +350,27 @@
                 </div>
             </div>
 
-            <!-- Pagination would go here if needed -->
+            <!-- Pagination -->
+            <div th:if="${tourPage.totalPages > 1}" class="flex justify-center mt-8">
+                <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <a th:href="@{/Client/ToursList(page=${currentPage - 1}, size=${tourPage.size}, keyword=${keyword}, isAbroad=${isAbroad}, duration=${duration}, transportation=${transportation}, priceRange=${priceRange}, location=${location}, region=${region}, hasPromotion=${hasPromotion}, startDate=${startDate}, rating=${rating})}"
+                       th:classappend="${tourPage.first ? 'pointer-events-none text-gray-300 bg-gray-100' : 'text-gray-500 hover:bg-gray-50'}"
+                       class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    <a th:each="i : ${#numbers.sequence(0, tourPage.totalPages - 1)}"
+                       th:href="@{/Client/ToursList(page=${i}, size=${tourPage.size}, keyword=${keyword}, isAbroad=${isAbroad}, duration=${duration}, transportation=${transportation}, priceRange=${priceRange}, location=${location}, region=${region}, hasPromotion=${hasPromotion}, startDate=${startDate}, rating=${rating})}"
+                       th:classappend="${i == currentPage ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'}"
+                       class="relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                       th:text="${i + 1}">
+                    </a>
+                    <a th:href="@{/Client/ToursList(page=${currentPage + 1}, size=${tourPage.size}, keyword=${keyword}, isAbroad=${isAbroad}, duration=${duration}, transportation=${transportation}, priceRange=${priceRange}, location=${location}, region=${region}, hasPromotion=${hasPromotion}, startDate=${startDate}, rating=${rating})}"
+                       th:classappend="${tourPage.last ? 'pointer-events-none text-gray-300 bg-gray-100' : 'text-gray-500 hover:bg-gray-50'}"
+                       class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </nav>
+            </div>
         </div>
     </div>
 </div>
@@ -359,15 +379,12 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const applyBtn = document.getElementById('applyFilters');
-        const resetBtn = document.getElementById('resetFilters');
-
         // Function to set filter values based on URL parameters
         function setFiltersFromURL() {
             const params = new URLSearchParams(window.location.search);
             document.getElementById('searchTourName').value = params.get('keyword') || '';
             document.getElementById('filterIsAbroad').value = params.get('isAbroad') || '';
-            document.getElementById('filterRegion').value = params.get('region') || ''; // Add this line
+            document.getElementById('filterRegion').value = params.get('region') || '';
             document.getElementById('filterDuration').value = params.get('duration') || '';
             document.getElementById('filterTransportation').value = params.get('transportation') || '';
             document.getElementById('filterPriceRange').value = params.get('priceRange') || '';
@@ -378,7 +395,7 @@
         }
 
         // Apply filters when the button is clicked
-        applyBtn.addEventListener('click', function() {
+        document.getElementById('applyFilters').addEventListener('click', function() {
             const params = new URLSearchParams();
             
             const keyword = document.getElementById('searchTourName').value;
@@ -387,8 +404,8 @@
             const isAbroad = document.getElementById('filterIsAbroad').value;
             if (isAbroad) params.append('isAbroad', isAbroad);
 
-            const region = document.getElementById('filterRegion').value; // Add this line
-            if (region) params.append('region', region); // Add this line
+            const region = document.getElementById('filterRegion').value;
+            if (region) params.append('region', region);
 
             const duration = document.getElementById('filterDuration').value;
             if (duration) params.append('duration', duration);
@@ -411,12 +428,17 @@
             const startDate = document.getElementById('filterStartDate').value;
             if (startDate) params.append('startDate', startDate);
 
+            // Always reset page to 0 and ensure size is present when applying new filters
+            params.append('page', '0'); 
+            params.append('size', '8'); 
+
             window.location.href = window.location.pathname + '?' + params.toString();
         });
 
         // Reset filters
-        resetBtn.addEventListener('click', function() {
-            window.location.href = window.location.pathname;
+        document.getElementById('resetFilters').addEventListener('click', function() {
+            // Reset filters and navigate to the first page with default size
+            window.location.href = window.location.pathname + '?page=0&size=8';
         });
 
         // Set initial state on page load

@@ -37,14 +37,17 @@ public class vouchersController {
                               @RequestParam(required = false) String status,
                               @RequestParam(required = false) String userId,
                               @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date expiryDateStart,
-                              @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date expiryDateEnd) {
+                              @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date expiryDateEnd,
+                              @RequestParam(defaultValue = "0") int page,
+                              @RequestParam(defaultValue = "9") int size) {
         ModelAndView modelAndView = new ModelAndView("admin_html/voucher/voucher_management");
-        List<vouchers> voucherList = voucherService.searchVouchers(voucherType, status, userId, expiryDateStart, expiryDateEnd);
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        org.springframework.data.domain.Page<vouchers> voucherPage = voucherService.searchVouchers(voucherType, status, userId, expiryDateStart, expiryDateEnd, pageable);
         List<users> userList = userService.getAllUsersExceptAdmin();
         List<tours> tourList = tourRepo.findAll(); // New
         List<PointVoucher> pointVouchers = pointVoucherService.getAllPointVouchers(); // New
         log.info("Searching vouchers with params: voucherType={}, status={}, userId={}, expiryDateStart={}, expiryDateEnd={}", voucherType, status, userId, expiryDateStart, expiryDateEnd);
-        modelAndView.addObject("vouchers", voucherList);
+        modelAndView.addObject("voucherPage", voucherPage); // Changed from vouchers
         modelAndView.addObject("userList", userList);
         modelAndView.addObject("tourList", tourList); // New
         modelAndView.addObject("pointVouchers", pointVouchers); // New
@@ -53,6 +56,10 @@ public class vouchersController {
         modelAndView.addObject("userId", userId);
         modelAndView.addObject("expiryDateStart", expiryDateStart);
         modelAndView.addObject("expiryDateEnd", expiryDateEnd);
+
+        // Add pagination data
+        modelAndView.addObject("currentPage", page);
+        modelAndView.addObject("totalPages", voucherPage.getTotalPages());
 
         return modelAndView;
     }

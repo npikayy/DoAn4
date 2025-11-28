@@ -51,10 +51,19 @@ public class clientController {
     private userService userService;
 
     @GetMapping("/khuyen-mai")
-    public ModelAndView showAllPromotions(ModelAndView modelAndView) {
+    public ModelAndView showAllPromotions(@RequestParam(defaultValue = "0") int page,
+                                          @RequestParam(defaultValue = "4") int size,
+                                          @RequestParam(required = false) String status) { // status can now be null or empty
+        ModelAndView modelAndView = new ModelAndView(); // Instantiate ModelAndView inside the method
         getCurrentUser(modelAndView);
-        List<KhuyenMai> promotions = khuyenMaiService.getActivePromotionsWithImages();
-        modelAndView.addObject("promotions", promotions);
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        // Pass status directly, searchKhuyenMai handles null/empty as "all"
+        org.springframework.data.domain.Page<KhuyenMai> promotionPage = khuyenMaiService.searchKhuyenMai(null, status, null, null, pageable);
+        modelAndView.addObject("promotionPage", promotionPage);
+        modelAndView.addObject("currentPage", page);
+        modelAndView.addObject("totalPages", promotionPage.getTotalPages());
+        modelAndView.addObject("status", status); // Pass the actual status for frontend highlighting
         modelAndView.setViewName("client_html/promotions_list");
         return modelAndView;
     }
@@ -172,16 +181,35 @@ public class clientController {
             @RequestParam(required = false) Boolean hasPromotion,
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String rating,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "8") int size,
             ModelAndView modelAndView) {
         
         getCurrentUser(modelAndView);
 
-        List<tours> tours = tourService.findTours(keyword, isAbroad, null, duration, transportation, priceRange, location, region, hasPromotion, null, startDate, null, rating, null);
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        org.springframework.data.domain.Page<tours> tourPage = tourService.findToursPaginated(keyword, isAbroad, null, duration, transportation, priceRange, location, region, hasPromotion, null, startDate, null, rating, null, pageable);
 
         List<String> uniqueLocations = tourRepo.findDistinctEndLocations();
         modelAndView.addObject("uniqueLocations", uniqueLocations);
 
-        prepareTourData(modelAndView, tours, "tourThumbnails", "tourStartDates");
+        // Add filter params to model to set the state of the inputs on the frontend
+        modelAndView.addObject("keyword", keyword);
+        modelAndView.addObject("isAbroad", isAbroad);
+        modelAndView.addObject("duration", duration);
+        modelAndView.addObject("transportation", transportation);
+        modelAndView.addObject("priceRange", priceRange);
+        modelAndView.addObject("location", location);
+        modelAndView.addObject("region", region);
+        modelAndView.addObject("hasPromotion", hasPromotion);
+        modelAndView.addObject("startDate", startDate);
+        modelAndView.addObject("rating", rating);
+
+        prepareTourData(modelAndView, tourPage.getContent(), "tourThumbnails", "tourStartDates"); // Pass content of the page
+        modelAndView.addObject("tourPage", tourPage); // Add the Page object
+        modelAndView.addObject("currentPage", page);
+        modelAndView.addObject("totalPages", tourPage.getTotalPages());
+
         modelAndView.setViewName("client_html/tours_list");
         return modelAndView;
     }

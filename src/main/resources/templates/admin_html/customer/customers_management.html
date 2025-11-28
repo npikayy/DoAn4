@@ -77,13 +77,13 @@
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-3">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-800">Quản Lý Khách Hàng</h1>
-                    <p class="text-gray-600 mt-1" th:text="'Tổng số: ' + ${customers.size()} + ' khách hàng'"></p>
+                    <p class="text-gray-600 mt-1" th:text="'Tổng số: ' + ${customerPage.totalElements} + ' khách hàng'"></p>
                 </div>
             </div>
 
 
             <!-- Filter Section -->
-            <form method="get" action="/admin/customers" class="bg-white rounded-xl shadow-sm p-6 mb-8">
+            <form method="get" th:action="@{/admin/customers}" class="bg-white rounded-xl shadow-sm p-6 mb-8">
                 <h2 class="text-lg font-semibold text-gray-800 mb-4">Bộ Lọc Tìm Kiếm</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                     <!-- Search Field -->
@@ -157,27 +157,20 @@
                          <button type="submit" class="w-full bg-primary hover:bg-primary-dark text-white py-2.5 px-4 rounded-lg font-medium transition-colors duration-300">
                             Áp dụng
                         </button>
-                        <a href="/admin/customers" class="w-full text-center bg-gray-200 hover:bg-gray-300 text-gray-800 py-2.5 px-4 rounded-lg font-medium transition-colors duration-300">
+                        <a th:href="@{/admin/customers(page=0, size=8)}" class="w-full text-center bg-gray-200 hover:bg-gray-300 text-gray-800 py-2.5 px-4 rounded-lg font-medium transition-colors duration-300">
                             Đặt lại
                         </a>
                     </div>
                 </div>
+                <input type="hidden" name="page" th:value="${currentPage}">
+                <input type="hidden" name="size" th:value="${customerPage.size}">
             </form>
 
 
             <!-- Customers Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="customersGrid">
-                <!-- Empty State -->
-                <div th:if="${customers.isEmpty()}" class="col-span-full rounded-xl p-8 text-center bg-gray-50">
-                    <div class="mx-auto w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 mb-4">
-                        <i class="fas fa-users text-3xl"></i>
-                    </div>
-                    <h3 class="text-xl font-medium text-gray-900 mb-2">Không có khách hàng nào</h3>
-                    <p class="text-gray-500 max-w-md mx-auto">Không tìm thấy khách hàng nào phù hợp với tiêu chí lọc của bạn.</p>
-                </div>
-
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" th:if="${!customerPage.empty}" id="customersGrid">
                 <!-- Customer Cards -->
-                <div th:each="customer : ${customers}"
+                <div th:each="customer : ${customerPage.content}"
                      class="customer-card bg-white rounded-2xl flex flex-col overflow-hidden shadow-card hover:shadow-card-hover">
 
                     <!-- Card Body -->
@@ -244,12 +237,87 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Empty State -->
+            <div th:if="${customerPage.empty}" class="col-span-full rounded-xl p-8 text-center bg-gray-50">
+                <div class="mx-auto w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 mb-4">
+                    <i class="fas fa-users text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-medium text-gray-900 mb-2">Không có khách hàng nào</h3>
+                <p class="text-gray-500 max-w-md mx-auto">Không tìm thấy khách hàng nào phù hợp với tiêu chí lọc của bạn.</p>
+            </div>
+
+            <!-- Pagination -->
+            <div th:if="${customerPage.totalPages > 1}" class="flex justify-center mt-8">
+                <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <a th:href="@{/admin/customers(page=${currentPage - 1}, size=${customerPage.size}, searchQuery=${searchQuery}, gender=${gender}, ageRange=${ageRange}, registrationDate=${registrationDate})}"
+                       th:classappend="${customerPage.first ? 'pointer-events-none text-gray-300 bg-gray-100' : 'text-gray-500 hover:bg-gray-50'}"
+                       class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                    <a th:each="i : ${#numbers.sequence(0, customerPage.totalPages - 1)}"
+                       th:href="@{/admin/customers(page=${i}, size=${customerPage.size}, searchQuery=${searchQuery}, gender=${gender}, ageRange=${ageRange}, registrationDate=${registrationDate})}"
+                       th:classappend="${i == currentPage ? 'z-10 bg-primary-light border-primary-light text-white' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'}"
+                       class="relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                       th:text="${i + 1}">
+                    </a>
+                    <a th:href="@{/admin/customers(page=${currentPage + 1}, size=${customerPage.size}, searchQuery=${searchQuery}, gender=${gender}, ageRange=${ageRange}, registrationDate=${registrationDate})}"
+                       th:classappend="${customerPage.last ? 'pointer-events-none text-gray-300 bg-gray-100' : 'text-gray-500 hover:bg-gray-50'}"
+                       class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </nav>
+            </div>
         </div>
     </main>
 </div>
 
 <script>
-    // Minimal script, if any, can go here. For example, the custom date range picker if re-added.
+    document.addEventListener('DOMContentLoaded', function() {
+        // Function to set filter values based on URL parameters
+        function setFiltersFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            document.getElementById('searchCustomer').value = params.get('searchQuery') || '';
+            document.getElementById('filterGender').value = params.get('gender') || '';
+            document.getElementById('filterAgeRange').value = params.get('ageRange') || '';
+            document.getElementById('filterRegistrationDate').value = params.get('registrationDate') || '';
+        }
+
+        // Apply filters when the form is submitted or filter is changed
+        document.querySelector('form').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const params = new URLSearchParams();
+
+            const searchQuery = document.getElementById('searchCustomer').value;
+            if (searchQuery) params.append('searchQuery', searchQuery);
+
+            const gender = document.getElementById('filterGender').value;
+            if (gender) params.append('gender', gender);
+
+            const ageRange = document.getElementById('filterAgeRange').value;
+            if (ageRange) params.append('ageRange', ageRange);
+
+            const registrationDate = document.getElementById('filterRegistrationDate').value;
+            if (registrationDate) params.append('registrationDate', registrationDate);
+
+            // Always reset page to 0 and ensure size is present when applying new filters
+            params.append('page', '0'); 
+            params.append('size', '8'); 
+
+            window.location.href = window.location.pathname + '?' + params.toString();
+        });
+
+        // Reset filters
+        document.querySelector('a[href="/admin/customers(page=0, size=8)"]').addEventListener('click', function(event) {
+            event.preventDefault();
+            window.location.href = this.href;
+        });
+
+
+        // Set initial state on page load
+        setFiltersFromURL();
+    });
 </script>
 </body>
 </html>
