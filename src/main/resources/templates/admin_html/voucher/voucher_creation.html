@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tạo Voucher Mới</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+<div class="min-h-screen flex">
+    <!-- Sidebar -->
+    <aside th:replace="~{admin_html/fragment/sidebar :: sidebar}"></aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-8 overflow-x-hidden overflow-y-auto p-8 ml-[18.5rem]">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">Tạo Voucher Mới</h1>
+            <a th:href="@{/admin/vouchers}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg shadow-sm transition flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i> Quay lại
+            </a>
+        </div>
+
+        <!-- Success Message -->
+        <div th:if="${successMessage}" class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-lg shadow-sm" role="alert">
+            <p th:text="${successMessage}"></p>
+        </div>
+
+        <form th:action="@{/admin/vouchers/addVoucher}" method="post">
+            <div class="bg-white p-6 rounded-lg shadow-sm mb-8">
+                <h2 class="text-xl font-semibold mb-4">Thông tin Voucher</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Voucher Type -->
+                    <div>
+                        <label for="voucherType" class="block text-sm font-medium text-gray-700 mb-2">Loại Voucher</label>
+                        <select id="voucherType" name="voucherType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
+                            <option value="PERCENTAGE">Giảm theo %</option>
+                            <option value="AMOUNT">Giảm số tiền</option>
+                        </select>
+                    </div>
+
+                    <!-- Discount Value -->
+                    <div>
+                        <label for="giaTriGiam" class="block text-sm font-medium text-gray-700 mb-2">Giá trị giảm</label>
+                        <div class="relative">
+                            <input type="text" id="giaTriGiam" name="giaTriGiam" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
+                            <span id="discount-unit" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500"></span>
+                        </div>
+                    </div>
+
+                    <!-- Expiry Date -->
+                    <div>
+                        <label for="ngayHetHan" class="block text-sm font-medium text-gray-700 mb-2">Ngày hết hạn</label>
+                        <input type="date" id="ngayHetHan" name="ngayHetHan" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-sm">
+                <h2 class="text-xl font-semibold mb-4">Chọn người dùng</h2>
+                
+                <!-- User Search and Filter Section -->
+                <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="search-user" class="block text-sm font-medium text-gray-700">Tìm kiếm</label>
+                        <input type="text" id="search-user" name="search" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="Tìm theo email, tên...">
+                    </div>
+                    <div>
+                        <label for="filter-rank" class="block text-sm font-medium text-gray-700">Cấp bậc</label>
+                        <select id="filter-rank" name="rank" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            <option value="">Tất cả</option>
+                            <option th:each="rank : ${ranks}" th:value="${rank}" th:text="${rank}"></option>
+                        </select>
+                    </div>
+                     <div class="flex items-end">
+                        <button type="button" id="search-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
+                            <i class="fas fa-search mr-2"></i> Tìm
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Users Table -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <input type="checkbox" id="select-all-users">
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Họ và tên</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cấp bậc</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body">
+                            <!-- User rows will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination for users table -->
+                <div id="users-pagination" class="flex justify-center mt-4">
+                    <!-- Pagination links will be here -->
+                </div>
+                
+                <input type="hidden" name="userIds" id="selected-user-ids">
+            </div>
+
+            <div class="mt-8 text-right">
+                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition text-lg">
+                    <i class="fas fa-paper-plane mr-2"></i>Gửi Voucher
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        let selectedUserIds = new Set();
+        let currentPage = 0;
+
+        function fetchUsers(page = 0) {
+            const search = $('#search-user').val();
+            const rank = $('#filter-rank').val();
+            currentPage = page;
+
+            $.ajax({
+                url: '/admin/vouchers/api/users',
+                data: {
+                    search: search,
+                    rank: rank,
+                    page: currentPage,
+                    size: 10 
+                },
+                success: function(data) {
+                    const tableBody = $('#users-table-body');
+                    tableBody.empty();
+                    
+                    if (data.results.length === 0) {
+                        tableBody.html('<tr><td colspan="4" class="text-center py-4">Không tìm thấy người dùng nào.</td></tr>');
+                        $('#users-pagination').empty();
+                        return;
+                    }
+
+                    data.results.forEach(user => {
+                        const isChecked = selectedUserIds.has(user.id) ? 'checked' : '';
+                        const row = `
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <input type="checkbox" class="user-checkbox" value="${user.id}" ${isChecked}>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">${user.email}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">${user.fullName || ''}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">${user.rank}</td>
+                            </tr>
+                        `;
+                        tableBody.append(row);
+                    });
+
+                    renderPagination(data.pagination, data.totalPages);
+                }
+            });
+        }
+
+        function renderPagination(pagination, totalPages) {
+            const paginationContainer = $('#users-pagination');
+            paginationContainer.empty();
+
+            if (totalPages <= 1) return;
+
+            let paginationHtml = '<nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">';
+
+            // Previous button
+            const prevDisabled = currentPage === 0 ? 'pointer-events-none text-gray-300 bg-gray-100' : 'text-gray-500 hover:bg-gray-50';
+            paginationHtml += `<a href="#" data-page="${currentPage - 1}" class="pagination-link relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${prevDisabled}">Prev</a>`;
+
+            // Page numbers
+            for (let i = 0; i < totalPages; i++) {
+                const isCurrent = i === currentPage ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50';
+                paginationHtml += `<a href="#" data-page="${i}" class="pagination-link relative inline-flex items-center px-4 py-2 border text-sm font-medium ${isCurrent}">${i + 1}</a>`;
+            }
+
+            // Next button
+            const nextDisabled = !pagination.more ? 'pointer-events-none text-gray-300 bg-gray-100' : 'text-gray-500 hover:bg-gray-50';
+            paginationHtml += `<a href="#" data-page="${currentPage + 1}" class="pagination-link relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${nextDisabled}">Next</a>`;
+
+            paginationHtml += '</nav>';
+            paginationContainer.html(paginationHtml);
+        }
+
+        $('#search-btn').on('click', function() {
+            fetchUsers(0);
+        });
+        
+        $(document).on('click', '.pagination-link', function(e) {
+            e.preventDefault();
+            const page = $(this).data('page');
+            fetchUsers(page);
+        });
+
+        $('#select-all-users').on('change', function() {
+            const isChecked = $(this).is(':checked');
+            $('.user-checkbox').each(function() {
+                const userId = $(this).val();
+                if (isChecked) {
+                    selectedUserIds.add(userId);
+                    $(this).prop('checked', true);
+                } else {
+                    selectedUserIds.delete(userId);
+                    $(this).prop('checked', false);
+                }
+            });
+        });
+
+        $(document).on('change', '.user-checkbox', function() {
+            const userId = $(this).val();
+            if ($(this).is(':checked')) {
+                selectedUserIds.add(userId);
+            } else {
+                selectedUserIds.delete(userId);
+            }
+        });
+
+        $('form').on('submit', function() {
+            const ids = Array.from(selectedUserIds);
+            if (ids.length === 0) {
+                alert('Bạn phải chọn ít nhất một người dùng.');
+                return false; // prevent submission
+            }
+            $('#selected-user-ids').val(ids.join(','));
+        });
+
+        // Discount input formatting
+        function updateDiscountInput() {
+            var voucherType = $('#voucherType').val();
+            var giaTriGiamInput = $('#giaTriGiam');
+            var discountUnit = $('#discount-unit');
+
+            giaTriGiamInput.val('');
+            giaTriGiamInput.off('input');
+
+            if (voucherType === 'PERCENTAGE') {
+                discountUnit.text('%');
+                giaTriGiamInput.on('input', function(e) {
+                    var value = e.target.value.replace(/[^0-9]/g, '');
+                    if (parseInt(value, 10) > 100) value = '100';
+                    e.target.value = value;
+                });
+            } else { // AMOUNT
+                discountUnit.text('VNĐ');
+                giaTriGiamInput.on('input', function(e) {
+                    var value = e.target.value.replace(/[^0-9]/g, '');
+                    if (value) {
+                        e.target.value = parseInt(value, 10).toLocaleString('vi-VN');
+                    } else {
+                        e.target.value = '';
+                    }
+                });
+            }
+        }
+        updateDiscountInput();
+        $('#voucherType').on('change', updateDiscountInput);
+        
+        var today = new Date().toISOString().split('T')[0];
+        $('#ngayHetHan').attr('min', today);
+
+        // Initial fetch
+        fetchUsers();
+    });
+</script>
+</body>
+</html>
