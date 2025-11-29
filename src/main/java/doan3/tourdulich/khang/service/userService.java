@@ -76,6 +76,13 @@ public class userService implements UserDetailsService {
         }
     }
 
+    public Page<users> searchUsers(String searchTerm, Pageable pageable) {
+        if (searchTerm == null || searchTerm.isBlank()) {
+            return userRepository.findAllUsersExceptAdmin(pageable);
+        }
+        return userRepository.searchUsers(searchTerm, pageable);
+    }
+
     public void updateUserRank(users user) {
         Rank rank = rankRepository.findByUser_id(user.getUser_id()); // Changed from Grade grade
         if (rank == null || "Đã chấm dứt".equals(rank.getRank())) {
@@ -121,7 +128,7 @@ public class userService implements UserDetailsService {
     public List<users> getAllUsersExceptAdmin() {
         List<users> users = userRepository.findAllUsers();
         return users.stream()
-                .filter(user -> !"admin@gmail.com".equals(user.getEmail()))
+                .filter(user -> !"admin@admin.com".equals(user.getEmail()))
                 .collect(java.util.stream.Collectors.toList());
     }
 
@@ -129,8 +136,13 @@ public class userService implements UserDetailsService {
         return userRepository.findAll();
     }
 
-    public Page<users> findFilteredUsers(String searchQuery, String gender, String ageRange, String registrationDate, org.springframework.data.domain.Pageable pageable) {
-        Specification<users> spec = UserSpecifications.withFilters(searchQuery, gender, ageRange, registrationDate);
+    public Page<users> searchAndFilterUsers(String searchTerm, String rank, Pageable pageable) {
+        Specification<users> spec = UserSpecifications.withFilters(searchTerm, null, null, null, rank);
+        return userRepository.findAll(spec, pageable);
+    }
+
+    public Page<users> findFilteredUsers(String searchQuery, String gender, String ageRange, String registrationDate, String rank, org.springframework.data.domain.Pageable pageable) {
+        Specification<users> spec = UserSpecifications.withFilters(searchQuery, gender, ageRange, registrationDate, rank);
         return userRepository.findAll(spec, pageable);
     }
 

@@ -3,11 +3,12 @@ package doan3.tourdulich.khang.repository;
 import doan3.tourdulich.khang.entity.tour_ratings;
 import jakarta.persistence.OneToMany;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
-public interface ratingRepo extends JpaRepository<tour_ratings, Integer> {
+public interface ratingRepo extends JpaRepository<tour_ratings, Integer>, JpaSpecificationExecutor<tour_ratings> {
 
     @Query("SELECT r.rating FROM tour_ratings r WHERE r.tour.tour_id = ?1")
     List<Float> findByTourId(String tour_id);
@@ -28,4 +29,7 @@ public interface ratingRepo extends JpaRepository<tour_ratings, Integer> {
             "AND EXTRACT(YEAR FROM r.rating_date) = EXTRACT(YEAR FROM CURRENT_DATE - INTERVAL '1 month')",
             nativeQuery = true)
     long countPreviousMonth();
+
+    @Query("SELECT AVG(r.rating) FROM tour_ratings r")
+    Double getAverageRating();
 }

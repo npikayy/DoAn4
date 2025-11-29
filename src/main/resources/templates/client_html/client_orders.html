@@ -146,685 +146,215 @@
                             </h2>
                         </div>
 
-                        <!-- Filter Tabs with pill style -->
+                        <!-- Filter and Search Section -->
+                        <div class="mb-8">
+                            <form th:action="@{/Client/Orders}" method="get" class="flex flex-col md:flex-row gap-4">
+                                <input type="hidden" name="status" th:value="${status}">
+                                <div class="relative flex-grow">
+                                    <input type="text" name="searchQuery" th:value="${searchQuery}" placeholder="Tìm theo tên tour, mã đơn..."
+                                           class="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-search text-gray-400"></i>
+                                    </div>
+                                </div>
+                                <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium flex items-center justify-center">
+                                    <i class="fas fa-filter mr-2"></i> Lọc
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Status Tabs -->
                         <div class="mb-8">
                             <div class="flex space-x-2 overflow-x-auto pb-2">
-                                <!-- Tab Tất cả -->
-                                <button onclick="showTab('all')"
-                                        class="filter-tab active px-4 py-2 rounded-full font-medium text-sm bg-indigo-600 text-white shadow-sm">
+                                <a th:href="@{/Client/Orders(status='all', searchQuery=${searchQuery})}"
+                                   th:classappend="${status == 'all' ? 'active bg-indigo-600 text-white' : 'bg-white hover:bg-gray-100 text-gray-700'}"
+                                   class="filter-tab px-4 py-2 rounded-full font-medium text-sm shadow-sm">
                                     <i class="fas fa-list mr-1"></i> Tất cả
-                                </button>
-
-                                <!-- Tab Chờ thanh toán -->
-                                <button onclick="showTab('waiting_payment')"
-                                        class="filter-tab px-4 py-2 rounded-full font-medium text-sm bg-amber-100 text-amber-800 hover:bg-amber-200">
+                                </a>
+                                <a th:href="@{/Client/Orders(status='Pending payment', searchQuery=${searchQuery})}"
+                                   th:classappend="${status == 'Pending payment' ? 'active bg-amber-500 text-white' : 'bg-amber-100 text-amber-800 hover:bg-amber-200'}"
+                                   class="filter-tab px-4 py-2 rounded-full font-medium text-sm">
                                     <i class="fas fa-clock mr-1"></i> Chờ thanh toán
-                                </button>
-
-                                <!-- Tab Đã thanh toán -->
-                                <button onclick="showTab('paid')"
-                                        class="filter-tab px-4 py-2 rounded-full font-medium text-sm bg-green-100 text-green-800 hover:bg-green-200">
+                                </a>
+                                <a th:href="@{/Client/Orders(status='Paid', searchQuery=${searchQuery})}"
+                                   th:classappend="${status == 'Paid' ? 'active bg-green-500 text-white' : 'bg-green-100 text-green-800 hover:bg-green-200'}"
+                                   class="filter-tab px-4 py-2 rounded-full font-medium text-sm">
                                     <i class="fas fa-check-circle mr-1"></i> Đã thanh toán
-                                </button>
-
-                                <!-- Tab Tiền mặt -->
-                                <button onclick="showTab('cash')"
-                                        class="filter-tab px-4 py-2 rounded-full font-medium text-sm bg-blue-100 text-blue-800 hover:bg-blue-200">
+                                </a>
+                                <a th:href="@{/Client/Orders(status='Cash', searchQuery=${searchQuery})}"
+                                   th:classappend="${status == 'Cash' ? 'active bg-blue-500 text-white' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'}"
+                                   class="filter-tab px-4 py-2 rounded-full font-medium text-sm">
                                     <i class="fas fa-money-bill-wave mr-1"></i> Tiền mặt
-                                </button>
-
-                                <!-- Tab Hoàn thành (đặt trước Đã hủy) -->
-                                <button onclick="showTab('completed')"
-                                        class="filter-tab px-4 py-2 rounded-full font-medium text-sm bg-purple-100 text-purple-800 hover:bg-purple-200">
+                                </a>
+                                <a th:href="@{/Client/Orders(status='Completed', searchQuery=${searchQuery})}"
+                                   th:classappend="${status == 'Completed' ? 'active bg-purple-500 text-white' : 'bg-purple-100 text-purple-800 hover:bg-purple-200'}"
+                                   class="filter-tab px-4 py-2 rounded-full font-medium text-sm">
                                     <i class="fas fa-check-double mr-1"></i> Hoàn thành
-                                </button>
-
-                                <!-- Tab Đã hủy -->
-                                <button onclick="showTab('cancelled')"
-                                        class="filter-tab px-4 py-2 rounded-full font-medium text-sm bg-red-100 text-red-800 hover:bg-red-200">
+                                </a>
+                                <a th:href="@{/Client/Orders(status='Cancelled', searchQuery=${searchQuery})}"
+                                   th:classappend="${status == 'Cancelled' ? 'active bg-red-500 text-white' : 'bg-red-100 text-red-800 hover:bg-red-200'}"
+                                   class="filter-tab px-4 py-2 rounded-full font-medium text-sm">
                                     <i class="fas fa-times-circle mr-1"></i> Đã hủy
-                                </button>
+                                </a>
                             </div>
                         </div>
 
-                        <!-- All Bookings Tab -->
-                        <div id="all-tab">
-                            <div class="grid gap-5">
-                                <!-- Booking Cards -->
-                                <div th:each="booking : ${bookings}" class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300">
-                                    <!-- Status ribbon -->
-                                    <div th:classappend="${(booking.status == 'Pending payment') ? 'bg-amber-500' :
-      (booking.status == 'Paid') ? 'bg-green-500' :
-      (booking.status == 'Cash') ? 'bg-blue-500' :
-      (booking.status == 'Cancelled') ? 'bg-red-500' :
-      (booking.status == 'Completed') ? 'bg-purple-500' : 'bg-gray-500'}"
-                                         class="h-1 w-full"></div>
+                        <!-- Bookings List -->
+                        <div class="grid gap-5">
+                            <!-- Booking Cards -->
+                            <div th:each="booking : ${bookingPage.content}" class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300">
+                                <!-- Status ribbon -->
+                                <div th:classappend="${(booking.status == 'Pending payment') ? 'bg-amber-500' :
+  (booking.status == 'Paid') ? 'bg-green-500' :
+  (booking.status == 'Cash') ? 'bg-blue-500' :
+  (booking.status == 'Cancelled') ? 'bg-red-500' :
+  (booking.status == 'Completed') ? 'bg-purple-500' : 'bg-gray-500'}"
+                                     class="h-1 w-full"></div>
 
-                                    <div class="p-5">
-                                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                            <div class="flex-1">
-                                                <div class="flex items-start justify-between">
-                                                    <h3 class="text-xl font-bold text-gray-800" th:text="${booking.tour_name}"></h3>
-                                                    <span th:classappend="${(booking.status == 'Pending payment') ? 'bg-amber-100 text-amber-800' :
-      (booking.status == 'Paid') ? 'bg-green-100 text-green-800' :
-      (booking.status == 'Cash') ? 'bg-blue-100 text-blue-800' :
-      (booking.status == 'Cancelled') ? 'bg-red-100 text-red-800' :
-      (booking.status == 'Completed') ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'}"
-                                                          class="px-3 py-1 rounded-full text-xs font-semibold">
-    <span th:text="${(booking.status == 'Pending payment') ? 'Chờ thanh toán' :
-          (booking.status == 'Paid') ? 'Đã thanh toán' :
-          (booking.status == 'Cash') ? 'Tiền mặt' :
-          (booking.status == 'Cancelled') ? 'Đã hủy' :
-          (booking.status == 'Completed') ? 'Hoàn thành' : 'Hoàn thành'}"></span>
+                                <div class="p-5">
+                                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                                        <div class="flex-1">
+                                            <div class="flex items-start justify-between">
+                                                <h3 class="text-xl font-bold text-gray-800" th:text="${booking.tour_name}"></h3>
+                                                <span th:classappend="${(booking.status == 'Pending payment') ? 'bg-amber-100 text-amber-800' :
+  (booking.status == 'Paid') ? 'bg-green-100 text-green-800' :
+  (booking.status == 'Cash') ? 'bg-blue-100 text-blue-800' :
+  (booking.status == 'Cancelled') ? 'bg-red-100 text-red-800' :
+  (booking.status == 'Completed') ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800'}"
+                                                      class="px-3 py-1 rounded-full text-xs font-semibold">
+<span th:text="${(booking.status == 'Pending payment') ? 'Chờ thanh toán' :
+      (booking.status == 'Paid') ? 'Đã thanh toán' :
+      (booking.status == 'Cash') ? 'Tiền mặt' :
+      (booking.status == 'Cancelled') ? 'Đã hủy' :
+      (booking.status == 'Completed') ? 'Hoàn thành' : 'Hoàn thành'}"></span>
 </span>
+                                            </div>
+
+                                            <div class="mt-3 flex items-center text-sm text-gray-500">
+                                                <i class="fas fa-hashtag text-indigo-500 mr-1"></i>
+                                                <span th:text="'Mã đơn: ' + ${booking.booking_id}"></span>
+                                            </div>
+
+                                            <!-- Tour details section -->
+                                            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div class="bg-gray-50 p-3 rounded-lg">
+                                                    <div class="flex items-center">
+                                                        <i class="fas fa-calendar-plus text-indigo-500 mr-2"></i>
+                                                        <div>
+                                                            <p class="text-xs text-gray-500">Ngày đặt</p>
+                                                            <p class="font-medium" th:text="${#temporals.format(booking.booking_date, 'dd/MM/yyyy HH:mm')}"></p>
+                                                        </div>
+                                                    </div>
                                                 </div>
 
-                                                <div class="mt-3 flex items-center text-sm text-gray-500">
-                                                    <i class="fas fa-hashtag text-indigo-500 mr-1"></i>
-                                                    <span th:text="'Mã đơn: ' + ${booking.booking_id}"></span>
+                                                <div class="bg-gray-50 p-3 rounded-lg">
+                                                    <div class="flex items-center">
+                                                        <i class="fas fa-plane-departure text-indigo-500 mr-2"></i>
+                                                        <div>
+                                                            <p class="text-xs text-gray-500">Ngày đi</p>
+                                                            <p class="font-medium" th:text="${#temporals.format(booking.start_date, 'dd/MM/yyyy')}"></p>
+                                                        </div>
+                                                    </div>
                                                 </div>
 
-                                                <!-- Tour details section -->
-                                                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-calendar-plus text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Ngày đặt</p>
-                                                                <p class="font-medium" th:text="${#temporals.format(booking.booking_date, 'dd/MM/yyyy HH:mm')}"></p>
-                                                            </div>
+                                                <div class="bg-gray-50 p-3 rounded-lg">
+                                                    <div class="flex items-center">
+                                                        <i class="fas fa-users text-indigo-500 mr-2"></i>
+                                                        <div>
+                                                            <p class="text-xs text-gray-500">Số lượng</p>
+                                                            <p class="font-medium">
+                                                                <span th:text="${booking.number_of_adults} + ' Người lớn'"></span>
+                                                                <span th:if="${booking.number_of_children > 0}" th:text="', ' + ${booking.number_of_children} + ' Trẻ em'"></span>
+                                                                <span th:if="${booking.number_of_infants > 0}" th:text="', ' + ${booking.number_of_infants} + ' Em bé'"></span>
+                                                            </p>
                                                         </div>
                                                     </div>
+                                                </div>
 
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-plane-departure text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Ngày đi</p>
-                                                                <p class="font-medium" th:text="${#temporals.format(booking.start_date, 'dd/MM/yyyy')}"></p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-users text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Số lượng</p>
-                                                                <p class="font-medium">
-                                                                    <span th:text="${booking.number_of_adults} + ' Người lớn'"></span>
-                                                                    <span th:if="${booking.number_of_children > 0}" th:text="', ' + ${booking.number_of_children} + ' Trẻ em'"></span>
-                                                                    <span th:if="${booking.number_of_infants > 0}" th:text="', ' + ${booking.number_of_infants} + ' Em bé'"></span>
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-plane-arrival text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Ngày về</p>
-                                                                <p class="font-medium" th:text="${#temporals.format(booking.end_date, 'dd/MM/yyyy')}"></p>
-                                                            </div>
+                                                <div class="bg-gray-50 p-3 rounded-lg">
+                                                    <div class="flex items-center">
+                                                        <i class="fas fa-plane-arrival text-indigo-500 mr-2"></i>
+                                                        <div>
+                                                            <p class="text-xs text-gray-500">Ngày về</p>
+                                                            <p class="font-medium" th:text="${#temporals.format(booking.end_date, 'dd/MM/yyyy')}"></p>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
+                                        </div>
 
-                                            <!-- Price and action buttons -->
-                                            <div class="flex flex-col items-end">
-                                                <div class="text-right">
-                                                    <p class="text-sm text-gray-500">Tổng cộng</p>
-                                                    <p class="text-2xl font-bold text-indigo-600" th:text="${#numbers.formatInteger(booking.total_price, 3, 'POINT') + '₫'}"></p>
-                                                </div>
+                                        <!-- Price and action buttons -->
+                                        <div class="flex flex-col items-end">
+                                            <div class="text-right">
+                                                <p class="text-sm text-gray-500">Tổng cộng</p>
+                                                <p class="text-2xl font-bold text-indigo-600" th:text="${#numbers.formatInteger(booking.total_price, 3, 'POINT') + '₫'}"></p>
+                                            </div>
 
-                                                <div class="mt-4 flex flex-col sm:flex-row gap-2">
-                                                    <a th:href="'/Client/booking_search/'+ ${booking.getBooking_id()}"
-                                                       class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center">
-                                                        <i class="fas fa-info-circle mr-2"></i> Chi tiết
-                                                    </a>
+                                            <div class="mt-4 flex flex-col sm:flex-row gap-2">
+                                                <a th:href="'/Client/booking_search/'+ ${booking.getBooking_id()}"
+                                                   class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center">
+                                                    <i class="fas fa-info-circle mr-2"></i> Chi tiết
+                                                </a>
 
-                                                    <a th:if="${booking.status == 'Pending payment'}"
-                                                       th:href="'/Client/orderBooking/Payment/'+ ${booking.getBooking_id()}"
-                                                       class="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-colors flex items-center justify-center">
-                                                        <i class="fas fa-credit-card mr-2"></i> Thanh toán
-                                                    </a>
-                                                    <a th:if="${booking.status == 'Paid' and #temporals.createNow().toLocalDate().isAfter(booking.end_date)}"
-                                                       href="#"
-                                                       class="complete-tour-btn px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg hover:from-emerald-600 hover:to-teal-700 transition-colors flex items-center justify-center"
-                                                       th:data-booking-id="${booking.booking_id}"
-                                                       th:data-tour-id="${booking.tour.tour_id}"
-                                                       th:data-tour-name="${booking.tour_name}">
-                                                        <i class="fas fa-check-circle mr-2"></i> Hoàn thành
-                                                    </a>
-                                                    <a th:if="${booking.status == 'Pending payment'}"
-                                                       href="#"
-                                                       th:data-booking-id="${booking.booking_id}"
-                                                       onclick="cancelBooking(event, this.getAttribute('data-booking-id'))"
-                                                       class="px-4 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg hover:from-red-600 hover:to-rose-700 transition-colors flex items-center justify-center">
-                                                        <i class="fas fa-times mr-2"></i> Hủy
-                                                    </a>
-                                                </div>
+                                                <a th:if="${booking.status == 'Pending payment'}"
+                                                   th:href="'/Client/orderBooking/Payment/'+ ${booking.getBooking_id()}"
+                                                   class="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-colors flex items-center justify-center">
+                                                    <i class="fas fa-credit-card mr-2"></i> Thanh toán
+                                                </a>
+                                                <a th:if="${booking.status == 'Paid' and #temporals.createNow().toLocalDate().isAfter(booking.end_date)}"
+                                                   href="#"
+                                                   class="complete-tour-btn px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg hover:from-emerald-600 hover:to-teal-700 transition-colors flex items-center justify-center"
+                                                   th:data-booking-id="${booking.booking_id}"
+                                                   th:data-tour-id="${booking.tour.tour_id}"
+                                                   th:data-tour-name="${booking.tour_name}">
+                                                    <i class="fas fa-check-circle mr-2"></i> Hoàn thành
+                                                </a>
+                                                <a th:if="${booking.status == 'Pending payment'}"
+                                                   href="#"
+                                                   th:data-booking-id="${booking.booking_id}"
+                                                   onclick="cancelBooking(event, this.getAttribute('data-booking-id'))"
+                                                   class="px-4 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg hover:from-red-600 hover:to-rose-700 transition-colors flex items-center justify-center">
+                                                    <i class="fas fa-times mr-2"></i> Hủy
+                                                </a>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
 
-                                <!-- Empty State -->
-                                <div th:if="${bookings.empty}" class="bg-gradient-to-br from-gray-50 to-indigo-50 border-2 border-dashed border-indigo-200 rounded-xl p-8 text-center">
-                                    <div class="inline-block bg-indigo-100 p-4 rounded-full mb-4">
-                                        <i class="fas fa-suitcase text-indigo-600 text-4xl"></i>
-                                    </div>
-                                    <h3 class="text-xl font-bold text-gray-700 mb-2">Bạn chưa có đơn đặt tour nào</h3>
-                                    <p class="text-gray-500 mb-6 max-w-md mx-auto">Khám phá những điểm đến tuyệt vời và tạo nên những kỷ niệm đáng nhớ với chuyến đi của bạn</p>
-                                    <a href="/Client/ToursList" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors shadow-md">
-                                        <i class="fas fa-search mr-2"></i> Khám phá tour ngay
-                                    </a>
+                            <!-- Empty State -->
+                            <div th:if="${bookingPage.empty}" class="bg-gradient-to-br from-gray-50 to-indigo-50 border-2 border-dashed border-indigo-200 rounded-xl p-8 text-center">
+                                <div class="inline-block bg-indigo-100 p-4 rounded-full mb-4">
+                                    <i class="fas fa-suitcase text-indigo-600 text-4xl"></i>
                                 </div>
+                                <h3 class="text-xl font-bold text-gray-700 mb-2">Bạn chưa có đơn đặt tour nào</h3>
+                                <p class="text-gray-500 mb-6 max-w-md mx-auto">Khám phá những điểm đến tuyệt vời và tạo nên những kỷ niệm đáng nhớ với chuyến đi của bạn</p>
+                                <a href="/Client/ToursList" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-colors shadow-md">
+                                    <i class="fas fa-search mr-2"></i> Khám phá tour ngay
+                                </a>
                             </div>
                         </div>
 
-                        <!-- Waiting Payment Tab -->
-                        <div id="waiting_payment-tab" class="hidden">
-                            <div class="grid gap-5">
-                                <div th:each="booking : ${bookings}" th:if="${booking.status == 'Pending payment'}" class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300">
-                                    <div class="h-1 w-full bg-amber-500"></div>
-
-                                    <div class="p-5">
-                                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                            <div class="flex-1">
-                                                <div class="flex items-start justify-between">
-                                                    <h3 class="text-xl font-bold text-gray-800" th:text="${booking.tour_name}"></h3>
-                                                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
-                                        Chờ thanh toán
-                                    </span>
-                                                </div>
-
-                                                <div class="mt-3 flex items-center text-sm text-gray-500">
-                                                    <i class="fas fa-hashtag text-indigo-500 mr-1"></i>
-                                                    <span th:text="'Mã đơn: ' + ${booking.booking_id}"></span>
-                                                </div>
-
-                                                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-calendar-plus text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Ngày đặt</p>
-                                                                <p class="font-medium" th:text="${#temporals.format(booking.booking_date, 'dd/MM/yyyy HH:mm')}"></p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-plane-departure text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Ngày đi</p>
-                                                                <p class="font-medium" th:text="${#temporals.format(booking.start_date, 'dd/MM/yyyy')}"></p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-users text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Số lượng</p>
-                                                                <p class="font-medium">
-                                                                    <span th:text="${booking.number_of_adults} + ' Người lớn'"></span>
-                                                                    <span th:if="${booking.number_of_children > 0}" th:text="', ' + ${booking.number_of_children} + ' Trẻ em'"></span>
-                                                                    <span th:if="${booking.number_of_infants > 0}" th:text="', ' + ${booking.number_of_infants} + ' Em bé'"></span>
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="flex flex-col items-end">
-                                                <div class="text-right">
-                                                    <p class="text-sm text-gray-500">Tổng cộng</p>
-                                                    <p class="text-2xl font-bold text-indigo-600" th:text="${#numbers.formatInteger(booking.total_price, 3, 'POINT') + '₫'}"></p>
-                                                </div>
-
-                                                <div class="mt-4 flex flex-col sm:flex-row gap-2">
-                                                    <a th:href="'/Client/booking_search/'+ ${booking.getBooking_id()}"
-                                                       class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center">
-                                                        <i class="fas fa-info-circle mr-2"></i> Chi tiết
-                                                    </a>
-
-                                                    <a th:href="'/Client/orderBooking/Payment/'+ ${booking.getBooking_id()}"
-                                                       class="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition-colors flex items-center justify-center">
-                                                        <i class="fas fa-credit-card mr-2"></i> Thanh toán
-                                                    </a>
-
-                                                    <a href="#"
-                                                       th:data-booking-id="${booking.booking_id}"
-                                                       onclick="cancelBooking(event, this.getAttribute('data-booking-id'))"
-                                                       class="px-4 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg hover:from-red-600 hover:to-rose-700 transition-colors flex items-center justify-center">
-                                                        <i class="fas fa-times mr-2"></i> Hủy
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div th:if="${bookings.?[status == 'Pending payment'].empty}" class="bg-gradient-to-br from-gray-50 to-amber-50 border-2 border-dashed border-amber-200 rounded-xl p-8 text-center">
-                                    <div class="inline-block bg-amber-100 p-4 rounded-full mb-4">
-                                        <i class="fas fa-clock text-amber-600 text-4xl"></i>
-                                    </div>
-                                    <h3 class="text-xl font-bold text-gray-700 mb-2">Không có tour nào chờ thanh toán</h3>
-                                    <p class="text-gray-500 mb-6">Tất cả các tour của bạn đã được thanh toán hoặc chưa có tour nào</p>
-                                    <a href="/Client/ToursList" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:from-amber-600 hover:to-orange-600 transition-colors shadow-md">
-                                        <i class="fas fa-search mr-2"></i> Đặt tour ngay
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Paid Tab -->
-                        <div id="paid-tab" class="hidden">
-                            <div class="grid gap-5">
-                                <div th:each="booking : ${bookings}" th:if="${booking.status == 'Paid'}" class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300">
-                                    <div class="h-1 w-full bg-green-500"></div>
-
-                                    <div class="p-5">
-                                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                            <div class="flex-1">
-                                                <div class="flex items-start justify-between">
-                                                    <h3 class="text-xl font-bold text-gray-800" th:text="${booking.tour_name}"></h3>
-                                                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                                        Đã thanh toán
-                                    </span>
-                                                </div>
-
-                                                <div class="mt-3 flex items-center text-sm text-gray-500">
-                                                    <i class="fas fa-hashtag text-indigo-500 mr-1"></i>
-                                                    <span th:text="'Mã đơn: ' + ${booking.booking_id}"></span>
-                                                </div>
-
-                                                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-calendar-plus text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Ngày đặt</p>
-                                                                <p class="font-medium" th:text="${#temporals.format(booking.booking_date, 'dd/MM/yyyy HH:mm')}"></p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-plane-departure text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Ngày đi</p>
-                                                                <p class="font-medium" th:text="${#temporals.format(booking.start_date, 'dd/MM/yyyy')}"></p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-
-
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-users text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Số lượng</p>
-                                                                <p class="font-medium">
-                                                                    <span th:text="${booking.number_of_adults} + ' Người lớn'"></span>
-                                                                    <span th:if="${booking.number_of_children > 0}" th:text="', ' + ${booking.number_of_children} + ' Trẻ em'"></span>
-                                                                    <span th:if="${booking.number_of_infants > 0}" th:text="', ' + ${booking.number_of_infants} + ' Em bé'"></span>
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-plane-arrival text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Ngày về</p>
-                                                                <p class="font-medium" th:text="${#temporals.format(booking.end_date, 'dd/MM/yyyy')}"></p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="flex flex-col items-end">
-                                                <div class="text-right">
-                                                    <p class="text-sm text-gray-500">Tổng cộng</p>
-                                                    <p class="text-2xl font-bold text-indigo-600" th:text="${#numbers.formatInteger(booking.total_price, 3, 'POINT') + '₫'}"></p>
-                                                </div>
-
-                                                <div class="mt-4 flex flex-col sm:flex-row gap-2">
-                                                    <a th:href="'/Client/booking_search/'+ ${booking.getBooking_id()}"
-                                                       class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center">
-                                                        <i class="fas fa-info-circle mr-2"></i> Chi tiết
-                                                    </a>
-
-                                                    <a th:if="${booking.end_date != null and #temporals.createNow().toLocalDate().isAfter(booking.end_date)}"
-                                                       href="#"
-                                                       class="complete-tour-btn px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-lg hover:from-emerald-600 hover:to-teal-700 transition-colors flex items-center justify-center"
-                                                       th:data-booking-id="${booking.booking_id}"
-                                                       th:data-tour-id="${booking.tour.tour_id}"
-                                                       th:data-tour-name="${booking.tour_name}">
-                                                        <i class="fas fa-check-circle mr-2"></i> Hoàn thành
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div th:if="${bookings.?[status == 'Paid'].empty}" class="bg-gradient-to-br from-gray-50 to-green-50 border-2 border-dashed border-green-200 rounded-xl p-8 text-center">
-                                    <div class="inline-block bg-green-100 p-4 rounded-full mb-4">
-                                        <i class="fas fa-check-circle text-green-600 text-4xl"></i>
-                                    </div>
-                                    <h3 class="text-xl font-bold text-gray-700 mb-2">Không có tour nào đã thanh toán</h3>
-                                    <p class="text-gray-500 mb-6">Bạn chưa có tour nào đã hoàn thành thanh toán</p>
-                                    <a href="/Client/ToursList" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-lg hover:from-green-600 hover:to-teal-600 transition-colors shadow-md">
-                                        <i class="fas fa-search mr-2"></i> Khám phá tour
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Cash Tab -->
-                        <div id="cash-tab" class="hidden">
-                            <div class="grid gap-5">
-                                <div th:each="booking : ${bookings}" th:if="${booking.status == 'Cash'}" class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300">
-                                    <div class="h-1 w-full bg-blue-500"></div>
-
-                                    <div class="p-5">
-                                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                            <div class="flex-1">
-                                                <div class="flex items-start justify-between">
-                                                    <h3 class="text-xl font-bold text-gray-800" th:text="${booking.tour_name}"></h3>
-                                                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                                        Tiền mặt
-                                    </span>
-                                                </div>
-
-                                                <div class="mt-3 flex items-center text-sm text-gray-500">
-                                                    <i class="fas fa-hashtag text-indigo-500 mr-1"></i>
-                                                    <span th:text="'Mã đơn: ' + ${booking.booking_id}"></span>
-                                                </div>
-
-                                                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-calendar-plus text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Ngày đặt</p>
-                                                                <p class="font-medium" th:text="${#temporals.format(booking.booking_date, 'dd/MM/yyyy HH:mm')}"></p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-plane-departure text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Ngày đi</p>
-                                                                <p class="font-medium" th:text="${#temporals.format(booking.start_date, 'dd/MM/yyyy')}"></p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-users text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Số lượng</p>
-                                                                <p class="font-medium">
-                                                                    <span th:text="${booking.number_of_adults} + ' Người lớn'"></span>
-                                                                    <span th:if="${booking.number_of_children > 0}" th:text="', ' + ${booking.number_of_children} + ' Trẻ em'"></span>
-                                                                    <span th:if="${booking.number_of_infants > 0}" th:text="', ' + ${booking.number_of_infants} + ' Em bé'"></span>
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-plane-arrival text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Ngày về</p>
-                                                                <p class="font-medium" th:text="${#temporals.format(booking.end_date, 'dd/MM/yyyy')}"></p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="flex flex-col items-end">
-                                                <div class="text-right">
-                                                    <p class="text-sm text-gray-500">Tổng cộng</p>
-                                                    <p class="text-2xl font-bold text-indigo-600" th:text="${#numbers.formatInteger(booking.total_price, 3, 'POINT') + '₫'}"></p>
-                                                </div>
-
-                                                <div class="mt-4 flex flex-col sm:flex-row gap-2">
-                                                    <a th:href="'/Client/booking_search/'+ ${booking.getBooking_id()}"
-                                                       class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center">
-                                                        <i class="fas fa-info-circle mr-2"></i> Chi tiết
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div th:if="${bookings.?[status == 'Cash'].empty}" class="bg-gradient-to-br from-gray-50 to-blue-50 border-2 border-dashed border-blue-200 rounded-xl p-8 text-center">
-                                    <div class="inline-block bg-blue-100 p-4 rounded-full mb-4">
-                                        <i class="fas fa-money-bill-wave text-blue-600 text-4xl"></i>
-                                    </div>
-                                    <h3 class="text-xl font-bold text-gray-700 mb-2">Không có tour nào thanh toán tiền mặt</h3>
-                                    <p class="text-gray-500 mb-6">Bạn chưa có tour nào đặt thanh toán bằng tiền mặt</p>
-                                    <a href="/Client/ToursList" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg hover:from-blue-600 hover:to-indigo-600 transition-colors shadow-md">
-                                        <i class="fas fa-search mr-2"></i> Tìm tour
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Cancelled Tab -->
-                        <div id="cancelled-tab" class="hidden">
-                            <div class="grid gap-5">
-                                <div th:each="booking : ${bookings}" th:if="${booking.status == 'Cancelled'}" class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300">
-                                    <div class="h-1 w-full bg-red-500"></div>
-
-                                    <div class="p-5">
-                                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                            <div class="flex-1">
-                                                <div class="flex items-start justify-between">
-                                                    <h3 class="text-xl font-bold text-gray-800" th:text="${booking.tour_name}"></h3>
-                                                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
-                                        Đã hủy
-                                    </span>
-                                                </div>
-
-                                                <div class="mt-3 flex items-center text-sm text-gray-500">
-                                                    <i class="fas fa-hashtag text-indigo-500 mr-1"></i>
-                                                    <span th:text="'Mã đơn: ' + ${booking.booking_id}"></span>
-                                                </div>
-
-                                                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-calendar-plus text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Ngày đặt</p>
-                                                                <p class="font-medium" th:text="${#temporals.format(booking.booking_date, 'dd/MM/yyyy HH:mm')}"></p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-plane-departure text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Ngày đi</p>
-                                                                <p class="font-medium" th:text="${#temporals.format(booking.start_date, 'dd/MM/yyyy')}"></p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-users text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Số lượng</p>
-                                                                <p class="font-medium">
-                                                                    <span th:text="${booking.number_of_adults} + ' Người lớn'"></span>
-                                                                    <span th:if="${booking.number_of_children > 0}" th:text="', ' + ${booking.number_of_children} + ' Trẻ em'"></span>
-                                                                    <span th:if="${booking.number_of_infants > 0}" th:text="', ' + ${booking.number_of_infants} + ' Em bé'"></span>
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-ban text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Trạng thái</p>
-                                                                <p class="font-medium">Đã hủy</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="flex flex-col items-end">
-                                                <div class="text-right">
-                                                    <p class="text-sm text-gray-500">Tổng cộng</p>
-                                                    <p class="text-2xl font-bold text-indigo-600" th:text="${#numbers.formatInteger(booking.total_price, 3, 'POINT') + '₫'}"></p>
-                                                </div>
-
-                                                <div class="mt-4">
-                                                    <a th:href="'/Client/booking_search/'+ ${booking.getBooking_id()}"
-                                                       class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center">
-                                                        <i class="fas fa-info-circle mr-2"></i> Chi tiết
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div th:if="${bookings.?[status == 'Cancelled'].empty}" class="bg-gradient-to-br from-gray-50 to-red-50 border-2 border-dashed border-red-200 rounded-xl p-8 text-center">
-                                    <div class="inline-block bg-red-100 p-4 rounded-full mb-4">
-                                        <i class="fas fa-times-circle text-red-600 text-4xl"></i>
-                                    </div>
-                                    <h3 class="text-xl font-bold text-gray-700 mb-2">Không có tour nào đã hủy</h3>
-                                    <p class="text-gray-500 mb-6">Bạn chưa hủy tour nào trong lịch sử đặt tour</p>
-                                    <a href="/Client/ToursList" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg hover:from-red-600 hover:to-pink-600 transition-colors shadow-md">
-                                        <i class="fas fa-search mr-2"></i> Đặt tour mới
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Thêm phần Completed Tab -->
-                        <div id="completed-tab" class="hidden">
-                            <div class="grid gap-5">
-                                <div th:each="booking : ${bookings}" th:if="${booking.status == 'Completed'}" class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300">
-                                    <div class="h-1 w-full bg-purple-500"></div>
-
-                                    <div class="p-5">
-                                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                            <div class="flex-1">
-                                                <div class="flex items-start justify-between">
-                                                    <h3 class="text-xl font-bold text-gray-800" th:text="${booking.tour_name}"></h3>
-                                                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">
-                                Hoàn thành
-                            </span>
-                                                </div>
-
-                                                <div class="mt-3 flex items-center text-sm text-gray-500">
-                                                    <i class="fas fa-hashtag text-indigo-500 mr-1"></i>
-                                                    <span th:text="'Mã đơn: ' + ${booking.booking_id}"></span>
-                                                </div>
-
-                                                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-calendar-plus text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Ngày đặt</p>
-                                                                <p class="font-medium" th:text="${#temporals.format(booking.booking_date, 'dd/MM/yyyy HH:mm')}"></p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-plane-departure text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Ngày đi</p>
-                                                                <p class="font-medium" th:text="${#temporals.format(booking.start_date, 'dd/MM/yyyy')}"></p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-users text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Số lượng</p>
-                                                                <p class="font-medium">
-                                                                    <span th:text="${booking.number_of_adults} + ' Người lớn'"></span>
-                                                                    <span th:if="${booking.number_of_children > 0}" th:text="', ' + ${booking.number_of_children} + ' Trẻ em'"></span>
-                                                                    <span th:if="${booking.number_of_infants > 0}" th:text="', ' + ${booking.number_of_infants} + ' Em bé'"></span>
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="bg-gray-50 p-3 rounded-lg">
-                                                        <div class="flex items-center">
-                                                            <i class="fas fa-plane-arrival text-indigo-500 mr-2"></i>
-                                                            <div>
-                                                                <p class="text-xs text-gray-500">Ngày về</p>
-                                                                <p class="font-medium" th:text="${#temporals.format(booking.end_date, 'dd/MM/yyyy')}"></p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="flex flex-col items-end">
-                                                <div class="text-right">
-                                                    <p class="text-sm text-gray-500">Tổng cộng</p>
-                                                    <p class="text-2xl font-bold text-indigo-600" th:text="${#numbers.formatInteger(booking.total_price, 3, 'POINT') + '₫'}"></p>
-                                                </div>
-
-                                                <div class="mt-4 flex flex-col sm:flex-row gap-2">
-                                                    <a th:href="'/Client/booking_search/'+ ${booking.getBooking_id()}"
-                                                       class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center">
-                                                        <i class="fas fa-info-circle mr-2"></i> Chi tiết
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div th:if="${bookings.?[status == 'Completed'].empty}" class="bg-gradient-to-br from-gray-50 to-purple-50 border-2 border-dashed border-purple-200 rounded-xl p-8 text-center">
-                                    <div class="inline-block bg-purple-100 p-4 rounded-full mb-4">
-                                        <i class="fas fa-check-double text-purple-600 text-4xl"></i>
-                                    </div>
-                                    <h3 class="text-xl font-bold text-gray-700 mb-2">Không có tour nào đã hoàn thành</h3>
-                                    <p class="text-gray-500 mb-6">Bạn chưa có tour nào đã hoàn thành chuyến đi</p>
-                                    <a href="/Client/ToursList" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-lg hover:from-purple-600 hover:to-indigo-600 transition-colors shadow-md">
-                                        <i class="fas fa-search mr-2"></i> Khám phá tour mới
-                                    </a>
-                                </div>
-                            </div>
+                        <!-- Pagination -->
+                        <div th:if="${bookingPage.totalPages > 1}" class="flex justify-center mt-8">
+                             <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                <a th:href="@{/Client/Orders(page=${currentPage - 1}, status=${status}, searchQuery=${searchQuery})}"
+                                   th:classappend="${bookingPage.first ? 'pointer-events-none text-gray-300' : 'text-gray-500 hover:bg-gray-50'}"
+                                   class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                                <a th:each="i : ${#numbers.sequence(0, bookingPage.totalPages - 1)}"
+                                   th:href="@{/Client/Orders(page=${i}, status=${status}, searchQuery=${searchQuery})}"
+                                   th:classappend="${i == currentPage ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'}"
+                                   class="relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                                   th:text="${i + 1}">
+                                </a>
+                                 <a th:href="@{/Client/Orders(page=${currentPage + 1}, status=${status}, searchQuery=${searchQuery})}"
+                                   th:classappend="${bookingPage.last ? 'pointer-events-none text-gray-300' : 'text-gray-500 hover:bg-gray-50'}"
+                                   class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </nav>
                         </div>
                     </div>
                 </div>
@@ -899,7 +429,7 @@
                 <div class="flex justify-center space-x-2" id="starRating">
                     <!-- 5 sao sẽ được tạo bằng JavaScript -->
                 </div>
-                <p class="text-sm text-gray-500 mt-2" id="ratingText"></p>
+                <p class.="text-sm text-gray-500 mt-2" id="ratingText"></p>
             </div>
 
             <!-- Nhận xét -->
@@ -919,32 +449,6 @@
     </div>
 </div>
 <script>
-    // Tab switching function
-    function showTab(tabName) {
-        // Hide all tabs
-        document.querySelectorAll('[id$="-tab"]').forEach(tab => {
-            tab.classList.add('hidden');
-        });
-
-        // Show selected tab
-        document.getElementById(`${tabName}-tab`).classList.remove('hidden');
-
-        // Update active tab style
-        document.querySelectorAll('.filter-tab').forEach(tab => {
-            tab.classList.remove('active', 'bg-indigo-600', 'text-white');
-        });
-
-        const activeTab = document.querySelector(`[onclick="showTab('${tabName}')"]`);
-        if (activeTab) {
-            activeTab.classList.add('active', 'bg-indigo-600', 'text-white');
-        }
-    }
-
-    // Initialize first tab as active
-    document.addEventListener('DOMContentLoaded', function() {
-        showTab('all');
-    });
-
     // Cancel booking function
     function cancelBooking(event, bookingId) {
         event.preventDefault();
@@ -1004,11 +508,6 @@
                 cancelButton.classList.remove('opacity-75');
             });
     }
-
-    // Initialize - show all tab by default
-    document.addEventListener('DOMContentLoaded', function() {
-        showTab('all');
-    });
 </script>
 <script>
     // Biến toàn cục

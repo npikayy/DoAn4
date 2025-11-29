@@ -4,8 +4,13 @@ import doan3.tourdulich.khang.entity.users;
 import doan3.tourdulich.khang.repository.*;
 import doan3.tourdulich.khang.service.VoucherService;
 import doan3.tourdulich.khang.service.userService;
+import doan3.tourdulich.khang.service.bookingService; // Import bookingService
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,6 +30,8 @@ public class clientInfoController {
     private userRepo userRepo;
     @Autowired
     private userService userService;
+    @Autowired
+    private bookingService bookingService; // Inject bookingService
     @Autowired
     private tourBookingRepo tourBookingRepo;
     @Autowired
@@ -101,16 +108,54 @@ public class clientInfoController {
         }
     }
     @GetMapping("/Orders")
-    public ModelAndView clientBooking(ModelAndView modelAndView) {
+    public ModelAndView clientBooking(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "3") int size,
+            @RequestParam(defaultValue = "all") String status,
+            @RequestParam(defaultValue = "") String searchQuery) {
+        ModelAndView modelAndView = new ModelAndView();
         getCurrentUser(modelAndView);
-        modelAndView.addObject("bookings", tourBookingRepo.findByUserId(modelAndView.getModel().get("user_id").toString()));
+        String userId = modelAndView.getModel().get("user_id").toString();
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<doan3.tourdulich.khang.entity.tour_bookings> bookingPage = bookingService.findAllPaginatedAndFilteredForUser(status, userId, searchQuery, pageable);
+
+
+        modelAndView.addObject("bookingPage", bookingPage);
+        modelAndView.addObject("currentPage", page);
+        modelAndView.addObject("status", status);
+        modelAndView.addObject("searchQuery", searchQuery);
         modelAndView.setViewName("/client_html/client_orders");
         return modelAndView;
     }
     @GetMapping("/MyTourRating")
-    public ModelAndView myTourRating(ModelAndView modelAndView) {
+    public ModelAndView myTourRating(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "3") int size,
+            @RequestParam(defaultValue = "all") String rating,
+            @RequestParam(defaultValue = "") String searchQuery,
+            ModelAndView modelAndView) {
         getCurrentUser(modelAndView);
-        modelAndView.addObject("reviews", ratingRepo.findRatingByUserId(modelAndView.getModel().get("user_id").toString()));
+        String userId = modelAndView.getModel().get("user_id").toString();
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Specification<doan3.tourdulich.khang.entity.tour_ratings> spec = Specification.where(RatingSpecifications.withUserId(userId));
+
+        if (org.springframework.util.StringUtils.hasText(rating)) {
+            spec = spec.and(RatingSpecifications.withRating(rating));
+        }
+
+        if (org.springframework.util.StringUtils.hasText(searchQuery)) {
+            spec = spec.and(RatingSpecifications.withSearchQuery(searchQuery));
+        }
+
+        Page<doan3.tourdulich.khang.entity.tour_ratings> ratingPage = ratingRepo.findAll(spec, pageable);
+
+        modelAndView.addObject("ratingPage", ratingPage);
+        modelAndView.addObject("currentPage", page);
+        modelAndView.addObject("rating", rating);
+        modelAndView.addObject("searchQuery", searchQuery);
         modelAndView.setViewName("/client_html/client_rating");
         return modelAndView;
     }

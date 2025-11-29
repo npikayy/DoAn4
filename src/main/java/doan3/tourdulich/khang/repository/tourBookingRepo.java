@@ -45,11 +45,12 @@ public interface tourBookingRepo extends JpaRepository<tour_bookings, Integer>, 
             nativeQuery = true)
     List<Object[]> getBookingCountsByMonth();
 
-    @Query(value = "SELECT b.tour_name, COUNT(b.booking_id) as booking_count " +
+    @Query("SELECT b.tour_name, COUNT(b.booking_id) as booking_count " +
             "FROM tour_bookings b " +
-            "GROUP BY b.tour.tour_id, b.tour_name " +
-            "ORDER BY booking_count DESC LIMIT 5")
-    List<Object[]> findPopularTours();
+            "WHERE b.status NOT IN ('Cancelled') " +
+            "GROUP BY b.tour_name " +
+            "ORDER BY booking_count DESC")
+    List<Object[]> findPopularTours(org.springframework.data.domain.Pageable pageable);
 
     @Query("SELECT b FROM tour_bookings b ORDER BY b.booking_date DESC LIMIT 5")
     List<tour_bookings> find5LatestBookings();
@@ -59,4 +60,9 @@ public interface tourBookingRepo extends JpaRepository<tour_bookings, Integer>, 
 
     @Query("SELECT SUM(b.total_price) FROM tour_bookings b WHERE b.user_id = :userId AND b.status = :status")
     Integer findTotalSpendByUserIdAndStatus(@Param("userId") String userId, @Param("status") String status);
+
+    @Query("SELECT b.status, count(b) FROM tour_bookings b GROUP BY b.status")
+    List<Object[]> countByStatus();
+
+    long countByStatus(String status);
 }

@@ -119,34 +119,54 @@
                             </h2>
                         </div>
 
+                        <!-- Filter and Search Section -->
+                        <div class="mb-8">
+                            <form th:action="@{/Client/MyTourRating}" method="get" class="flex flex-col md:flex-row gap-4">
+                                <input type="hidden" name="rating" th:value="${rating}">
+                                <div class="relative flex-grow">
+                                    <input type="text" name="searchQuery" th:value="${searchQuery}" placeholder="Tìm theo tên tour, nhận xét..."
+                                           class="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fas fa-search text-gray-400"></i>
+                                    </div>
+                                </div>
+                                <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium flex items-center justify-center">
+                                    <i class="fas fa-filter mr-2"></i> Lọc
+                                </button>
+                            </form>
+                        </div>
+
                         <!-- Filter Tabs -->
                         <div class="mb-8">
                             <div class="flex space-x-2 overflow-x-auto pb-2">
-                                <button onclick="filterReviews('all')"
-                                        class="filter-tab active px-4 py-2 rounded-full font-medium text-sm bg-indigo-600 text-white shadow-sm">
+                                <a th:href="@{/Client/MyTourRating(rating='all', searchQuery=${searchQuery})}"
+                                   th:classappend="${rating == 'all' ? 'active bg-indigo-600 text-white' : 'bg-white hover:bg-gray-100 text-gray-700'}"
+                                   class="filter-tab px-4 py-2 rounded-full font-medium text-sm shadow-sm">
                                     <i class="fas fa-list mr-1"></i> Tất cả
-                                </button>
-                                <button onclick="filterReviews('5')"
-                                        class="filter-tab px-4 py-2 rounded-full font-medium text-sm bg-green-100 text-green-800 hover:bg-green-200">
+                                </a>
+                                <a th:href="@{/Client/MyTourRating(rating='5', searchQuery=${searchQuery})}"
+                                   th:classappend="${rating == '5' ? 'active bg-green-500 text-white' : 'bg-green-100 text-green-800 hover:bg-green-200'}"
+                                   class="filter-tab px-4 py-2 rounded-full font-medium text-sm">
                                     <i class="fas fa-star mr-1"></i> 5 sao
-                                </button>
-                                <button onclick="filterReviews('4')"
-                                        class="filter-tab px-4 py-2 rounded-full font-medium text-sm bg-blue-100 text-blue-800 hover:bg-blue-200">
+                                </a>
+                                <a th:href="@{/Client/MyTourRating(rating='4', searchQuery=${searchQuery})}"
+                                   th:classappend="${rating == '4' ? 'active bg-blue-500 text-white' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'}"
+                                   class="filter-tab px-4 py-2 rounded-full font-medium text-sm">
                                     <i class="fas fa-star mr-1"></i> 4 sao
-                                </button>
-                                <button onclick="filterReviews('1-3')"
-                                        class="filter-tab px-4 py-2 rounded-full font-medium text-sm bg-amber-100 text-amber-800 hover:bg-amber-200">
+                                </a>
+                                <a th:href="@{/Client/MyTourRating(rating='1-3', searchQuery=${searchQuery})}"
+                                   th:classappend="${rating == '1-3' ? 'active bg-amber-500 text-white' : 'bg-amber-100 text-amber-800 hover:bg-amber-200'}"
+                                   class="filter-tab px-4 py-2 rounded-full font-medium text-sm">
                                     <i class="fas fa-star-half-alt mr-1"></i> 1-3 sao
-                                </button>
+                                </a>
                             </div>
                         </div>
 
                         <!-- Reviews List -->
                         <div class="space-y-6">
                             <!-- Review Card -->
-                            <div th:each="review : ${reviews}"
-                                 class="review-card bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden"
-                                 th:data-rating="${review.rating}">
+                            <div th:each="review : ${ratingPage.content}"
+                                 class="review-card bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
                                 <div class="p-6">
                                     <div class="flex justify-between items-start mb-4">
                                         <div>
@@ -183,7 +203,7 @@
                             </div>
 
                             <!-- Empty State -->
-                            <div th:if="${reviews.size() == 0}" class="bg-gradient-to-br from-gray-50 to-indigo-50 border-2 border-dashed border-indigo-200 rounded-xl p-8 text-center">
+                            <div th:if="${ratingPage.empty}" class="bg-gradient-to-br from-gray-50 to-indigo-50 border-2 border-dashed border-indigo-200 rounded-xl p-8 text-center">
                                 <div class="inline-block bg-indigo-100 p-4 rounded-full mb-4">
                                     <i class="fas fa-star text-indigo-600 text-4xl"></i>
                                 </div>
@@ -193,6 +213,28 @@
                                     <i class="fas fa-search mr-2"></i> Khám phá tour ngay
                                 </a>
                             </div>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div th:if="${ratingPage.totalPages > 1}" class="flex justify-center mt-8">
+                             <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                <a th:href="@{/Client/MyTourRating(page=${currentPage - 1}, rating=${rating}, searchQuery=${searchQuery})}"
+                                   th:classappend="${ratingPage.first ? 'pointer-events-none text-gray-300' : 'text-gray-500 hover:bg-gray-50'}"
+                                   class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                                <a th:each="i : ${#numbers.sequence(0, ratingPage.totalPages - 1)}"
+                                   th:href="@{/Client/MyTourRating(page=${i}, rating=${rating}, searchQuery=${searchQuery})}"
+                                   th:classappend="${i == currentPage ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'}"
+                                   class="relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                                   th:text="${i + 1}">
+                                </a>
+                                 <a th:href="@{/Client/MyTourRating(page=${currentPage + 1}, rating=${rating}, searchQuery=${searchQuery})}"
+                                   th:classappend="${ratingPage.last ? 'pointer-events-none text-gray-300' : 'text-gray-500 hover:bg-gray-50'}"
+                                   class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </nav>
                         </div>
                     </div>
                 </div>
@@ -205,58 +247,6 @@
 <footer th:replace="client_html/fragment/headerANDfooter :: footer"></footer>
 
 <script>
-    // Filter reviews by rating
-    function filterReviews(ratingFilter) {
-        const reviews = document.querySelectorAll('.review-card');
-        let visibleCount = 0;
-
-        reviews.forEach(review => {
-            const rating = review.getAttribute('data-rating');
-            let shouldShow = false;
-
-            if (ratingFilter === 'all') {
-                shouldShow = true;
-            } else if (ratingFilter === '5' && rating === '5') {
-                shouldShow = true;
-            } else if (ratingFilter === '4' && rating === '4') {
-                shouldShow = true;
-            } else if (ratingFilter === '1-3' && rating >= 1 && rating <= 3) {
-                shouldShow = true;
-            }
-
-            if (shouldShow) {
-                review.classList.remove('hidden');
-                visibleCount++;
-            } else {
-                review.classList.add('hidden');
-            }
-        });
-
-        // Update active tab
-        document.querySelectorAll('.filter-tab').forEach(tab => {
-            tab.classList.remove('active', 'bg-indigo-600', 'text-white');
-        });
-
-        const activeTab = document.querySelector(`[onclick="filterReviews('${ratingFilter}')"]`);
-        if (activeTab) {
-            activeTab.classList.add('active', 'bg-indigo-600', 'text-white');
-        }
-
-        // Show empty state if no reviews visible
-        const emptyState = document.querySelector('.bg-gradient-to-br.from-gray-50.to-indigo-50');
-        if (emptyState) {
-            if (visibleCount === 0 && reviews.length > 0) {
-                emptyState.classList.remove('hidden');
-            } else {
-                emptyState.classList.add('hidden');
-            }
-        }
-    }
-
-    // Initialize - show all reviews by default
-    document.addEventListener('DOMContentLoaded', function() {
-        filterReviews('all');
-    });
 </script>
 </body>
 </html>

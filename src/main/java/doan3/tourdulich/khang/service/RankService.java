@@ -18,6 +18,10 @@ public class RankService {
         rankRepository.save(rank);
     }
 
+    public java.util.List<String> getDistinctRanks() {
+        return rankRepository.findDistinctRanks();
+    }
+
     public void createDefaultRank(users user) {
         Rank defaultRank = new Rank();
         defaultRank.setUser(user);

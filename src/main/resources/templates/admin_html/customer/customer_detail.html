@@ -61,12 +61,12 @@
     </style>
 </head>
 <body class="min-h-screen bg-gray-50">
-<div class="flex">
+<div class="flex min-h-screen relative">
     <!-- Sidebar -->
     <aside th:replace="~{admin_html/fragment/sidebar :: sidebar}"></aside>
 
     <!-- Main Content -->
-    <main class="flex-1 overflow-x-hidden overflow-y-auto">
+    <main class="flex-1 overflow-x-hidden overflow-y-auto p-8 ml-[18.5rem]">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <!-- Header Section -->
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
@@ -112,7 +112,7 @@
 
                         <div class="mt-6 grid grid-cols-3 gap-4">
                             <div class="text-center">
-                                <p class="text-2xl font-bold text-indigo-600" th:text="${#lists.size(bookings)}"></p>
+                                <p class="text-2xl font-bold text-indigo-600" th:text="${bookingPage.content.size()}"></p>
                                 <p class="text-sm text-gray-500">Tours đã đi</p>
                             </div>
                             <div class="text-center">
@@ -137,6 +137,30 @@
                                 Chấm dứt Tư cách Thành viên
                             </button>
                         </form>
+                    </div>
+
+                    <!-- Rating History Card -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-star text-yellow-500 mr-3"></i>Lịch sử Đánh giá
+                        </h3>
+                        <div th:if="${!reviews.empty}" class="space-y-4 max-h-64 overflow-y-auto pr-2">
+                            <div th:each="review : ${reviews}" class="border-b pb-4">
+                                <div class="flex justify-between items-center">
+                                    <h4 class="font-semibold text-gray-900" th:text="${review.tour.tour_name}"></h4>
+                                    <div class="flex items-center">
+                                        <th:block th:each="i : ${#numbers.sequence(1, 5)}">
+                                            <i th:class="${i <= review.rating} ? 'fas fa-star text-yellow-400' : 'far fa-star text-yellow-400'"></i>
+                                        </th:block>
+                                    </div>
+                                </div>
+                                <p class="text-sm text-gray-600 mt-1" th:text="${review.comment}"></p>
+                                <p class="text-xs text-gray-400 mt-2" th:text="${#temporals.format(review.rating_date, 'dd/MM/yyyy')}"></p>
+                            </div>
+                        </div>
+                        <div th:if="${reviews.empty}" class="text-center text-gray-500">
+                            <p>Khách hàng này chưa có đánh giá nào.</p>
+                        </div>
                     </div>
 
                      <!-- Info Card -->
@@ -245,16 +269,45 @@
                         </div>
                     </div>
 
-                    <!-- Bookings Section -->
-                    <div class="bg-white rounded-xl shadow-lg p-6 mt-8 md:p-8">
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-                            <h2 class="text-2xl font-bold text-gray-800">Tour đã đi</h2>
-                        </div>
-        
-                        <div id="all-tab">
-                            <div class="flex flex-col gap-4">
+                                         <!-- Bookings Section -->
+                                        <div class="bg-white rounded-xl shadow-lg p-6 mt-8 md:p-8">
+                                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                                                <h2 class="text-2xl font-bold text-gray-800">Tour đã đi</h2>
+                                            </div>
+                                            
+                                            <!-- Filter and Search Section -->
+                                            <div class="mb-6">
+                                                <form id="filterForm" th:action="@{/admin/customers/customer_detail/{user_id}(user_id=${customer.user_id})}" method="get" class="flex flex-col md:flex-row gap-4">
+                                                    <div class="flex-1">
+                                                        <label for="statusFilter" class="sr-only">Lọc theo Trạng thái</label>
+                                                        <select id="statusFilter" name="status" class="block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 bg-white">
+                                                            <option value="">Tất cả trạng thái</option>
+                                                            <option value="Pending payment" th:selected="${status == 'Pending payment'}">Chờ thanh toán</option>
+                                                            <option value="Paid" th:selected="${status == 'Paid'}">Đã thanh toán</option>
+                                                            <option value="Cash" th:selected="${status == 'Cash'}">Thanh toán tiền mặt</option>
+                                                            <option value="Cancelled" th:selected="${status == 'Cancelled'}">Đã hủy</option>
+                                                            <option value="Completed" th:selected="${status == 'Completed'}">Đã hoàn thành</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="flex-1">
+                                                        <label for="searchQuery" class="sr-only">Tìm kiếm</label>
+                                                        <div class="relative">
+                                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                <i class="fas fa-search text-gray-400"></i>
+                                                            </div>
+                                                            <input type="text" id="searchQuery" name="searchQuery" th:value="${searchQuery}" placeholder="Tìm kiếm theo tên tour, mã đơn..."
+                                                                class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900">
+                                                        </div>
+                                                    </div>
+                                                    <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center justify-center font-medium transition">
+                                                        <i class="fas fa-filter mr-2"></i> Lọc
+                                                    </button>
+                                                </form>
+                                            </div>
+                            
+                                            <div id="all-tab">                            <div class="flex flex-col gap-4">
                                 <!-- Booking List Item -->
-                                <div th:each="booking : ${bookings}" class="flex flex-col sm:flex-row items-center bg-white p-4 rounded-xl border border-gray-200 hover:border-indigo-500 hover:shadow-lg transition-all duration-300">
+                                <div th:each="booking : ${bookingPage.content}" class="flex flex-col sm:flex-row items-center bg-white p-4 rounded-xl border border-gray-200 hover:border-indigo-500 hover:shadow-lg transition-all duration-300">
                                     <div class="flex-1 w-full">
                                         <div class="flex justify-between items-start">
                                              <a th:href="'/admin/tourBookings/detail/'+ ${booking.getBooking_id()}" class="font-bold text-lg text-gray-800 hover:text-indigo-600" th:text="${booking.tour_name}"></a>
@@ -283,13 +336,38 @@
                                 </div>
         
                                 <!-- Empty State -->
-                                <div th:if="${bookings.empty}" class="bg-blue-50 border-2 border-dashed border-blue-200 rounded-xl p-8 text-center">
+                                <div th:if="${bookingPage.empty}" class="bg-blue-50 border-2 border-dashed border-blue-200 rounded-xl p-8 text-center">
                                     <div class="inline-block bg-blue-100 p-4 rounded-full mb-4">
                                         <i class="fas fa-suitcase text-blue-600 text-4xl"></i>
                                     </div>
                                     <h3 class="text-xl font-bold text-gray-700 mb-2">Khách hàng này chưa có đơn đặt tour nào</h3>
                                 </div>
                             </div>
+
+                            <!-- Pagination -->
+                            <nav th:if="${bookingPage.totalPages > 1}" class="flex justify-center items-center gap-x-1 mt-8">
+                                <a th:if="${currentPage > 0}"
+                                   th:href="@{/admin/customers/customer_detail/{user_id}(user_id=${customer.user_id}, page=${currentPage - 1}, status=${status}, searchQuery=${searchQuery})}"
+                                   class="min-h-[38px] min-w-[38px] flex justify-center items-center bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-3 rounded-lg text-sm"
+                                   aria-label="Previous">
+                                    <i class="fa-solid fa-arrow-left"></i>
+                                </a>
+                                <div class="flex items-center gap-x-1">
+                                    <th:block th:each="i : ${#numbers.sequence(0, bookingPage.totalPages - 1)}">
+                                        <a th:href="@{/admin/customers/customer_detail/{user_id}(user_id=${customer.user_id}, page=${i}, status=${status}, searchQuery=${searchQuery})}"
+                                           th:classappend="${i == currentPage ? 'bg-indigo-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'}"
+                                           class="min-h-[38px] min-w-[38px] flex justify-center items-center text-sm rounded-lg py-2 px-3">
+                                            <span th:text="${i + 1}"></span>
+                                        </a>
+                                    </th:block>
+                                </div>
+                                <a th:if="${currentPage < bookingPage.totalPages - 1}"
+                                   th:href="@{/admin/customers/customer_detail/{user_id}(user_id=${customer.user_id}, page=${currentPage + 1}, status=${status}, searchQuery=${searchQuery})}"
+                                   class="min-h-[38px] min-w-[38px] flex justify-center items-center bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-3 rounded-lg text-sm"
+                                   aria-label="Next">
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                </a>
+                            </nav>
                         </div>
                     </div>
                 </div>
@@ -339,6 +417,24 @@
         if (openModalBtn) {
             openModalBtn.addEventListener('click', () => {
                 if (modal) modal.classList.remove('hidden');
+                confirmBtn.disabled = true;
+                confirmBtn.classList.remove('bg-red-600', 'hover:bg-red-700', 'focus:ring-red-500');
+                confirmBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+
+                let countdown = 5;
+                confirmBtn.textContent = `Xác nhận (${countdown})`;
+
+                const intervalId = setInterval(() => {
+                    countdown--;
+                    confirmBtn.textContent = `Xác nhận (${countdown})`;
+                    if (countdown === 0) {
+                        clearInterval(intervalId);
+                        confirmBtn.disabled = false;
+                        confirmBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                        confirmBtn.classList.add('bg-red-600', 'hover:bg-red-700', 'focus:ring-red-500');
+                        confirmBtn.textContent = 'Xác nhận';
+                    }
+                }, 1000);
             });
         }
 

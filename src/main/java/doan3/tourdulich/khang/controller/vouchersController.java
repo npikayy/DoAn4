@@ -1,4 +1,9 @@
 package doan3.tourdulich.khang.controller;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.ResponseBody;
+import java.util.stream.Collectors;
+import doan3.tourdulich.khang.service.RankService;
 import doan3.tourdulich.khang.entity.PointVoucher; // New
 import doan3.tourdulich.khang.entity.RedeemableVoucherType; // New
 import doan3.tourdulich.khang.entity.tours; // New
@@ -10,6 +15,7 @@ import doan3.tourdulich.khang.service.VoucherService;
 import doan3.tourdulich.khang.service.bookingService;
 import doan3.tourdulich.khang.repository.tourRepo; // New
 import doan3.tourdulich.khang.service.userService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -31,6 +37,8 @@ public class vouchersController {
     private final AsyncVoucherService asyncVoucherService;
     private final PointVoucherService pointVoucherService; // New
     private final tourRepo tourRepo; // New
+    private final ObjectMapper objectMapper;
+    private final RankService rankService;
 
     @GetMapping("")
     public ModelAndView index(@RequestParam(required = false) String voucherType,
@@ -41,14 +49,13 @@ public class vouchersController {
                               @RequestParam(defaultValue = "0") int page,
                               @RequestParam(defaultValue = "9") int size) {
         ModelAndView modelAndView = new ModelAndView("admin_html/voucher/voucher_management");
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
-        org.springframework.data.domain.Page<vouchers> voucherPage = voucherService.searchVouchers(voucherType, status, userId, expiryDateStart, expiryDateEnd, pageable);
-        List<users> userList = userService.getAllUsersExceptAdmin();
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        Page<vouchers> voucherPage = voucherService.searchVouchers(voucherType, status, userId, expiryDateStart, expiryDateEnd, pageable);
         List<tours> tourList = tourRepo.findAll(); // New
         List<PointVoucher> pointVouchers = pointVoucherService.getAllPointVouchers(); // New
         log.info("Searching vouchers with params: voucherType={}, status={}, userId={}, expiryDateStart={}, expiryDateEnd={}", voucherType, status, userId, expiryDateStart, expiryDateEnd);
         modelAndView.addObject("voucherPage", voucherPage); // Changed from vouchers
-        modelAndView.addObject("userList", userList);
+
         modelAndView.addObject("tourList", tourList); // New
         modelAndView.addObject("pointVouchers", pointVouchers); // New
         modelAndView.addObject("voucherType", voucherType);
@@ -63,6 +70,38 @@ public class vouchersController {
 
         return modelAndView;
     }
+
+    @GetMapping("/new")
+    public ModelAndView newVoucherPage() {
+        ModelAndView modelAndView = new ModelAndView("admin_html/voucher/voucher_creation");
+        modelAndView.addObject("ranks", rankService.getDistinctRanks());
+        return modelAndView;
+    }
+
+    @GetMapping("/api/users")
+    @ResponseBody
+    public Map<String, Object> searchUsers(@RequestParam(value = "search", required = false) String search,
+                                           @RequestParam(value = "rank", required = false) String rank,
+                                           Pageable pageable) {
+        Page<users> userPage = userService.searchAndFilterUsers(search, rank, pageable);
+        
+        List<Map<String, Object>> userList = userPage.getContent().stream().map(user -> {
+            Map<String, Object> userMap = new HashMap<>();
+            userMap.put("id", user.getUser_id());
+            userMap.put("email", user.getEmail());
+            userMap.put("fullName", user.getFull_name());
+            userMap.put("rank", user.getRank() != null ? user.getRank().getRank() : "Chưa có");
+            return userMap;
+        }).collect(Collectors.toList());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("results", userList);
+        response.put("pagination", Map.of("more", !userPage.isLast()));
+        response.put("totalPages", userPage.getTotalPages());
+
+        return response;
+    }
+
 
 
     @GetMapping("/update-expired")
@@ -84,28 +123,32 @@ public class vouchersController {
         return new ModelAndView("redirect:/admin/vouchers");
     }
 
+    @PostMapping("/delete-expired")
+    public String deleteExpiredVouchers(RedirectAttributes redirectAttributes) {
+        voucherService.deleteExpiredVouchers();
+        redirectAttributes.addFlashAttribute("successMessage", "Đã xóa tất cả voucher hết hạn thành công.");
+        return "redirect:/admin/vouchers";
+    }
+
     @PostMapping("/addVoucher")
     public ModelAndView addVoucher(@RequestParam("voucherType") String voucherType,
                                    @RequestParam("giaTriGiam") String giaTriGiamStr,
-                                   @RequestParam("userId") String userId,
-                                   @RequestParam("ngayHetHan") String ngayHetHan) {
+                                   @RequestParam("userIds") List<String> userIds,
+                                   @RequestParam("ngayHetHan") String ngayHetHan,
+                                   RedirectAttributes redirectAttributes) {
         try {
-            if ("ALL_USERS".equals(userId)) {
+            if (userIds != null && userIds.contains("ALL_USERS")) {
                 asyncVoucherService.createVouchersForAllUsers(voucherType, giaTriGiamStr, ngayHetHan);
+                redirectAttributes.addFlashAttribute("successMessage", "Yêu cầu tạo voucher cho tất cả người dùng đã được gửi. Quá trình này sẽ chạy trong nền.");
+            } else if (userIds != null && !userIds.isEmpty()) {
+                asyncVoucherService.createVouchersForSpecificUsers(voucherType, giaTriGiamStr, ngayHetHan, userIds);
+                redirectAttributes.addFlashAttribute("successMessage", "Yêu cầu tạo voucher cho người dùng đã chọn đã được gửi. Quá trình này sẽ chạy trong nền.");
             } else {
-                int giaTriGiam = Integer.parseInt(giaTriGiamStr.replace(".", ""));
-                vouchers newVoucher = new vouchers();
-                String code = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-                newVoucher.setMaVoucher(code);
-                newVoucher.setVoucherType(voucherType);
-                newVoucher.setGiaTriGiam(giaTriGiam);
-                newVoucher.setNgayHetHan(java.sql.Date.valueOf(ngayHetHan));
-                newVoucher.setTrangThai("ACTIVE");
-                userService.findByUserId(userId).ifPresent(newVoucher::setUser);
-                vouchers savedVoucher = voucherService.saveVoucher(newVoucher);
+                redirectAttributes.addFlashAttribute("errorMessage", "Không có người dùng nào được chọn để tạo voucher.");
             }
         } catch (Exception e) {
-            log.error("Error creating voucher: {}", e.getMessage());
+            log.error("Error dispatching voucher creation job: {}", e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi khi gửi yêu cầu tạo voucher: " + e.getMessage());
         }
         return new ModelAndView("redirect:/admin/vouchers");
     }

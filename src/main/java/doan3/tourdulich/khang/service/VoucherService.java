@@ -72,6 +72,11 @@ public class VoucherService {
         });
     }
 
+    @Transactional
+    public void deleteExpiredVouchers() {
+        voucherRepository.deleteByTrangThai("EXPIRED");
+    }
+
     public void revokeVoucher(int id) {
         voucherRepository.findById(id).ifPresent(voucher -> {
             voucher.setTrangThai("Đã hủy");

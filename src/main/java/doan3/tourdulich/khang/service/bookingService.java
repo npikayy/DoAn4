@@ -97,6 +97,19 @@ public class bookingService {
 
         return tourBookingRepo.findAll(spec, pageable);
     }
+    public Page<tour_bookings> findAllPaginatedAndFilteredForUser(String status, String userId, String searchQuery, Pageable pageable) {
+        Specification<tour_bookings> spec = Specification.where(BookingSpecifications.withUserId(userId));
+
+        if (org.springframework.util.StringUtils.hasText(status) && !"all".equalsIgnoreCase(status)) {
+            spec = spec.and(BookingSpecifications.withStatus(status));
+        }
+
+        if (org.springframework.util.StringUtils.hasText(searchQuery)) {
+            spec = spec.and(BookingSpecifications.withSearchQuery(searchQuery));
+        }
+
+        return tourBookingRepo.findAll(spec, pageable);
+    }
     public void updateBookingStatus(Integer bookingId, String status) {
         tourBookingRepo.findById(bookingId).ifPresent(booking -> {
             booking.setStatus(status);

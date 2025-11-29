@@ -15,71 +15,29 @@
     <aside th:replace="~{admin_html/fragment/sidebar :: sidebar}"></aside>
 
     <!-- Main Content -->
-    <div class="flex-1 p-8">
+    <div class="flex-1 p-8 overflow-x-hidden overflow-y-auto p-8 ml-[18.5rem]">
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl font-bold">Quản lý Voucher</h1>
-            <a id="update-status-btn" th:href="@{/admin/vouchers/update-expired}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-sm transition flex items-center">
-                <i class="fas fa-sync-alt mr-2"></i> Cập nhật trạng thái
-            </a>
+            <div>
+                <a th:href="@{/admin/vouchers/new}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm transition inline-flex items-center mr-2">
+                    <i class="fas fa-plus mr-2"></i> Tạo Voucher
+                </a>
+                <a id="update-status-btn" th:href="@{/admin/vouchers/update-expired}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-sm transition inline-flex items-center mr-2">
+                    <i class="fas fa-sync-alt mr-2"></i> Cập nhật trạng thái
+                </a>
+                <form th:action="@{/admin/vouchers/delete-expired}" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tất cả voucher đã hết hạn không?');" class="inline-flex">
+                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-sm transition flex items-center">
+                        <i class="fas fa-trash-alt mr-2"></i> Xóa Voucher hết hạn
+                    </button>
+                </form>
+            </div>
         </div>
 
         <!-- Success Message -->
         <div th:if="${successMessage}" class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded-lg shadow-sm" role="alert">
             <p th:text="${successMessage}"></p>
         </div>
-        <!-- Add Voucher Form Section -->
-        <div class="bg-white p-6 rounded-lg shadow-sm mb-8">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold">Tạo Voucher Mới</h2>
-                <button type="button" id="toggle-add-voucher-btn" class="text-blue-600 hover:text-blue-800">
-                    <i class="fas fa-chevron-down"></i>
-                </button>
-            </div>
-            <div id="add-voucher-section" class="hidden">
-                <form th:action="@{/admin/vouchers/addVoucher}" method="post">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <!-- Voucher Type -->
-                        <div>
-                            <label for="voucherType" class="block text-sm font-medium text-gray-700 mb-2">Loại Voucher</label>
-                            <select id="voucherType" name="voucherType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
-                                <option value="PERCENTAGE">Giảm theo %</option>
-                                <option value="AMOUNT">Giảm số tiền</option>
-                            </select>
-                        </div>
-
-                        <!-- Discount Value -->
-                        <div>
-                            <label for="giaTriGiam" class="block text-sm font-medium text-gray-700 mb-2">Giá trị giảm</label>
-                            <div class="relative">
-                                <input type="text" id="giaTriGiam" name="giaTriGiam" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
-                                <span id="discount-unit" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500"></span>
-                            </div>
-                        </div>
-
-                        <!-- User Select -->
-                        <div>
-                            <label for="userId" class="block text-sm font-medium text-gray-700 mb-2">Gán cho người dùng</label>
-                            <select id="userId" name="userId" class="w-full" required>
-                                <option value="">Chọn người dùng</option>
-                                <option value="ALL_USERS">Tất cả người dùng</option>
-                                <option th:each="user : ${userList}" th:value="${user.user_id}" th:text="${user.email}"></option>
-                            </select>
-                        </div>
-
-                        <!-- Expiry Date -->
-                        <div>
-                            <label for="ngayHetHan" class="block text-sm font-medium text-gray-700 mb-2">Ngày hết hạn</label>
-                            <input type="date" id="ngayHetHan" name="ngayHetHan" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
-                        </div>
-                    </div>
-                    <div class="mt-6 text-right">
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition">
-                            <i class="fas fa-plus-circle mr-2"></i>Tạo Voucher
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+        
         <!-- Add Point Voucher Form Section -->
         <div class="bg-white p-6 rounded-lg shadow-sm mb-8">
             <div class="flex justify-between items-center mb-4">
@@ -172,7 +130,6 @@
                             <label for="userFilter" class="block text-sm font-medium text-gray-700">Người dùng</label>
                             <select id="userFilter" name="userId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" th:value="${userId}">
                                 <option value="">Tất cả</option>
-                                <option th:each="user : ${userList}" th:value="${user.user_id}" th:text="${user.email}" th:selected="${user.user_id == userId}"></option>
                             </select>
                         </div>
                     </div>
@@ -348,8 +305,52 @@
         $('#ngayHetHan').attr('min', today);
 
         $('#userId').select2({
-            placeholder: "Chọn người dùng",
-            allowClear: true
+            placeholder: "Chọn người dùng hoặc tìm kiếm bằng email",
+            allowClear: true,
+            ajax: {
+                url: '/admin/vouchers/api/users',
+                dataType: 'json',
+                delay: 250, // wait 250 milliseconds before triggering the request
+                data: function (params) {
+                    return {
+                        search: params.term, // search term
+                        page: params.page || 0,
+                        size: 10
+                    };
+                },
+                processResults: function (data, params) {
+                    params.page = params.page || 0;
+
+                    return {
+                        results: data.results,
+                        pagination: {
+                            more: data.pagination.more
+                        }
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 1,
+        });
+
+        // Add logic for "All Users" selection
+        var lastSelection = [];
+        $('#userId').on('select2:opening', function(e) {
+            lastSelection = $(this).val() || [];
+        });
+
+        $('#userId').on('change', function() {
+            var currentSelection = $(this).val() || [];
+            
+            // If "ALL_USERS" was just selected
+            if (currentSelection.includes('ALL_USERS') && !lastSelection.includes('ALL_USERS')) {
+                 $(this).val(['ALL_USERS']).trigger('change.select2');
+            } 
+            // If a user was just selected while "ALL_USERS" was already selected
+            else if (currentSelection.includes('ALL_USERS') && currentSelection.length > 1) {
+                 var newSelection = currentSelection.filter(item => item !== 'ALL_USERS');
+                 $(this).val(newSelection).trigger('change.select2');
+            }
         });
 
         function updateDiscountInput() {
@@ -463,7 +464,52 @@
         const urlParams = new URLSearchParams(window.location.search);
         $('#voucherTypeFilter').val(urlParams.get('voucherType') || '');
         $('#statusFilter').val(urlParams.get('status') || '');
-        $('#userFilter').val(urlParams.get('userId') || '');
+
+        $('#userFilter').select2({
+            placeholder: "Tìm kiếm người dùng",
+            allowClear: true,
+            ajax: {
+                url: '/admin/vouchers/api/users',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return {
+                        search: params.term,
+                        page: params.page || 0,
+                        size: 10
+                    };
+                },
+                processResults: function (data, params) {
+                    params.page = params.page || 0;
+                    return {
+                        results: data.results,
+                        pagination: {
+                            more: data.pagination.more
+                        }
+                    };
+                },
+                cache: true
+            }
+        });
+        
+        // If there is a userId in the URL, fetch the user and set it as the value
+        const userId = urlParams.get('userId');
+        if (userId) {
+            $.ajax({
+                type: 'GET',
+                url: '/admin/vouchers/api/users',
+                data: { search: userId } // A bit of a hack, assuming userId is unique enough
+            }).then(function (data) {
+                if (data.results && data.results.length > 0) {
+                    var user = data.results[0];
+                    // Create the DOM option that is pre-selected by default
+                    var option = new Option(user.text, user.id, true, true);
+                    // Append it to the select
+                    $('#userFilter').append(option).trigger('change');
+                }
+            });
+        }
+        
         $('#expiryDateStart').val(urlParams.get('expiryDateStart') || '');
         $('#expiryDateEnd').val(urlParams.get('expiryDateEnd') || '');
 

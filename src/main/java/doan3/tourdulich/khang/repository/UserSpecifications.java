@@ -12,7 +12,7 @@ import java.util.List;
 
 public class UserSpecifications {
 
-    public static Specification<users> withFilters(String searchQuery, String gender, String ageRange, String registrationDate) {
+    public static Specification<users> withFilters(String searchQuery, String gender, String ageRange, String registrationDate, String rank) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -32,6 +32,11 @@ public class UserSpecifications {
             // Gender filter
             if (gender != null && !gender.isEmpty()) {
                 predicates.add(criteriaBuilder.equal(root.get("gender"), gender));
+            }
+
+            // Rank filter
+            if (rank != null && !rank.isEmpty()) {
+                predicates.add(criteriaBuilder.equal(root.get("rank").get("rank"), rank));
             }
 
             // Age range filter

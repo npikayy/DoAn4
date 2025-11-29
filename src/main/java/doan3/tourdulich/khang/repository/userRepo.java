@@ -18,6 +18,9 @@ public interface userRepo extends JpaRepository<users, String>, JpaSpecification
 
 
 
+    @Query("SELECT u FROM users u WHERE u.role = 'ROLE_USER' AND (LOWER(u.email) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR LOWER(u.full_name) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
+    Page<users> searchUsers(String searchTerm, Pageable pageable);
+
     @Query("SELECT u FROM users u WHERE u.role = 'ROLE_USER' AND u.email <> 'admin@gmail.com'")
     Page<users> findAllUsersExceptAdmin(Pageable pageable);
 
@@ -36,4 +39,7 @@ public interface userRepo extends JpaRepository<users, String>, JpaSpecification
             "ORDER BY year, month",
             nativeQuery = true)
     List<Object[]> getUserGrowthByMonth();
+
+    @Query("SELECT u.gender, COUNT(u) FROM users u WHERE u.role = 'ROLE_USER' GROUP BY u.gender")
+    List<Object[]> countUsersByGender();
 }

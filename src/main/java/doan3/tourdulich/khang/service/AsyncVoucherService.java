@@ -69,6 +69,38 @@ public class AsyncVoucherService {
         }
     }
 
+    @Async
+    public void createVouchersForSpecificUsers(String voucherType, String giaTriGiamStr, String ngayHetHan, java.util.List<String> userIds) {
+        log.info("Starting asynchronous job to create vouchers for {} specific users.", userIds.size());
+        try {
+            int giaTriGiam = Integer.parseInt(giaTriGiamStr.replace(".", ""));
+            for (String userId : userIds) {
+                try {
+                    vouchers newVoucher = new vouchers();
+                    String code = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+                    newVoucher.setMaVoucher(code);
+                    newVoucher.setVoucherType(voucherType);
+                    newVoucher.setGiaTriGiam(giaTriGiam);
+                    newVoucher.setNgayHetHan(java.sql.Date.valueOf(ngayHetHan));
+                    newVoucher.setTrangThai("ACTIVE");
+                    userService.findByUserId(userId).ifPresent(newVoucher::setUser);
+                    if (newVoucher.getUser() != null) {
+                        vouchers savedVoucher = voucherService.saveVoucher(newVoucher);
+                        sendVoucherNotificationEmail(savedVoucher.getUser().getEmail(), savedVoucher);
+                    } else {
+                        log.warn("User with ID {} not found. Skipping voucher creation.", userId);
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to create voucher or send email for user {}: {}", userId, e.getMessage(), e);
+                }
+            }
+            log.info("Finished processing voucher creation job for specific users.");
+        } catch (Exception e) {
+            log.error("Error in voucher creation job for specific users: {}", e.getMessage(), e);
+        }
+    }
+
+    @Async
     public void sendVoucherNotificationEmail(String email, vouchers voucher) {
         Context context = new Context();
         context.setVariable("customerName", voucher.getUser().getFull_name());

@@ -9,12 +9,12 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100">
-<div class="min-h-screen flex">
+<div class="min-h-screen flex relative">
     <!-- Sidebar -->
     <aside th:replace="~{admin_html/fragment/sidebar :: sidebar}"></aside>
 
     <!-- Main Content -->
-    <div class="flex-1 p-8">
+    <div class="flex-1 p-8 ml-[18.5rem] overflow-x-hidden overflow-y-auto">
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold text-gray-800">Quản lý Khuyến mãi</h1>
             <a th:href="@{/admin/khuyen-mai/add}"

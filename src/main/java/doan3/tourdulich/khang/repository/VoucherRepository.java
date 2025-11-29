@@ -17,6 +17,8 @@ public interface VoucherRepository extends JpaRepository<vouchers, Integer>, Jpa
     List<vouchers> findByUser(String userId);
     Optional<vouchers> findByMaVoucher(String maVoucher);
 
+    void deleteByTrangThai(String trangThai);
+
     @Query("SELECT v FROM vouchers v WHERE v.trangThai = 'ACTIVE' AND v.ngayHetHan <= CURRENT_DATE")
     List<vouchers> findActiveAndExpiredVouchers();
 }
