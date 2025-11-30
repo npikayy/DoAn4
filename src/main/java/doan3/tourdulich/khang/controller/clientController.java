@@ -129,7 +129,7 @@ public class clientController {
     @GetMapping("/Home")
     public ModelAndView TrangChu(ModelAndView modelAndView) {
         getCurrentUser(modelAndView);
-        List<tours> tours = tourRepo.find3Tour_discount();
+        List<tours> tours = tourRepo.find3Tour_discount(new Date());
         modelAndView.addObject("banners", bannerRepo.findAll());
         modelAndView.addObject("promotionBanners", khuyenMaiService.getActivePromotionsWithImages()); // Add this line
         String RecommendedTourThumbnails = "RecommendedTourThumbnails";

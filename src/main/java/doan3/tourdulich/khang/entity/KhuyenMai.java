@@ -4,13 +4,10 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Entity
 @Table(name = "khuyen_mai")
@@ -35,12 +32,10 @@ public class KhuyenMai {
     private String hinhAnh;
 
     @Column(name = "ngay_bat_dau")
-    @Temporal(TemporalType.DATE)
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date ngayBatDau;
 
     @Column(name = "ngay_ket_thuc")
-    @Temporal(TemporalType.DATE)
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date ngayKetThuc;
 

@@ -37,10 +37,6 @@ public class loginController {
             modelAndView.addObject("errorMessage", "Tên tài khoản không được sử dụng.");
             return modelAndView;
         }
-        else if (fullName.isEmpty() || username.isEmpty() || password.isEmpty() || email.isEmpty()) {
-            modelAndView.addObject("errorMessage", "Không được để trống các trường.");
-            return modelAndView;
-        }
         else if (userRepository.findByUsername(username)!= null) {
             modelAndView.addObject("errorMessage", "Tên tài khoản đã tồn tại.");
             return modelAndView;
@@ -53,6 +49,19 @@ public class loginController {
             modelAndView.addObject("errorMessage", "Mật khẩu phải có ít nhất 8 ký tự.");
             return modelAndView;
         }
+        else if (password.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?].*")) {
+            modelAndView.addObject("errorMessage", "Mật khẩu không được chứa kí tự đặc biệt.");
+            return modelAndView;
+        }
+        else if (!password.matches(".*[A-Z].*")) {
+            modelAndView.addObject("errorMessage", "Mật khẩu phải chứa ít nhất 1 chữ cái in hoa.");
+            return modelAndView;
+        }
+        else if (!password.matches(".*[a-z].*")) {
+            modelAndView.addObject("errorMessage", "Mật khẩu phải chứa ít nhất 1 chữ cái in thường.");
+            return modelAndView;
+        }
+
         else {
         userService.saveUser(fullName, username, passwordEncoder.encode(password), email);
         return new ModelAndView("redirect:/login");
